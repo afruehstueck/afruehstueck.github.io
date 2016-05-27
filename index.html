@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title> Experimental GLSL Signed Distance Function Demo </title>
+    <script src = "scripts/jquery-1.11.0.min.js"></script>
+    <script src = "scripts/require.js"></script>
+    <link rel = "stylesheet" href = "main.css" />
+    <!--script src="fun.js"></script-->
+</head>
+
+<body>
+<h2>
+    Processed Image
+</h2>
+<p>
+    Click and drag in image to center seed point and adjust seed radius.
+</p>
+<canvas id = "renderCanvas"></canvas>
+<table id = "parameters">
+    <!--tr>
+        <td><input type = "button" onclick="nextIteration()" value="Next iteration"></td>
+    </tr-->
+    <tr>
+        <th style = "text-align: left">Number of Iterations</th>
+    </tr>
+    <tr>
+        <td><input type = "number" min = "1" max = "3000" value = "500" step = "1" id = "numberOfIterations"></td>
+    </tr>
+    <tr>
+        <th style="text-align: left">Alpha</th>
+    </tr>
+    <tr>
+        <td><input type = "number" min = "0.0" max = "1.0" value = "0.5" step = "0.01" id = "alpha"></td>
+    </tr>
+    <tr>
+        <th style="text-align: left">Epsilon</th>
+    </tr>
+    <tr>
+        <td><input type = "number" min = "0.0" max = "1.0" value = "0.2" step = "0.01" id = "epsilon"></td>
+    </tr>
+
+</table>
+
+<p id = "log">Log output...<p>
+
+<h2>Source Image</h2>
+
+<!-- <img id="sourceImage" class='drawable' src="./coronal-mr-tumor.png" ></img> -->
+<img id = "sourceImage" class = "drawable" src = "res/lung-lesion512.png" />
+
+<script src = "main.js"></script>
+</body>
+</html>
