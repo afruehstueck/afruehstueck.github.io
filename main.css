@@ -1,44 +1,44 @@
-.container {
-  padding-left: 20px; 
+body {
+    font-family: Helvetica, san-serif;
 }
 
-#slicer_header {
-  font-size: 48px;
-  text-shadow: 2px 2px 3px #777; 
-}
-#slicer_header .gray {
-  color: #77c;
-  vertical-align: center; 
-}
-#slicer_header .text {
-  vertical-align: center; 
+#log {
+    background-color: lightgrey;
+    border-radius: 5px;
+    padding-top: 0.4em;
+    padding-bottom: 0.4em;
+    font-family: "Courier New";
 }
 
-
-    
-/* Start with core styles outside of a media query that apply to mobile and up */
-/* Global typography and design elements, stacked containers */
-body { font-family: Helvetica, san-serif; }
-H1 { color: green; }
-a:link { color:purple; }
-
-/* Stack the two content containers */
-.main,
-.sidebar { display:block; width:100%; }
-
-/* First breakpoint at 576px */
-/* Inherits mobile styles, but floats containers to make columns */
-@media all and (min-width: 36em) {
-	.main { float: left; width:60%; }
-	.sidebar { float: left; width:40%; }
+#parameters {
+    width: 100%;
 }
 
-/* Second breakpoint at 800px */
-/* Adjusts column proportions, tweaks base H1 */
-@media all and (min-width: 50em) {
-	.main { width:70%; }
-	.sidebar { width:30%; }
+#parameters input {
+    margin: 0.1em;
+    padding: 0.1em;
+    width: 95%;
+}
 
-	/* You can also tweak any other styles in a breakpoint */
-	H1 { color: blue; font-size:1.2em }
+a:link {
+    color: purple;
+}
+
+.overlayWrapper {
+    position: relative;
+}
+
+.coveredImage {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+.overlayCanvas {
+    /*width: 100%;
+    height: 100%;*/
+    opacity: 0.4;
+    position: absolute;
+    top: 0px;
+    left: 0px;
 }

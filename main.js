@@ -13,6 +13,7 @@ var seedOrigin = [ 0.3, 0.45 ], // holds a value to be passed as a uniform to th
 // set up webGL
 //
 var renderCanvas = document.querySelector( '#renderCanvas' );
+var overlayCanvas = document.querySelector( '.overlayCanvas' );
 var gl = renderCanvas.getContext( 'webgl' );
 
 if ( !gl ) { alert( "Your browser does not support WebGL. " +
@@ -271,22 +272,49 @@ function setupInterface() {
     setupFrameBuffers();
     renderCanvas.height = sourceTextureImage.height;
     renderCanvas.width = sourceTextureImage.width;
+
+    overlayCanvas.height = sourceTextureImage.height;
+    overlayCanvas.width = sourceTextureImage.width;
+    $('#outputContainer').css('width', sourceTextureImage.width);
+    $('.overlayWrapper').css({'width': sourceTextureImage.width, 'height': sourceTextureImage.height});
+
     //$( '#numberOfIterations' ).width( sourceTextureImage.width );
     $.when( setupShaders( 'scripts/text!shaders/test.frag', 'scripts/text!shaders/test.vert' ) ).done( function () {
         storeLocations();
         updateParameters();
     } );
 
+
+    function drawOnSourceImage() {
+        var context = overlayCanvas.getContext('2d');
+
+        context.save();
+        context.clearRect(0, 0, sourceTextureImage.width, sourceTextureImage.height);
+        context.fillStyle = '#007dff';
+        context.beginPath();
+        var circle_coord = denormalizeCoordinate( seedOrigin[ 0 ], seedOrigin [ 1 ] );
+        var circle_radius = seedRadius * sourceTextureImage.width;
+        context.arc( circle_coord[ 0 ], circle_coord[ 1 ], circle_radius, 0, 2 * Math.PI, false);
+        context.fill();
+
+        context.beginPath();
+        context.arc(circle_coord[ 0 ], circle_coord[ 1 ], 5, 0, 2 * Math.PI, false);
+        context.clip();
+        context.clearRect(circle_coord[ 0 ] - 5 - 1, circle_coord[ 1 ] - 5 - 1, 5 * 2 + 2, 5 * 2 + 2);
+        context.restore();
+    }
     //
     // user interface elements
     //
     function updateParameters() {
+        drawOnSourceImage();
         numberOfIterations = Number( document.getElementById( 'numberOfIterations' ).value );
         alpha = Number( document.getElementById( 'alpha' ).value );
         epsilon = Number( document.getElementById( 'epsilon' ).value );
         iteration = 0;
         render();
         renderIteration();
+
 
         if( autoIterate ) {
             (function iterate( i ) {
@@ -295,12 +323,9 @@ function setupInterface() {
                     if ( --i ) {          // If i > 0, keep going
                         iterate( i );// Call the loop again, and pass it the current value of i
                     }
-                }, 10 );
+                }, 0 );
             })( numberOfIterations );
         }
-        /*while ( iteration < numberOfIterations) {
-            nextIteration();
-        }*/
     }
 
     // listen to continuous and release events
@@ -317,19 +342,20 @@ function setupInterface() {
     //
 
     var drawRadius = false;
-    var selectTarget = false;
-    var startPoint = [ 0., 0. ];
     var currentPoint = [ 0., 0. ];
 
     function normalizeCoordinate( x, y ) {
         return [ x / sourceTextureImage.width, 1. - ( y / sourceTextureImage.height ) ];
     }
 
+    function denormalizeCoordinate( x, y ) {
+        return [ x * sourceTextureImage.width, ( 1. - y ) * sourceTextureImage.height ];
+    }
+
     function startDraw( event ) {
         event.preventDefault();
         drawRadius = true;
         seedOrigin = normalizeCoordinate( event.offsetX, event.offsetY );
-        //seedOrigin = normalizeCoordinate( event.offsetX, event.offsetY );
     }
 
     function endDraw( event ) {
@@ -339,21 +365,14 @@ function setupInterface() {
         event.preventDefault();
         drawRadius = false;
         currentPoint = normalizeCoordinate( event.offsetX, event.offsetY );
-        var dist_x = seedOrigin[0] - currentPoint[0];
-        var dist_y = seedOrigin[1] - currentPoint[1];
+        var dist_x = seedOrigin[ 0 ] - currentPoint[ 0 ];
+        var dist_y = seedOrigin[ 1 ] - currentPoint[ 1 ];
         seedRadius = Math.sqrt( dist_x * dist_x + dist_y * dist_y );
 
         updateParameters();
     }
 
-    function updateDraw( event ) {
-        if ( !drawRadius ) {
-            return;
-        }
-    }
-
     $( '#renderCanvas' ).mousedown( startDraw );
-    $( '#renderCanvas' ).mousemove( updateDraw );
     $( '#renderCanvas' ).mouseup( endDraw );
     $( '#renderCanvas' ).mouseout( endDraw );
 
