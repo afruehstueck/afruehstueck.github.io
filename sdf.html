@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title> Experimental GLSL Signed Distance Function Demo </title>
+    <script src="scripts/jquery-1.11.0.min.js"></script>
+    <script src="scripts/require.js"></script>
+    <link rel="stylesheet" href="main.css"/>
+    <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:400|Ubuntu+Mono' rel='stylesheet' type='text/css'>
+    <!--script src="fun.js"></script-->
+</head>
+
+<body>
+<h2>
+    Processed Image
+</h2>
+<p>
+    Click and drag in image to center seed point and adjust seed radius.
+</p>
+<div id="outputContainer">
+    <canvas id="renderCanvas"></canvas>
+    <p id="log">
+        Log output...
+    <p>
+
+    <table id="parameters">
+        <!--tr>
+            <td><input type = "button" onclick="nextIteration()" value="Next iteration"></td>
+        </tr-->
+        <tr>
+            <th style="text-align: left">Iterations</th>
+            <th style="text-align: left; color: grey">Alpha</th>
+            <th style="text-align: left">Epsilon</th>
+        </tr>
+        <tr>
+            <td><input type="number" min="1" max="10000" value="500" step="1" id="numberOfIterations"
+                       title="Adjust the number of iterations of the distance field."></td>
+            <td><input type="number" min="0.0" max="1.0" value="0.5" step="0.01" id="alpha" disabled="true"
+                       title="Control the influence of the speed and curvature functions."></td>
+            <td><input type="number" min="0.0" max="1.0" value="0.2" step="0.01" id="epsilon"
+                       title="Adjust the epsilon of the distance function."></td>
+        </tr>
+    </table>
+
+    <h2>
+        Source Image and Seed Region
+    </h2>
+    <!--<img id="sourceImage" class='drawable' src="res/coronal-mr-tumor.png"/>-->
+    <div class="overlayWrapper">
+        <img id="sourceImage" class="coveredImage" class="drawable" src="res/lung-lesion512.png"/>
+        <canvas class="overlayCanvas"></canvas>
+    </div>
+</div>
+<script src="sdf.js"></script>
+</body>
+</html>

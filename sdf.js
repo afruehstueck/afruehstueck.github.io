@@ -17,7 +17,7 @@ var overlayCanvas = document.querySelector( '.overlayCanvas' );
 var gl = renderCanvas.getContext( 'webgl' );
 
 if ( !gl ) { alert( "Your browser does not support WebGL. " +
-                    "Please use a WebGL-enabled explorer such as Chrome." ); }
+    "Please use a WebGL-enabled explorer such as Chrome." ); }
 
 gl.clearColor( 0.0, 0.0, 0.0, 1.0 ); // black, fully opaque
 gl.enable( gl.DEPTH_TEST );
@@ -91,6 +91,9 @@ var deferred = $.Deferred();
 
 /* Loading fragment and vertex shaders using require.js */
 var setupShaders = function ( fragmentShaderLocation, vertexShaderLocation ) {
+    require.config({
+        baseUrl: "./"
+    });
     require( [ fragmentShaderLocation, vertexShaderLocation ],
         /* Callback function initializing shaders when all resources have been loaded */
         function ( fragmentShaderCode, vertexShaderCode ) {
@@ -148,7 +151,7 @@ var nextIteration = function() {
         renderIteration();
     }
 }
-var storeLocations = function () {
+var getLocations = function () {
     loc_position = gl.getAttribLocation( glProgram, 'position' );
     loc_texCoord = gl.getAttribLocation( glProgram, 'texCoord' );
     loc_seedOrigin = gl.getUniformLocation( glProgram, 'seedOrigin' );
@@ -206,68 +209,31 @@ function render() {
     gl.uniform1i( loc_numIteration, numberOfIterations );
     gl.uniform1f( loc_alpha, alpha );
     gl.uniform1f( loc_epsilon, epsilon );
-
-
-
-    /*    (function iterate (i) {
-     setTimeout(function () {
-     iteration = numberOfIterations - i;
-     gl.uniform1i( gl.getUniformLocation( glProgram, 'iteration' ), iteration );
-
-     // set the frame buffer to render into
-     if ( iteration < numberOfIterations ) {
-     // render into one of the texture framebuffers
-     gl.bindFramebuffer( gl.FRAMEBUFFER, framebuffers[ iteration % 2 ] );
-     gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
-     }
-     // use the canvas frame buffer for last render
-     gl.bindFramebuffer( gl.FRAMEBUFFER, null );
-
-     // the primitive, triggers the fragment shader
-     gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
-
-     // switch the intermediate texture
-     gl.activeTexture( gl.TEXTURE2 ); // Use TEXTURE2 as the intermediate image for Grow Cut
-     gl.bindTexture( gl.TEXTURE_2D, textures[ iteration % 2 ] );
-
-     if (--i) {          // If i > 0, keep going
-     iterate(i);       // Call the loop again, and pass it the current value of i
-     }
-     }, 10);
-     })(numberOfIterations);*/
 }
 
 function renderIteration() {
-    //var iteration;
-    //for ( iteration = 0; iteration <= numberOfIterations; ++iteration ) {
     gl.uniform1i( loc_iteration, iteration );
 
-    //if ( iteration < numberOfIterations ) {
     // render into one of the texture framebuffers
     gl.uniform1i( loc_renderDistanceField, 1 );
     gl.bindFramebuffer( gl.FRAMEBUFFER, framebuffers[ iteration % 2 ] );
     gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
-    //} else {
-    // use the canvas frame buffer for last render
-    //}
 
     // switch the intermediate texture
     gl.activeTexture( gl.TEXTURE2 ); // Use TEXTURE2 as the intermediate image for Grow Cut
     gl.bindTexture( gl.TEXTURE_2D, textures[ iteration % 2 ] );
-    //}
 
+    //render to output buffer
     gl.uniform1i( loc_renderDistanceField, 0 );
     gl.bindFramebuffer( gl.FRAMEBUFFER, null );
     gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
 }
 
 function setupInterface() {
-    //
     // set up the drawCanvas
-    //
     sourceTextureImage = $( '#sourceImage' )[ 0 ];
 
-    setupSourceTexture(); // jvm - changes these to take image as parameter? change these to keep things as fields in image[i]?
+    setupSourceTexture();
 
     setupFrameBuffers();
     renderCanvas.height = sourceTextureImage.height;
@@ -278,14 +244,13 @@ function setupInterface() {
     $('#outputContainer').css('width', sourceTextureImage.width);
     $('.overlayWrapper').css({'width': sourceTextureImage.width, 'height': sourceTextureImage.height});
 
-    //$( '#numberOfIterations' ).width( sourceTextureImage.width );
     $.when( setupShaders( 'scripts/text!shaders/test.frag', 'scripts/text!shaders/test.vert' ) ).done( function () {
-        storeLocations();
+        getLocations();
         updateParameters();
     } );
 
 
-    function drawOnSourceImage() {
+    function drawSourceRegionToCanvas() {
         var context = overlayCanvas.getContext('2d');
 
         context.save();
@@ -297,17 +262,19 @@ function setupInterface() {
         context.arc( circle_coord[ 0 ], circle_coord[ 1 ], circle_radius, 0, 2 * Math.PI, false);
         context.fill();
 
+        //draw cut out circle to canvas
         context.beginPath();
-        context.arc(circle_coord[ 0 ], circle_coord[ 1 ], 5, 0, 2 * Math.PI, false);
+        var small_radius = 5;
+        context.arc(circle_coord[ 0 ], circle_coord[ 1 ], small_radius, 0, 2 * Math.PI, false);
         context.clip();
-        context.clearRect(circle_coord[ 0 ] - 5 - 1, circle_coord[ 1 ] - 5 - 1, 5 * 2 + 2, 5 * 2 + 2);
+        context.clearRect(circle_coord[ 0 ] - small_radius - 1, circle_coord[ 1 ] - small_radius - 1, small_radius * 2 + 2, small_radius * 2 + 2);
         context.restore();
     }
     //
     // user interface elements
     //
     function updateParameters() {
-        drawOnSourceImage();
+        drawSourceRegionToCanvas();
         numberOfIterations = Number( document.getElementById( 'numberOfIterations' ).value );
         alpha = Number( document.getElementById( 'alpha' ).value );
         epsilon = Number( document.getElementById( 'epsilon' ).value );

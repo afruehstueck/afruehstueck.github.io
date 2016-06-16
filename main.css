@@ -1,5 +1,9 @@
 body {
-    font-family: Helvetica, san-serif;
+    font-family: "Roboto Condensed", sans-serif;
+    width: 100%;
+    height: 100%;
+    padding: 0em;
+    margin: 0em;
 }
 
 #log {
@@ -7,7 +11,8 @@ body {
     border-radius: 5px;
     padding-top: 0.4em;
     padding-bottom: 0.4em;
-    font-family: "Courier New";
+    font-family: "Ubuntu Mono";
+    font-size: 12px;
 }
 
 #parameters {
@@ -22,6 +27,11 @@ body {
 
 a:link {
     color: purple;
+}
+
+.floatingCanvas {
+    position: relative !important;
+    float: left;
 }
 
 .overlayWrapper {
