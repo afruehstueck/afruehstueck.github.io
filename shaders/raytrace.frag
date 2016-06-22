@@ -3,13 +3,13 @@ precision highp float;
 uniform vec2  iResolution;
 uniform float iGlobalTime;
 uniform sampler2D sdfBuffer;
-uniform sampler2D sourceTexture;
+uniform sampler2D backfaceBuffer;
+uniform sampler2D volumeTexture;
 
-vec2 doModel( vec3 p );
-vec2 sampleVolume( vec3 pos );
-vec2 sampleVolumeSimple( vec3 pos );
+//vec2 doModel( vec3 p );
+//vec2 sampleVolume( vec3 pos );
 
-//#pragma glslify: raytrace = require( 'glsl-raytrace' , map = sampleVolumeSimple, steps = 150 )
+//#pragma glslify: raytrace = require( 'glsl-raytrace' , map = sampleVolumeSimple, MAX_STEPS = 150 )
 //#pragma glslify: normal   = require( 'glsl-sdf-normal', map = doModel)
 //#pragma glslify: noise    = require( 'glsl-noise/simplex/4d' )
 //#pragma glslify: square   = require( 'glsl-square-frame' )
@@ -20,37 +20,9 @@ vec2 sampleVolumeSimple( vec3 pos );
 const float numSlices = 256.0;
 const float slicesX = 16.0;
 const float slicesY = 16.0;
+const int MAX_STEPS = 250;
 
-//////////////////////// BEGIN GLSL-RAYTRACE
-
-vec2 raytrace(vec3 rayOrigin, vec3 rayDir, float maxd, float precis) {
-  float latest = precis * 2.0;
-  float dist   = +0.0;
-  float type   = -1.0;
-  vec2  res    = vec2(-1.0, -1.0);
-
-  for (int i = 0; i < 150 ; i++) {
-    if (latest < precis || dist > maxd) break;
-
-    vec2 result = doModel(rayOrigin + rayDir * dist);
-
-    latest = result.x;
-    type   = result.y;
-    dist  += latest;
-  }
-
-  if (dist < maxd) {
-    res = vec2(dist, type);
-  }
-
-  return res;
-}
-
-vec2 raytrace(vec3 rayOrigin, vec3 rayDir) {
-  return raytrace(rayOrigin, rayDir, 20.0, 0.001);
-}
-//////////////////////// END GLSL-RAYTRACE
-
+varying vec3 textureCoordinate;
 
 //////////////////////// BEGIN NOISE
 
@@ -177,37 +149,37 @@ float noise(vec4 v)
 
 //////////////////////// BEGIN TURNTABLE_CAMERA
 
-vec2 squareFrame_4_7(vec2 screenSize) {
-  vec2 position = 2.0 * (gl_FragCoord.xy / screenSize.xy) - 1.0;
+vec2 squareFrame( vec2 screenSize ) {
+  vec2 position = 2.0 * ( gl_FragCoord.xy / screenSize.xy ) - 1.0;
   position.x *= screenSize.x / screenSize.y;
   return position;
 }
 
-vec2 squareFrame_4_7(vec2 screenSize, vec2 coord) {
-  vec2 position = 2.0 * (coord.xy / screenSize.xy) - 1.0;
+vec2 squareFrame( vec2 screenSize, vec2 coord ) {
+  vec2 position = 2.0 * ( coord.xy / screenSize.xy ) - 1.0;
   position.x *= screenSize.x / screenSize.y;
   return position;
 }
 
-mat3 calcLookAtMatrix_6_8(vec3 origin, vec3 target, float roll) {
-  vec3 rr = vec3(sin(roll), cos(roll), 0.0);
-  vec3 ww = normalize(target - origin);
-  vec3 uu = normalize(cross(ww, rr));
-  vec3 vv = normalize(cross(uu, ww));
+mat3 calcLookAtMatrix( vec3 origin, vec3 target, float roll ) {
+  vec3 rr = vec3( sin( roll ), cos( roll ), 0.0 );
+  vec3 ww = normalize( target - origin );
+  vec3 uu = normalize( cross( ww, rr ) );
+  vec3 vv = normalize( cross( uu, ww ) );
 
-  return mat3(uu, vv, ww);
+  return mat3( uu, vv, ww );
 }
 
-vec3 getRay_5_9(mat3 camMat, vec2 screenPos, float lensLength) {
-  return normalize(camMat * vec3(screenPos, lensLength));
+vec3 getRay( mat3 camMat, vec2 screenPos, float lensLength ) {
+  return normalize( camMat * vec3( screenPos, lensLength ) );
 }
 
-vec3 getRay_5_9(vec3 origin, vec3 target, vec2 screenPos, float lensLength) {
-  mat3 camMat = calcLookAtMatrix_6_8(origin, target, 0.0);
-  return getRay_5_9(camMat, screenPos, lensLength);
+vec3 getRay( vec3 origin, vec3 target, vec2 screenPos, float lensLength ) {
+  mat3 camMat = calcLookAtMatrix( origin, target, 0.0 );
+  return getRay( camMat, screenPos, lensLength );
 }
 
-void orbitCamera_3_10(
+void orbitCamera(
   in float camAngle,
   in float camHeight,
   in float camDistance,
@@ -215,87 +187,101 @@ void orbitCamera_3_10(
   out vec3 rayOrigin,
   out vec3 rayDirection
 ) {
-  vec2 screenPos = squareFrame_4_7(screenResolution);
-  vec3 rayTarget = vec3(0.0);
+  vec2 screenPos = squareFrame( screenResolution );
+  vec3 rayTarget = vec3( 0.0 );
 
   rayOrigin = vec3(
-    camDistance * sin(camAngle),
+    camDistance * sin( camAngle ),
     camHeight,
-    camDistance * cos(camAngle)
+    camDistance * cos( camAngle )
   );
 
-  rayDirection = getRay_5_9(rayOrigin, rayTarget, screenPos, 2.0);
+  rayDirection = getRay( rayOrigin, rayTarget, screenPos, 2.0 );
 }
 
 //////////////////////// END TURNTABLE_CAMERA
 
 vec2 sampleVolume( vec3 p ) {
+    if( p.x > 1. || p.y > 1. || p.x < 0. || p.y < 0. ) return vec2( 1.0, 0.0 );
 
-    vec3 pos = p;
+    float tiles_x = 16.;
+    float tiles_y = 16.;
+    float volumeWidth = 128.;
+    float volumeHeight = 128.;
 
-    if(abs( pos.x ) > 1. || abs(pos.y) > 1. ) return vec2( -1.0, 0.0 );
+    float sliceNo = floor( p.z * tiles_x * tiles_y );
 
-	vec2 tex1, tex2;
-	float slice1, slice2;
-	slice1 = floor( pos.z * numSlices );
-	slice2 = slice1 + 1.0;
+    float dx = mod( sliceNo, tiles_x );
+    float dy = ( sliceNo - dx ) / tiles_x;
 
-	float dx1, dy1, dx2, dy2;
-	dx1 = fract( slice1 / slicesX );
-	dx2 = fract( slice2 / slicesX );
-	dy1 = floor( slice1 / slicesY ) / slicesY;
-	dy2 = floor( slice2 / slicesY ) / slicesY;
+    dx *= volumeWidth;
+    dy *= volumeHeight;
 
-	tex1.x = dx1 + ( pos.x / slicesX );
-	tex2.x = dx2 + ( pos.x / slicesX );
+    vec2 t;
+    t.x = dx + p.x * volumeWidth;
+    t.y = dy + p.y * volumeHeight;
 
-	tex1.y = ( -pos.y / slicesY ) - dy1;
-	tex2.y = ( -pos.y / slicesY ) - dy2;
+    t.x /= ( volumeWidth * tiles_x );
+    t.y /= ( volumeHeight * tiles_y );
 
-    vec4 slice1Color = texture2D( sdfBuffer, tex1 );
-    vec4 slice2Color = texture2D( sdfBuffer, tex2 );
+    vec4 texColor = texture2D( sdfBuffer, t );
 
-	float slice1X = slice1Color.x * 2.0 - 1.0;
-	float slice2X = slice2Color.x * 2.0 - 1.0;
-	return vec2 ( mix( slice1X, slice2X, ( pos.z * numSlices ) - slice1 ), 1.0 );
+    float deNormalized = texColor.x * 2.0 - 1.0;
+    //////////
+    return vec2 ( deNormalized, 0.0 );
 }
 
+vec4 sampleAs3DTexture( vec3 texCoord, sampler2D volume ) {
+    if( texCoord.x < 0. || texCoord.x > 1. ||
+        texCoord.y < 0. || texCoord.y > 1. ||
+        texCoord.z < 0. || texCoord.z > 1. ) {
+        return vec4( 0.0, 0.0, 0.0, 0.0 );
+    }
 
-vec2 sampleVolumeSimple( vec3 p ) {
+    vec2 tiles = vec2( 16., 16. );
+    float volumeDepth = tiles.x * tiles.y;
+    float max_slice = volumeDepth - 1.0;
+    vec2 slice1, slice2;
 
-    vec3 pos = p;
+    //z coordinate determines which 2D tile we sample from
+    //z slice number runs from 0 to 255.
+    float slice1_z = floor( texCoord.z * max_slice );
+    float slice2_z = clamp( slice1_z + 1.0, 0.0, max_slice );
 
-    if( pos.x > 1. || pos.y > 1. || pos.x < -1. || pos.y < -1. || pos.z < -1. || pos.z > 10. ) return vec2( -1.0, 0.0 );
+    float dx1 = mod( slice1_z, tiles.x );
+    float dy1 = floor( ( max_slice - slice1_z ) / tiles.x );
 
-	vec2 tex1;
-	float slice1;
-	slice1 = floor( pos.z * numSlices );
+    float dx2 = mod( slice2_z, tiles.x );
+    float dy2 = floor( ( max_slice - slice2_z ) / tiles.x );
 
-	float dx1, dy1;
-	dx1 = fract( slice1 / slicesX );
-	dy1 = floor( slice1 / slicesY ) / slicesY;
+    slice1.x = ( texCoord.x + dx1 ) / tiles.x;
+    slice1.y = ( texCoord.y + dy1 ) / tiles.y;
 
-	tex1.x = dx1 + ( ( pos.x * 0.5 + 0.5 ) / slicesX );
+    slice2.x = ( texCoord.x + dx2 ) / tiles.x;
+    slice2.y = ( texCoord.y + dy2 ) / tiles.y;
 
-	tex1.y = ( -( pos.y * 0.5 + 0.5 ) / slicesY ) - dy1;
+    //bilinear filtering is done at each texture2D by default
+    vec4 color1 = texture2D( volume, slice1 );
+    vec4 color2 = texture2D( volume, slice2 );
+    //TODO: lookup transfer functions for colors (if relevant)
 
-    vec4 slice1Color = texture2D( sdfBuffer, tex1 );
-
-	return vec2 ( slice1Color.x * 2.0 - 1.0, 0.0 );
+    float zDifference = mod( texCoord.z * max_slice, 1.0 );
+    //interpolate between the two intermediate colors of each slice
+    return mix( color1, color2, zDifference );
 }
 
 
 vec2 doModel( vec3 p ) {
-  //if( abs ( p.x ) > 1. || abs ( p.y ) > 1. || abs ( p.z ) > 1. ) return vec2( 1.0, 0.0 );
+
+  //vec3 pos = p * 0.5 + 0.5;
 
   float r = 1.0;
   r += noise( vec4( p * 0.75, iGlobalTime ) ) * 0.25;
 
-  return vec2( length( p ) - 4.0, 0.0 );
-  //return vec2( sampleVolume ( p * 0.5 + 0.5 ), 0.0 );
-
-  //return vec2 ( sampleVolume ( p * 0.5 + 0.5 ) , 0.0 );
+  //return vec2( length(p) - r, 0.0);
+  return sampleVolume( p );
 }
+
 
 vec3 doMaterial( vec3 pos, vec3 nor ) {
   return vec3( 0.4, 0.768, 1.0 ) * 0.5;
@@ -327,20 +313,37 @@ vec3 calcNormal( vec3 pos ) {
                     v4 * doModel( pos + v4 * eps ).x );
 }
 
-vec3 calcNormalSimple( vec3 pos ) {
-  const float eps = 0.05;
 
-  const vec3 v1 = vec3(  1.0, -1.0, -1.0 );
-  const vec3 v2 = vec3( -1.0, -1.0,  1.0 );
-  const vec3 v3 = vec3( -1.0,  1.0, -1.0 );
-  const vec3 v4 = vec3(  1.0,  1.0,  1.0 );
 
-  return normalize( v1 * sampleVolumeSimple( pos + v1 * eps ).x +
-                    v2 * sampleVolumeSimple( pos + v2 * eps ).x +
-                    v3 * sampleVolumeSimple( pos + v3 * eps ).x +
-                    v4 * sampleVolumeSimple( pos + v4 * eps ).x );
+//////////////////////// BEGIN GLSL-RAYTR ACE
+
+vec2 raytrace( vec3 rayOrigin, vec3 rayDir, float maxd, float precis ) {
+  float latest = precis * 2.0;
+  float dist   = +0.0;
+  float type   = -1.0;
+  vec2  res    = vec2( -1.0, -1.0 );
+
+  for ( int i = 0; i < 150 ; i++ ) {
+    if ( latest < precis || dist > maxd ) break;
+
+    vec2 result = doModel( rayOrigin + rayDir * dist );
+
+    latest = result.x;
+    type   = result.y;
+    dist  += latest;
+  }
+
+  if ( dist < maxd ) {
+    res = vec2( dist, type );
+  }
+
+  return res;
 }
 
+vec2 raytrace( vec3 rayOrigin, vec3 rayDir ) {
+  return raytrace( rayOrigin, rayDir, 20.0, 0.001 );
+}
+//////////////////////// END GLSL-RAYTRACE
 
 
 /*void main() {
@@ -366,26 +369,78 @@ vec3 calcNormalSimple( vec3 pos ) {
   gl_FragColor = vec4( col, 1.0 );
 }*/
 
+
+void main() {
+    float steps = 100.0;
+    float alphaCorrection = 0.1;
+    vec4 accumulatedColor = vec4( 0.0 );
+    float accumulatedAlpha = 0.0;
+    float accumulatedLength = 0.0;
+
+    vec3 rayStart = textureCoordinate;//? * 2.0 - 1.0;
+    vec3 rayEnd = texture2D( backfaceBuffer, gl_FragCoord.xy / vec2( iResolution.x, iResolution.y ) ).xyz;// * 2.0 - 1.0;
+
+    vec3 ray = rayEnd - rayStart;
+    float rayLength = length( ray );
+
+    float delta = 1.0 / steps;
+    vec3 deltaDirection = normalize ( ray ) * delta;
+    float deltaLength = length ( deltaDirection );
+
+    vec3 position = rayStart;
+
+    for ( int i = 0; i < MAX_STEPS; ++i ) {
+        //acc.a = sampleAs3DTexture( position * 0.5 + 0.5, volumeTexture );
+        vec4 sampleColor = sampleAs3DTexture( position, volumeTexture );
+
+        //todo: determine which value is sampled. currently .x because some data does not have alpha
+        float sampleAlpha = sampleColor.x * alphaCorrection;
+
+        accumulatedColor += ( 1.0 - accumulatedAlpha ) * sampleColor * sampleAlpha;
+
+        accumulatedAlpha += sampleAlpha;
+
+        /*MIP // do not have tf, otherwise sample it
+        src = vec4( acc.aaaa );
+        if ( src.a >= dst.a )
+            dst = src;
+        */
+        position += deltaDirection;
+        accumulatedLength += deltaLength;
+
+        if( accumulatedLength >= rayLength || accumulatedAlpha >= 1.0 ) {
+            break;
+        }
+    }
+
+    //vec4 sampleColor = sampleAs3DTexture( rayStart, volumeTexture );
+    //gl_FragColor  = vec4(sampleColor.xyz, 1.0);
+    //gl_FragColor = vec4( texsture2D( backfaceBuffer, gl_FragCoord.xy / vec2( iResolution.x, iResolution.y ) ).xyz, 1.0 );
+    gl_FragColor = vec4(accumulatedColor.xyz, 1.0);
+}
+
+/*
 void main() {
   vec3 color = vec3( 0.0 );
   vec3 rayOrigin, rayDirection;
 
-  float rotation = 0.0;//fiGlobalTime;
+  float rotation = 0.0;//2.4;
   float height   = 0.0;
-  float dist     = 10.0;
-  vec2 test = vec2( 512, 512 );
-  orbitCamera_3_10( rotation, height, dist, iResolution.xy, rayOrigin, rayDirection );
+  float dist     = 5.0;
 
-  vec2 t = raytrace( rayOrigin, rayDirection );
+  orbitCamera( rotation, height, dist, iResolution.xy, rayOrigin, rayDirection );
+
+  vec2 t = raytrace( rayOrigin, rayDirection, 20.0, 0.01 ); //find first ray intersection
   if ( t.x > -0.5 ) {
     vec3 pos = rayOrigin + t.x * rayDirection;
-    vec3 nor = calcNormalSimple( pos );
+    vec3 nor = calcNormal( pos );
     vec3 mal = doMaterial( pos, nor );
 
-    color = doLighting( pos, nor, rayDirection, t.x, mal );
-    //color = nor * 0.5 + 0.5;
+    //color = doLighting( pos, nor, rayDirection, t.x, mal );
+        color = nor * 0.5 + 0.5;
   }
 
   gl_FragColor.rgb = color;
   gl_FragColor.a   = 1.0;
 }
+*/

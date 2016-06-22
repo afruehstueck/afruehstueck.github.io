@@ -30,12 +30,7 @@ void main( void ) {
     float z = ( tile_y * sliceLayout.x + tile_x ) / ( sliceLayout.x * sliceLayout.y );
 
     vec3 currentPosition = vec3( x, y, z );
-    /*float len_x = seedOrigin.x - x;
-    float len_y = seedOrigin.y - y;
-    float len_z = seedOrigin.z - z;
 
-    float distanceToOrigin = sqrt( len_x * len_x + len_y * len_y + len_z * len_z );
-*/
     float distanceToOrigin = distance( seedOrigin, currentPosition );
     //WATCH OUT, different from other example
     //distance in distance function is positive outside of seed and negative inside of seed (required this way by glsl-raytrace
