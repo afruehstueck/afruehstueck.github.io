@@ -4,36 +4,40 @@ precision highp float;
 
 uniform vec3 seedOrigin;
 uniform float seedRadius;
-uniform vec2 volumeDimensions;
-uniform vec2 sliceLayout;
+uniform vec2 tiles;
 
 varying vec2 textureCoordinate;
+varying vec2 pos;
+
+
+vec3 tiledTextureCoordToVolumeCoord( vec2 textureCoordinate ) {
+    //scale textureCoordinate from [ 0, 1 ] to [ 0, tiles{x,y} ]
+    float tx = textureCoordinate.x * tiles.x;
+    float ty = textureCoordinate.y * tiles.y;
+
+    float dx = floor( tx );
+    float dy = floor( ty );
+
+    vec3 coord;
+
+    coord.x = fract( tx );
+    coord.y = fract( ty );
+
+    //z-arrangement is inverted to adhere to file format. maybe change this!
+    coord.z = ( dy * tiles.x + dx ) / ( tiles.x * tiles.y );
+    //coord.z = ( ( tiles.y - dy ) * tiles.x + dx ) / ( tiles.x * tiles.y );
+
+    return coord;
+}
 
 void main( void ) {
-    float volumeWidth = volumeDimensions.x; //* sliceLayout.x;
-    float volumeHeight = volumeDimensions.y;// * sliceLayout.y;
 
-    float imageWidth = volumeDimensions.x * sliceLayout.x;
-    float imageHeight = volumeDimensions.y * sliceLayout.y;
-
-    float tx = textureCoordinate.x * imageWidth;
-    float ty = textureCoordinate.y * imageHeight;
-
-    float x = mod( tx, volumeWidth );
-    float y = mod( ty, volumeHeight );
-    float tile_x = ( tx - x ) / volumeWidth;
-    float tile_y = ( ty - y ) / volumeHeight;
-
-    //normalize to [ 0, 1 ] range
-    x /= volumeWidth;
-    y /= volumeHeight;
-    float z = ( tile_y * sliceLayout.x + tile_x ) / ( sliceLayout.x * sliceLayout.y );
-
-    vec3 currentPosition = vec3( x, y, z );
+    //vec3 currentPosition = vec3( x, y, z );
+    vec3 currentPosition = tiledTextureCoordToVolumeCoord( textureCoordinate );
 
     float distanceToOrigin = distance( seedOrigin, currentPosition );
     //WATCH OUT, different from other example
-    //distance in distance function is positive outside of seed and negative inside of seed (required this way by glsl-raytrace
+    //distance in distance function is *positive* outside of seed and *negative* inside of seed (required this way by glsl-raytrace
     // normalize distance value by dividing through fbo resolution
     float distance = distanceToOrigin - seedRadius;
 
@@ -41,9 +45,13 @@ void main( void ) {
     //normalize distance value to [0, 1] range
     float normalizedDistance = ( clampDistance + 1. ) / 2.;
 
-    gl_FragColor.r = normalizedDistance;
-    gl_FragColor.g = 0.;
-    gl_FragColor.b = 0.;
+    /*gl_FragColor.r = normalizedDistance;
+    gl_FragColor.g = normalizedDistance;
+    gl_FragColor.b = normalizedDistance;
+    */
+    gl_FragColor.r = 1.0 - distanceToOrigin;
+    gl_FragColor.g = 1.0 - distanceToOrigin;
+    gl_FragColor.b = 1.0 - distanceToOrigin;
 
     //DEBUG: draws a nice circle around the seed region with unused green and blue values
     //gl_FragColor.rgb = vec3( normalizedDistance, ( abs( clampDistance ) < 0.01 ) ? 1. : 0., ( abs( clampDistance ) < 0.01 ) ? 1. : 0. );

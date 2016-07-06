@@ -1,13 +1,13 @@
 precision highp float;
 
-uniform vec2  iResolution;
+uniform vec2  resolution;
+uniform vec3  volumeDimensions;
+uniform vec3  seedOrigin;
 uniform float iGlobalTime;
-uniform sampler2D sdfBuffer;
-uniform sampler2D backfaceBuffer;
+uniform sampler2D distanceFieldTexture;
+uniform sampler2D backfaceTexture;
+uniform sampler2D frontfaceTexture;
 uniform sampler2D volumeTexture;
-
-//vec2 doModel( vec3 p );
-//vec2 sampleVolume( vec3 pos );
 
 //#pragma glslify: raytrace = require( 'glsl-raytrace' , map = sampleVolumeSimple, MAX_STEPS = 150 )
 //#pragma glslify: normal   = require( 'glsl-sdf-normal', map = doModel)
@@ -18,11 +18,12 @@ uniform sampler2D volumeTexture;
 //#pragma glslify: camera  = require( 'glsl-turntable-camera' )
 
 const float numSlices = 256.0;
-const float slicesX = 16.0;
-const float slicesY = 16.0;
+//todo: make this uniform
+const vec2 tiles = vec2( 16., 16. );
 const int MAX_STEPS = 250;
 
 varying vec3 textureCoordinate;
+varying vec4 projectedCoordinate;
 
 //////////////////////// BEGIN NOISE
 
@@ -143,102 +144,16 @@ float noise(vec4 v)
                + dot(m1*m1, vec2( dot( p3, x3 ), dot( p4, x4 ) ) ) ) ;
 
   }
-
 //////////////////////// END NOISE
 
-
-//////////////////////// BEGIN TURNTABLE_CAMERA
-
-vec2 squareFrame( vec2 screenSize ) {
-  vec2 position = 2.0 * ( gl_FragCoord.xy / screenSize.xy ) - 1.0;
-  position.x *= screenSize.x / screenSize.y;
-  return position;
-}
-
-vec2 squareFrame( vec2 screenSize, vec2 coord ) {
-  vec2 position = 2.0 * ( coord.xy / screenSize.xy ) - 1.0;
-  position.x *= screenSize.x / screenSize.y;
-  return position;
-}
-
-mat3 calcLookAtMatrix( vec3 origin, vec3 target, float roll ) {
-  vec3 rr = vec3( sin( roll ), cos( roll ), 0.0 );
-  vec3 ww = normalize( target - origin );
-  vec3 uu = normalize( cross( ww, rr ) );
-  vec3 vv = normalize( cross( uu, ww ) );
-
-  return mat3( uu, vv, ww );
-}
-
-vec3 getRay( mat3 camMat, vec2 screenPos, float lensLength ) {
-  return normalize( camMat * vec3( screenPos, lensLength ) );
-}
-
-vec3 getRay( vec3 origin, vec3 target, vec2 screenPos, float lensLength ) {
-  mat3 camMat = calcLookAtMatrix( origin, target, 0.0 );
-  return getRay( camMat, screenPos, lensLength );
-}
-
-void orbitCamera(
-  in float camAngle,
-  in float camHeight,
-  in float camDistance,
-  in vec2 screenResolution,
-  out vec3 rayOrigin,
-  out vec3 rayDirection
-) {
-  vec2 screenPos = squareFrame( screenResolution );
-  vec3 rayTarget = vec3( 0.0 );
-
-  rayOrigin = vec3(
-    camDistance * sin( camAngle ),
-    camHeight,
-    camDistance * cos( camAngle )
-  );
-
-  rayDirection = getRay( rayOrigin, rayTarget, screenPos, 2.0 );
-}
-
-//////////////////////// END TURNTABLE_CAMERA
-
-vec2 sampleVolume( vec3 p ) {
-    if( p.x > 1. || p.y > 1. || p.x < 0. || p.y < 0. ) return vec2( 1.0, 0.0 );
-
-    float tiles_x = 16.;
-    float tiles_y = 16.;
-    float volumeWidth = 128.;
-    float volumeHeight = 128.;
-
-    float sliceNo = floor( p.z * tiles_x * tiles_y );
-
-    float dx = mod( sliceNo, tiles_x );
-    float dy = ( sliceNo - dx ) / tiles_x;
-
-    dx *= volumeWidth;
-    dy *= volumeHeight;
-
-    vec2 t;
-    t.x = dx + p.x * volumeWidth;
-    t.y = dy + p.y * volumeHeight;
-
-    t.x /= ( volumeWidth * tiles_x );
-    t.y /= ( volumeHeight * tiles_y );
-
-    vec4 texColor = texture2D( sdfBuffer, t );
-
-    float deNormalized = texColor.x * 2.0 - 1.0;
-    //////////
-    return vec2 ( deNormalized, 0.0 );
-}
-
-vec4 sampleAs3DTexture( vec3 texCoord, sampler2D volume ) {
+//sample volumetric data from tiled 2d texture - do trilinear filtering
+vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
     if( texCoord.x < 0. || texCoord.x > 1. ||
         texCoord.y < 0. || texCoord.y > 1. ||
         texCoord.z < 0. || texCoord.z > 1. ) {
-        return vec4( 0.0, 0.0, 0.0, 0.0 );
+        return vec4( 0. );
     }
 
-    vec2 tiles = vec2( 16., 16. );
     float volumeDepth = tiles.x * tiles.y;
     float max_slice = volumeDepth - 1.0;
     vec2 slice1, slice2;
@@ -246,13 +161,16 @@ vec4 sampleAs3DTexture( vec3 texCoord, sampler2D volume ) {
     //z coordinate determines which 2D tile we sample from
     //z slice number runs from 0 to 255.
     float slice1_z = floor( texCoord.z * max_slice );
-    float slice2_z = clamp( slice1_z + 1.0, 0.0, max_slice );
+    float slice2_z = clamp( slice1_z + 1., 0., max_slice );
 
     float dx1 = mod( slice1_z, tiles.x );
-    float dy1 = floor( ( max_slice - slice1_z ) / tiles.x );
+    //examples inverted y values (they are like this in the example volumes) - do we want this?
+    //for inverted values do float dy1 = floor( ( max_slice - slice1_z ) / tiles.x );
+    float dy1 = floor( slice1_z / tiles.x ); // same for dy2
 
     float dx2 = mod( slice2_z, tiles.x );
-    float dy2 = floor( ( max_slice - slice2_z ) / tiles.x );
+    float dy2 = floor( slice2_z / tiles.x );
+    //float dy2 = floor( ( max_slice - slice2_z ) / tiles.x );
 
     slice1.x = ( texCoord.x + dx1 ) / tiles.x;
     slice1.y = ( texCoord.y + dy1 ) / tiles.y;
@@ -260,7 +178,7 @@ vec4 sampleAs3DTexture( vec3 texCoord, sampler2D volume ) {
     slice2.x = ( texCoord.x + dx2 ) / tiles.x;
     slice2.y = ( texCoord.y + dy2 ) / tiles.y;
 
-    //bilinear filtering is done at each texture2D by default
+    //bilinear filtering is done at each texture2D lookup by default
     vec4 color1 = texture2D( volume, slice1 );
     vec4 color2 = texture2D( volume, slice2 );
     //TODO: lookup transfer functions for colors (if relevant)
@@ -270,18 +188,9 @@ vec4 sampleAs3DTexture( vec3 texCoord, sampler2D volume ) {
     return mix( color1, color2, zDifference );
 }
 
-
-vec2 doModel( vec3 p ) {
-
-  //vec3 pos = p * 0.5 + 0.5;
-
-  float r = 1.0;
-  r += noise( vec4( p * 0.75, iGlobalTime ) ) * 0.25;
-
-  //return vec2( length(p) - r, 0.0);
-  return sampleVolume( p );
+float getNormalizedSample( sampler2D volume, vec3 texCoord ) {
+    return sampleAs3DTexture( volume, texCoord ).x * 2.0 - 1.0;
 }
-
 
 vec3 doMaterial( vec3 pos, vec3 nor ) {
   return vec3( 0.4, 0.768, 1.0 ) * 0.5;
@@ -307,96 +216,39 @@ vec3 calcNormal( vec3 pos ) {
   const vec3 v3 = vec3( -1.0,  1.0, -1.0 );
   const vec3 v4 = vec3(  1.0,  1.0,  1.0 );
 
-  return normalize( v1 * doModel( pos + v1 * eps ).x +
-                    v2 * doModel( pos + v2 * eps ).x +
-                    v3 * doModel( pos + v3 * eps ).x +
-                    v4 * doModel( pos + v4 * eps ).x );
+  return normalize( v1 * getNormalizedSample( distanceFieldTexture, pos + v1 * eps ) +
+                    v2 * getNormalizedSample( distanceFieldTexture, pos + v2 * eps ) +
+                    v3 * getNormalizedSample( distanceFieldTexture, pos + v3 * eps ) +
+                    v4 * getNormalizedSample( distanceFieldTexture, pos + v4 * eps ) );
 }
 
-
-
-//////////////////////// BEGIN GLSL-RAYTR ACE
-
-vec2 raytrace( vec3 rayOrigin, vec3 rayDir, float maxd, float precis ) {
-  float latest = precis * 2.0;
-  float dist   = +0.0;
-  float type   = -1.0;
-  vec2  res    = vec2( -1.0, -1.0 );
-
-  for ( int i = 0; i < 150 ; i++ ) {
-    if ( latest < precis || dist > maxd ) break;
-
-    vec2 result = doModel( rayOrigin + rayDir * dist );
-
-    latest = result.x;
-    type   = result.y;
-    dist  += latest;
-  }
-
-  if ( dist < maxd ) {
-    res = vec2( dist, type );
-  }
-
-  return res;
-}
-
-vec2 raytrace( vec3 rayOrigin, vec3 rayDir ) {
-  return raytrace( rayOrigin, rayDir, 20.0, 0.001 );
-}
-//////////////////////// END GLSL-RAYTRACE
-
-
-/*void main() {
-  float cameraAngle  = 0.0;//iGlobalTime;
-  vec3  rayOrigin    = vec3( 3.5 * sin( cameraAngle ), 3.0, 3.5 * cos( cameraAngle ) );
-  vec3  rayTarget    = vec3( 0.0, 0.0, 0.0 );
-  vec2  screenPos    = square( iResolution );
-  vec3  rayDirection = camera( rayOrigin, rayTarget, screenPos, 2.0 );
-
-  vec3 col = vec3( 0.015 );
-  vec2 t   = raytrace( rayOrigin, rayDirection );
-
-  if ( t.x > -0.5 ) {
-    vec3 pos = rayOrigin + t.x * rayDirection;
-    vec3 nor = calcNormal( pos );
-    vec3 mal = doMaterial( pos, nor );
-
-    col = doLighting( pos, nor, rayDirection, t.x, mal );
-  }
-
-  col = pow( clamp( col, 0.0, 1.0 ), vec3( 0.4545 ) );
-
-  gl_FragColor = vec4( col, 1.0 );
-}*/
-
-
-void main() {
-    float steps = 100.0;
-    float alphaCorrection = 0.1;
+vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
+    float alphaCorrection = 0.2;
     vec4 accumulatedColor = vec4( 0.0 );
     float accumulatedAlpha = 0.0;
     float accumulatedLength = 0.0;
 
-    vec3 rayStart = textureCoordinate;//? * 2.0 - 1.0;
-    vec3 rayEnd = texture2D( backfaceBuffer, gl_FragCoord.xy / vec2( iResolution.x, iResolution.y ) ).xyz;// * 2.0 - 1.0;
-
-    vec3 ray = rayEnd - rayStart;
     float rayLength = length( ray );
 
-    float delta = 1.0 / steps;
-    vec3 deltaDirection = normalize ( ray ) * delta;
+    vec3 deltaDirection = normalize ( ray ) / float( steps );
     float deltaLength = length ( deltaDirection );
+
 
     vec3 position = rayStart;
 
     for ( int i = 0; i < MAX_STEPS; ++i ) {
-        //acc.a = sampleAs3DTexture( position * 0.5 + 0.5, volumeTexture );
-        vec4 sampleColor = sampleAs3DTexture( position, volumeTexture );
+        vec4 sampleColor = sampleAs3DTexture( volumeTexture, position );
 
+        //sampleColor.xyz = ( sampleColor.xyz ) * 2.0 - 1.0;
+        float sampleValue = sampleColor.x;
+        sampleValue = sampleValue * 2. - 1.; // go back to [ -1, 1 ] range
+
+        //sampleValue = clamp( sampleValue, 0., 1. );
         //todo: determine which value is sampled. currently .x because some data does not have alpha
-        float sampleAlpha = sampleColor.x * alphaCorrection;
+        //float sampleAlpha = sampleColor.x * alphaCorrection;
+        float sampleAlpha = sampleValue * alphaCorrection;
 
-        accumulatedColor += ( 1.0 - accumulatedAlpha ) * sampleColor * sampleAlpha;
+        accumulatedColor += ( 1.0 - accumulatedAlpha ) * vec4( vec3( sampleValue ), 1. ) * sampleAlpha;
 
         accumulatedAlpha += sampleAlpha;
 
@@ -412,12 +264,84 @@ void main() {
             break;
         }
     }
-
-    //vec4 sampleColor = sampleAs3DTexture( rayStart, volumeTexture );
-    //gl_FragColor  = vec4(sampleColor.xyz, 1.0);
-    //gl_FragColor = vec4( texsture2D( backfaceBuffer, gl_FragCoord.xy / vec2( iResolution.x, iResolution.y ) ).xyz, 1.0 );
-    gl_FragColor = vec4(accumulatedColor.xyz, 1.0);
+    return accumulatedColor;
 }
+
+
+vec4 raySurface( vec3 rayStart, vec3 ray, int steps ) {
+
+    float rayLength = length( ray );
+
+    vec3 deltaDirection = normalize ( ray ) / float( steps );
+    float deltaLength = length ( deltaDirection );
+
+
+    float alphaCorrection = 0.2;
+    vec4 accumulatedColor = vec4( 0.0 );
+    float accumulatedAlpha = 0.0;
+    float accumulatedLength = 0.0;
+
+    vec3 position = rayStart;
+
+    for ( int i = 0; i < steps; ++i ) {
+        vec4 sampleColor = sampleAs3DTexture( volumeTexture, position );
+
+        //sampleColor.xyz = ( sampleColor.xyz ) * 2.0 - 1.0;
+        float sampleValue = sampleColor.x;
+        sampleValue = sampleValue * 2. - 1.; // go back to [ -1, 1 ] range
+
+        //sampleValue = clamp( sampleValue, 0., 1. );
+        //todo: determine which value is sampled. currently .x because some data does not have alpha
+        //float sampleAlpha = sampleColor.x * alphaCorrection;
+        float sampleAlpha = sampleValue * alphaCorrection;
+
+        accumulatedColor += ( 1.0 - accumulatedAlpha ) * vec4( vec3( sampleValue ), 1. ) * sampleAlpha;
+
+        accumulatedAlpha += sampleAlpha;
+
+        /*MIP // do not have tf, otherwise sample it
+        src = vec4( acc.aaaa );
+        if ( src.a >= dst.a )
+            dst = src;
+        */
+        position += deltaDirection;
+        accumulatedLength += deltaLength;
+
+        if( accumulatedLength >= rayLength || accumulatedAlpha >= 1.0 ) {
+            break;
+        }
+    }
+    return accumulatedColor;
+}
+
+//////////////////////// BEGIN GLSL-RAYTRACE
+
+
+float raytraceSDF( vec3 rayOrigin, vec3 rayDir, float maxd, float precis ) {
+  float latest = precis * 2.0;
+  float dist = +0.0;
+  float res = -1.0;
+
+  for ( int i = 0; i < MAX_STEPS; i++ ) {
+    if ( latest < precis || dist > maxd ) break;
+
+    vec3 pos = rayOrigin + rayDir * dist;
+
+    latest = getNormalizedSample( distanceFieldTexture, pos );
+    dist  += latest;
+  }
+
+  if ( dist < maxd ) {
+    res = dist;
+  }
+
+  return res;
+}
+
+float raytraceSDF( vec3 rayOrigin, vec3 rayDir ) {
+  return raytraceSDF( rayOrigin, rayDir, 20.0, 0.001 );
+}
+//////////////////////// END GLSL-RAYTRACE
 
 /*
 void main() {
@@ -428,9 +352,9 @@ void main() {
   float height   = 0.0;
   float dist     = 5.0;
 
-  orbitCamera( rotation, height, dist, iResolution.xy, rayOrigin, rayDirection );
+  orbitCamera( rotation, height, dist, resolution.xy, rayOrigin, rayDirection );
 
-  vec2 t = raytrace( rayOrigin, rayDirection, 20.0, 0.01 ); //find first ray intersection
+  vec2 t = raytraceSDF( rayOrigin, rayDirection, 20.0, 0.01 ); //find first ray intersection
   if ( t.x > -0.5 ) {
     vec3 pos = rayOrigin + t.x * rayDirection;
     vec3 nor = calcNormal( pos );
@@ -444,3 +368,37 @@ void main() {
   gl_FragColor.a   = 1.0;
 }
 */
+
+void main() {
+    int steps = MAX_STEPS;
+
+    vec2 texc = vec2( ( ( projectedCoordinate.x / projectedCoordinate.w ) + 1.0 ) / 2.0,
+                       ( ( projectedCoordinate.y / projectedCoordinate.w ) + 1.0 ) / 2.0 );
+
+    vec3 rayStart = texture2D( frontfaceTexture, texc ).xyz;
+    vec3 rayEnd = texture2D( backfaceTexture, texc ).xyz;
+
+    vec3 ray = rayEnd - rayStart;
+    vec3 rayDirection = normalize ( ray );
+
+    vec4 color = vec4( 1. );
+    color = rayAccumulate( rayStart, ray, steps );
+
+
+    /*float t = raytraceSDF( rayStart, rayDirection ); //find first ray intersection
+    if ( t > -0.5 ) {
+        vec3 pos = rayStart + t * rayDirection;
+        vec3 nor = calcNormal( pos );
+        vec3 mal = doMaterial( pos, nor );
+
+        //color.xyz = doLighting( pos, nor, rayDirection, t, mal );
+        color.xyz = vec3( t );
+        //color.xyz = nor * 0.5 + 0.5;
+    }*/
+
+
+    //vec4 sampleColor = sampleAs3DTexture( volumeTexture, rayStart );
+    //gl_FragColor  = vec4(sampleColor.xyz, 1.0);
+    //gl_FragColor = vec4( texture2D( frontfaceTexture, gl_FragCoord.xy / vec2( resolution.x, resolution.y ) ).xyz, 1.0 );
+    gl_FragColor = vec4( color.xyz, 1.0 );
+}

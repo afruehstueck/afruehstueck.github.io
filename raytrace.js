@@ -16,6 +16,10 @@ var renderCanvas = document.querySelector( '#renderCanvas' );
 // OpenGL context
 var gl = renderCanvas.getContext( 'webgl' );
 
+var stats = new Stats();
+stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+document.body.appendChild( stats.dom );
+
 //WebGL debug context
 //var gl = WebGLDebugUtils.makeDebugContext( renderCanvas.getContext( 'webgl' ) );
 
@@ -30,18 +34,18 @@ gl.getExtension( 'OES_texture_float' );
 gl.getExtension( 'OES_texture_float_linear' );
 
 var start = Date.now();
-var width = 256,
-    height = 256,
-    slices_x = 16,
-    slices_y = 16;
+var width = 128,
+    height = 128,
+    slices = { x: 16, y: 16 };
 
 var frameBuffers,
+    frontfaceFrameBuffer,
     backfaceFrameBuffer,
     sourceVolume;
 var seedOrigin;
 var seedRadius;
 
-var programs = [];
+var programs = {};
 
 var position2DBuffer,
     texCoord2DBuffer,
@@ -55,7 +59,7 @@ window.update = ( function() {
         window.mozRequestAnimationFrame ||
         window.oRequestAnimationFrame ||
         window.msRequestAnimationFrame ||
-        function(/* function FrameRequestCallback */ callback, /* DOMElement Element */ element) {
+        function( callback ) {
             window.setTimeout( callback, 1000 / 25 );
         };
 } )();
@@ -73,6 +77,11 @@ function resizeCanvas() {
     renderCanvas.style.position = renderCanvas.style.position || 'absolute';
 
     backfaceFrameBuffer = createFBO( gl, [ canvas_width, canvas_height ] );
+    frontfaceFrameBuffer = createFBO( gl, [ canvas_width, canvas_height ] );
+
+    if( camera ) {
+        camera.setAspectRatio( renderCanvas.width, renderCanvas.height );
+    }
 
     render();
 }
@@ -80,12 +89,21 @@ function resizeCanvas() {
 //adjust canvas dimensions and re-render on resize
 window.addEventListener( 'resize', resizeCanvas, false );
 
-///////////////////////////////// MOUSE EVENTS
-var mouseDown = false;
+////////////////////////////////////////////////////////////////////////////////
+// MOUSE EVENTS
+////////////////////////////////////////////////////////////////////////////////
+
+var leftMouseDown = false;
+var rightMouseDown = false;
 renderCanvas.onmousedown = onMouseDownEvent;
 document.onmouseup 		= onMouseUpEvent;
 document.onmousemove 	= onMouseMoveEvent;
+//suppress context menu on right-click
+document.oncontextmenu  = function( event ) {
+    return false;
+};
 
+var prevMousePos;
 
 // converts global mouse coordinates to canvas-specific coordinates
 function getMousePos( elem, event ) {
@@ -96,31 +114,55 @@ function getMousePos( elem, event ) {
     };
 }
 
+function getNormalizedMousePos( elem, event ) {
+    var mouseCoords = getMousePos( elem, event );
+    return [ mouseCoords.x / elem.width - 0.5, mouseCoords.y / elem.height - 0.5 ];
+}
+
 function onMouseDownEvent( event ) {
-    mouseDown = true;
-    var mouseCoords = getMousePos( renderCanvas, event );
-    camera.start( mouseCoords.x, mouseCoords.y );
+    if ( event.button == 0 )
+        leftMouseDown = true;
+    else if ( event.button == 2 )
+        rightMouseDown = true;
+
+    prevMousePos = getNormalizedMousePos( renderCanvas, event );
 }
 
 function onMouseUpEvent( event ) {
-    mouseDown = false;
-    camera.bRotate = false;
+    event.preventDefault();
+    leftMouseDown = false;
+    rightMouseDown = false;
 }
 
 function onMouseMoveEvent( event ) {
-    if( !mouseDown ) return;
+    if( ! ( leftMouseDown  || rightMouseDown ) ) return;
 
-    camera.bRotate = true;
-    var mouseCoords = getMousePos( renderCanvas, event );
-    camera.update( mouseCoords.x, mouseCoords.y );
+    var mousePos = getNormalizedMousePos( renderCanvas, event );
+
+    //only rerender if mouseposition has changed from previous
+    if( Math.abs( mousePos[ 0 ] - prevMousePos[ 0 ] ) < 1e-6
+     && Math.abs( mousePos[ 1 ] - prevMousePos[ 1 ] ) < 1e-6 ) return;
+
+    if( leftMouseDown ) {
+        camera.rotate( mousePos, prevMousePos );
+    } else if( rightMouseDown ) {
+        camera.pan( [ mousePos.x - prevMousePos.x , mousePos.y - prevMousePos.y ] );
+    }
+    prevMousePos = mousePos;
+    camera.update();
+    render();
 }
-///////////////////////////////// CAMERA
+////////////////////////////////////////////////////////////////////////////////
+// CAMERA SETUP
+////////////////////////////////////////////////////////////////////////////////
+
 var camera;
 
 function initCamera() {
-    camera = new Camera();
-    camera.width = renderCanvas.width;
-    camera.height = renderCanvas.height;
+    camera = createCamera(  [ 0, 0, -4 ], /* eye vector */
+                            [ 0, 0, 0 ], /* target */
+                            [ 0, 1, 0 ] ); /* up vector */
+    camera.setAspectRatio( renderCanvas.width, renderCanvas.height );
     camera.update();
 }
 
@@ -184,7 +226,7 @@ var setupShaders = function ( fragmentShaderPath, vertexShaderPath ) {
 };
 
 /* 
-   request shaders using XMLHttpRequest
+   request shaders using asynchronous (or synchronous, but deprecated) XMLHttpRequest
    based on (c) WebReflection http://webreflection.blogspot.com/2010/09/fragment-and-vertex-shaders-my-way-to.html
    released under MIT License
 */
@@ -218,10 +260,13 @@ function loadShaders( shaders, callback ) {
 var getRaytraceUniforms = function ( program ) {
     program.position = gl.getAttribLocation( program, 'position' );
     program.texCoord = gl.getAttribLocation( program, 'texCoord' );
-    program.iResolution = gl.getUniformLocation( program, 'iResolution' );
+    program.resolution = gl.getUniformLocation( program, 'resolution' );
+    program.volumeDimensions = gl.getUniformLocation( program, 'volumeDimensions' );
+    program.seedOrigin = gl.getUniformLocation( program, 'seedOrigin' );
     program.iGlobalTime = gl.getUniformLocation( program, 'iGlobalTime' );
-    program.sdfBuffer = gl.getUniformLocation( program, 'sdfBuffer' );
-    program.backfaceBuffer = gl.getUniformLocation( program, 'backfaceBuffer' );
+    program.distanceFieldTexture = gl.getUniformLocation( program, 'distanceFieldTexture' );
+    program.backfaceTexture = gl.getUniformLocation( program, 'backfaceTexture' );
+    program.frontfaceTexture = gl.getUniformLocation( program, 'frontfaceTexture' );
     program.volumeTexture = gl.getUniformLocation( program, 'volumeTexture' );
     program.projectionMatrix = gl.getUniformLocation( program, 'projectionMatrix' );
     program.modelViewMatrix = gl.getUniformLocation( program, 'modelViewMatrix' );
@@ -241,12 +286,12 @@ var getBackfacesUniforms = function ( program ) {
 };
 
 //TODO: parse uniforms from shader? create shader and add uniforms to shader string?
+//parsing uniforms from shader code shouldn't be too hard actually
 var getFillUniforms = function ( program ) {
     gl.useProgram( program );
     program.position = gl.getAttribLocation( program, 'position' );
     program.texCoord = gl.getAttribLocation( program, 'texCoord' );
-    program.volumeDimensions = gl.getUniformLocation( program, 'volumeDimensions' );
-    program.sliceLayout = gl.getUniformLocation( program, 'sliceLayout' );
+    program.tiles = gl.getUniformLocation( program, 'tiles' );
     program.seedOrigin = gl.getUniformLocation( program, 'seedOrigin' );
     program.seedRadius = gl.getUniformLocation( program, 'seedRadius' );
 
@@ -254,6 +299,17 @@ var getFillUniforms = function ( program ) {
     gl.enableVertexAttribArray( program.texCoord );
 };
 
+var getUpdateUniforms = function ( program ) {
+    gl.useProgram( program );
+    program.position = gl.getAttribLocation( program, 'position' );
+    program.texCoord = gl.getAttribLocation( program, 'texCoord' );
+    program.tiles = gl.getUniformLocation( program, 'tiles' );
+    program.sourceTexelSize = gl.getUniformLocation( program, 'sourceTexelSize' );
+    program.volumeDimensions = gl.getUniformLocation( program, 'volumeDimensions' );
+    program.seedOrigin = gl.getUniformLocation( program, 'seedOrigin' );
+    program.distanceFieldTexture = gl.getUniformLocation( program, 'distanceFieldTexture' );
+    program.volumeTexture = gl.getUniformLocation( program, 'volumeTexture' );
+}
 
 var getDebugUniforms = function ( program ) {
     program.position = gl.getAttribLocation( program, 'position' );
@@ -297,51 +353,39 @@ function create2DBuffers() {
     position2DBuffer = gl.createBuffer();
     var positionVertices =  // GL_TRIANGLE_STRIP
         [ -1., -1., 0.,     // bottom left corner
-            1., -1., 0.,     // bottom right corner
-            -1.,  1., 0.,     // top left corner
-            1.,  1., 0. ];   // top right corner
-    /*
-     [ //GL_TRIANGLES
-     -1.0, -1.0,
-     1.0, -1.0,
-     -1.0,  1.0,
-     -1.0,  1.0,
-     1.0, -1.0,
-     1.0,  1.0 ]
-     */
+           1., -1., 0.,     // bottom right corner
+          -1.,  1., 0.,     // top left corner
+           1.,  1., 0. ];   // top right corner
+     var positionVerticesTriangle = //GL_TRIANGLES
+        [ -1., -1.,
+           1., -1.,
+          -1.,  1.,
+          -1.,  1.,
+           1., -1.,
+           1.,  1. ];
     gl.bindBuffer( gl.ARRAY_BUFFER, position2DBuffer );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( positionVertices ), gl.STATIC_DRAW );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( positionVerticesTriangle ), gl.STATIC_DRAW );
 
     texCoord2DBuffer = gl.createBuffer();
     var textureCoords =  // GL_TRIANGLE_STRIP
-        [ 0.0, 0.0,
-            1.0, 0.0,
-            0.0, 1.0,
-            1.0, 1.0 ];
-    /*
-     [ //GL_TRIANGLES
-     0.0,  0.0,
-     1.0,  0.0,
-     0.0,  1.0,
-     0.0,  1.0,
-     1.0,  0.0,
-     1.0,  1.0 ]
-     */
+        [ 0., 0.,
+          1., 0.,
+          0., 1.,
+          1., 1. ];
+     var textureCoordsTriangle = //GL_TRIANGLES
+        [ 0., 0.,
+          1., 0.,
+          0., 1.,
+          0., 1.,
+          1., 0.,
+          1., 1. ];
     gl.bindBuffer( gl.ARRAY_BUFFER, texCoord2DBuffer );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( textureCoords ), gl.STATIC_DRAW );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( textureCoordsTriangle ), gl.STATIC_DRAW );
 }
 
 function create3DBuffers() {
     position3DBuffer = gl.createBuffer();
-    /*var v0 = [  1,  1,  1 ],
-        v1 = [ -1,  1,  1 ],
-        v2 = [ -1, -1,  1 ],
-        v3 = [  1, -1,  1 ],
-        v4 = [  1, -1, -1 ],
-        v5 = [  1,  1, -1 ],
-        v6 = [ -1,  1, -1 ],
-        v7 = [ -1, -1, -1 ];
-    */
+
     var v0 = [ -1, -1, -1 ], t0 = [ 0, 0, 0 ],
         v1 = [ -1, -1,  1 ], t1 = [ 0, 0, 1 ],
         v2 = [ -1,  1,  1 ], t2 = [ 0, 1, 1 ],
@@ -365,28 +409,8 @@ function create3DBuffers() {
     positionVertices = positionVertices.concat( v7, v4, v2 ); //top
     positionVertices = positionVertices.concat( v7, v2, v5 ); //front
 
-    var dX = 1.0;
-    var dY = 1.0;
-    var dZ = 1.0;
-
-    var cubeVerticesArray = [
-        -dX,-dY,-dZ,	-dX,-dY, dZ,	-dX, dY, dZ,	//1		- left
-        dX, dY,-dZ,	-dX,-dY,-dZ,	-dX, dY,-dZ,	//2		- back
-        dX,-dY, dZ,	-dX,-dY,-dZ,	 dX,-dY,-dZ,	//3		- bottom
-        dX, dY,-dZ,	 dX,-dY,-dZ,	-dX,-dY,-dZ,	//4		- back
-        -dX,-dY,-dZ,	-dX, dY, dZ,	-dX, dY,-dZ,	//5		- left
-        dX,-dY, dZ,	-dX,-dY, dZ,	-dX,-dY,-dZ,	//6		- bottom
-        -dX, dY, dZ,	-dX,-dY, dZ,	 dX,-dY, dZ,	//7		- front
-        dX, dY, dZ,	 dX,-dY,-dZ,	 dX, dY,-dZ,	//8		- right
-        dX,-dY,-dZ,	 dX, dY, dZ,	 dX,-dY, dZ,	//9		- right
-        dX, dY, dZ,	 dX, dY,-dZ,	-dX, dY,-dZ,	//10	- top
-        dX, dY, dZ,	-dX, dY,-dZ,	-dX, dY, dZ,	//11	- top
-        dX, dY, dZ,	-dX, dY, dZ,	dX,-dY, dZ,	];	//12	- front
-
-
-
     gl.bindBuffer( gl.ARRAY_BUFFER, position3DBuffer );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( cubeVerticesArray ), gl.STATIC_DRAW );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( positionVertices ), gl.STATIC_DRAW );
 
     texCoord3DBuffer = gl.createBuffer();
     var textureCoords = [];
@@ -407,6 +431,37 @@ function create3DBuffers() {
     gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( textureCoords ), gl.STATIC_DRAW );
 }
 
+//Render a 3D box
+function renderCube( program ) {
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+    gl.bindBuffer( gl.ARRAY_BUFFER, position3DBuffer );
+    gl.vertexAttribPointer( program.position, 3, gl.FLOAT, false, 0, 0 );
+
+    gl.bindBuffer( gl.ARRAY_BUFFER, texCoord3DBuffer );
+    gl.vertexAttribPointer( program.texCoord, 3, gl.FLOAT, false, 0, 0 );
+
+    gl.drawArrays( gl.TRIANGLES, 0, 36 );
+
+    gl.bindBuffer( gl.ARRAY_BUFFER, null );
+}
+
+//Render a 2D quad
+function renderQuad( program ) {
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+    gl.bindBuffer( gl.ARRAY_BUFFER, position2DBuffer );
+    gl.vertexAttribPointer( program.position, 2, gl.FLOAT, false, 0, 0 );
+
+    gl.bindBuffer( gl.ARRAY_BUFFER, texCoord2DBuffer );
+    gl.vertexAttribPointer( program.texCoord, 2, gl.FLOAT, false, 0, 0 );
+
+    //gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
+    gl.drawArrays( gl.TRIANGLES, 0, 6 );
+
+    gl.bindBuffer( gl.ARRAY_BUFFER, null );
+}
+
 init();
 
 function init() {
@@ -417,12 +472,11 @@ function init() {
     var volume_async_load = jQuery.Deferred();
 
     var sourceImage = new Image();
-    sourceImage.onload = function() {
+    sourceImage.onload = function () {
         sourceVolume = createTexture( gl, sourceImage );
 
-        var sourceWidth = sourceImage.width; // should equal width * slices_x
-        var sourceHeight = sourceImage.height; // should equal height * slices_y
-
+        var sourceWidth = sourceImage.width; // should equal width * slices.x
+        var sourceHeight = sourceImage.height; // should equal height * slices.y
 
         //create two fbos to alternately draw to them during iterations
         frameBuffers = [ createFBO( gl, [ sourceWidth, sourceHeight ] ),
@@ -430,124 +484,170 @@ function init() {
 
         volume_async_load.resolve();
     };
-    sourceImage.src = 'res/bonsai256x256x256.png';
+    sourceImage.src = 'res/bonsai128x128x256.png';
+    //sourceImage.src = 'res/bonsai256x256x256.png';
     //sourceImage.src = 'res/heart128x128x256.png';
     //sourceImage.src = 'res/teapot256x256x256.png';
 
-    seedOrigin = [ 0.5, 0.75, 0.25 ];
-    seedRadius = 0.3;
+    seedOrigin = [ 0.5, 0.5, 0.5 ];
+    seedRadius = 0.2;
 
-    create2DBuffers();
     create3DBuffers();
+    create2DBuffers();
 
-    var fill_async_load = setupShaders( 'shaders/initialize_sdf.frag', 'shaders/basic.vert' );
-    var debug_async_load = setupShaders( 'shaders/debug_texture.frag', 'shaders/basic.vert' );
-    var backfaces_async_load = setupShaders( 'shaders/backfaces.frag', 'shaders/backfaces.vert' );
-    var raytrace_async_load = setupShaders( 'shaders/raytrace.frag', 'shaders/raytrace.vert' );
+    var fillsdf_async_load = setupShaders( 'shaders/initialize_sdf.frag', 'shaders/quad.vert' );
+    var updatesdf_async_load = setupShaders( 'shaders/update_sdf.frag', 'shaders/quad.vert' );
+    var debug_async_load = setupShaders( 'shaders/debug_texture.frag', 'shaders/quad.vert' );
+    var backfaces_async_load = setupShaders( 'shaders/backfaces.frag', 'shaders/projected_box.vert' );
+    var raytrace_async_load = setupShaders( 'shaders/raytrace.frag', 'shaders/projected_box.vert' );
 
-    $.when( fill_async_load,
-            debug_async_load,
-            backfaces_async_load,
-            raytrace_async_load,
-            volume_async_load ).done(
+    //todo: make execution of deferred and their resolve objects cleaner
+    $.when( fillsdf_async_load,
+        debug_async_load,
+        backfaces_async_load,
+        raytrace_async_load,
+        updatesdf_async_load,
+        volume_async_load ).done(
         function ( program_fill,
                    program_debug,
                    program_backfaces,
-                   program_raytrace ) {
-        getFillUniforms( program_fill );
-        program_fill.render = initializeSDF;
-        programs.push( program_fill );
+                   program_raytrace,
+                   program_update ) {
+            getFillUniforms( program_fill );
+            program_fill.render = initializeDistanceField;
+            programs[ 'fill' ] = program_fill;
 
-        getDebugUniforms( program_debug );
-        program_debug.render = renderToDebugTexture;
-        programs.push( program_debug );
+            getDebugUniforms( program_debug );
+            program_debug.render = renderTextureToViewport;
+            programs[ 'debug' ] = program_debug;
 
-        getBackfacesUniforms( program_backfaces );
-        program_backfaces.render = renderBackfaces;
-        programs.push( program_backfaces );
+            getBackfacesUniforms( program_backfaces );
+            program_backfaces.render = renderFaces;
+            programs[ 'backfaces' ] = program_backfaces;
 
-        getRaytraceUniforms( program_raytrace );
-        program_raytrace.render = renderRaytrace;
-        programs.push( program_raytrace );
+            getRaytraceUniforms( program_raytrace );
+            program_raytrace.render = renderRaytrace;
+            programs[ 'raytrace' ] = program_raytrace;
 
-        render();
-    } );
+            getUpdateUniforms( program_update );
+            program_update.render = updateDistanceField;
+            programs[ 'update' ] = program_update;
+
+            gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+
+            renderOnce();
+            render();
+
+            /*(function iterate( i ) {
+                setTimeout( function () {
+                    render();
+                    if ( --i ) {          // If i > 0, keep going
+                        iterate( i );// Call the loop again, and pass it the current value of i
+                    }
+                }, 50 );
+            })( 100 );*/
+
+            /*(function loop() {
+                window.update( loop );
+                render();
+            })();*/
+        } );
 }
 
+function renderOnce() {
+    if( $.isEmptyObject( programs ) ) return;
+    //if( programs === undefined || programs.length == 0 ) return;
+    var program_fill = programs[ 'fill' ];
+
+    //initialize the SDF - render initial SDF to FBO
+    program_fill.render( frameBuffers[ 0 ], seedOrigin, seedRadius );
+}
+
+var backfacing = true;
+var iteration = 0;
+var MAX_ITERATION = 200;
 
 function render() {
-    if( programs === undefined || programs.length == 0 ) return;
+    //stats.begin();
+    if( $.isEmptyObject( programs ) ) return;
+    //if( programs === undefined || programs.length == 0 ) return;
 
-    var program_fill = programs[ 0 ];
-    var program_debug = programs[ 1 ];
-    var program_backfaces = programs[ 2 ];
-    var program_raytrace = programs[ 3 ];
-
-    //render to FBO
-    program_fill.render( frameBuffers[ 0 ], seedOrigin, seedRadius );
-
+    var program_debug = programs[ 'debug' ];
+    var program_backfaces = programs[ 'backfaces' ];
+    var program_raytrace = programs[ 'raytrace' ];
+    var program_update = programs[ 'update' ];
+    
     //render a texture to fullscreen (for debug purposes)
-    //program_debug.render( frameBuffers[ 0 ].texture );
 
-    program_backfaces.render( backfaceFrameBuffer );
-    program_raytrace.render( sourceVolume, frameBuffers[ 0 ].texture, backfaceFrameBuffer.texture );
+    //program_debug.render( frameBuffers[ iteration % 2 ].texture );
+    program_update.render( sourceVolume, frameBuffers[ iteration % 2 ], frameBuffers[ ( iteration + 1 ) % 2 ] );
+    //program_update.render( sourceVolume, frameBuffers[ 0 ], frameBuffers[ 1 ] );
+    program_backfaces.render( frontfaceFrameBuffer, !backfacing );
+    program_backfaces.render( backfaceFrameBuffer, backfacing );
 
-    window.update( render );
+    program_raytrace.render( frameBuffers[ ( iteration + 1 ) % 2 ].texture, frameBuffers[ 0 ].texture, frontfaceFrameBuffer.texture, backfaceFrameBuffer.texture );
+    //program_raytrace.render( frameBuffers[ 0 ].texture, frameBuffers[ 0 ].texture, frontfaceFrameBuffer.texture, backfaceFrameBuffer.texture );
+
+    if( iteration < MAX_ITERATION ) iteration++;
+
+    //program_debug.render( backfaceFrameBuffer.texture );
+    //stats.end();
+    //window.update( render );
+    /*if( iteration++ < MAX_ITERATION ) {
+        render();
+    }*/
 }
 
-
-function renderBox( program ) {
-
-    gl.bindBuffer( gl.ARRAY_BUFFER, position3DBuffer );
-    gl.vertexAttribPointer( program.position, 3, gl.FLOAT, false, 0, 0 );
-
-
-    gl.bindBuffer( gl.ARRAY_BUFFER, texCoord3DBuffer );
-    gl.vertexAttribPointer( program.texCoord, 3, gl.FLOAT, false, 0, 0 );
-
-    gl.drawArrays( gl.TRIANGLES, 0, 36 );
-
-    gl.bindBuffer( gl.ARRAY_BUFFER, null );
-}
-
-
-function renderQuad( program ) {
-    gl.bindBuffer( gl.ARRAY_BUFFER, position2DBuffer );
-    gl.vertexAttribPointer( program.position, 3, gl.FLOAT, false, 0, 0 );
-
-    gl.bindBuffer( gl.ARRAY_BUFFER, texCoord2DBuffer );
-    gl.vertexAttribPointer( program.texCoord, 2, gl.FLOAT, false, 0, 0 );
-
-    gl.drawArrays( gl.TRIANGLE_STRIP, 0, 4 );
-
-    gl.bindBuffer( gl.ARRAY_BUFFER, null );
-}
-
-function initializeSDF ( frameBuffer, seedOrigin, seedRadius ) {
+function initializeDistanceField ( frameBuffer, seedOrigin, seedRadius ) {
     var program = this;
     gl.viewport( 0, 0, frameBuffer.width, frameBuffer.height );
-    gl.clearColor( 1.0, 0.5, 0.2, 1.0 );
-    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-
-    //TODO don't do this every render pass
     gl.useProgram( program );
 
-    gl.uniform2f( program.sliceLayout, slices_x, slices_y );
-    gl.uniform2f( program.volumeDimensions, width, height );
+    gl.uniform2f( program.tiles, slices.x, slices.y );
     gl.uniform3f( program.seedOrigin, seedOrigin[ 0 ], seedOrigin[ 1 ], seedOrigin[ 2 ] );
     gl.uniform1f( program.seedRadius, seedRadius );
 
     gl.bindFramebuffer( gl.FRAMEBUFFER, frameBuffer.buffer );
 
+    //gl.clearColor( 1.0, 0.5, 0.2, 1.0 ); //orange for debugging!
+
     renderQuad( program );
-    //gl.drawArrays( gl.TRIANGLES, 0, 6 );
+
     gl.bindFramebuffer( gl.FRAMEBUFFER, null );
 }
 
-function renderToDebugTexture( texture ) {
+function updateDistanceField( volumeTexture, sourceFrameBuffer, targetFrameBuffer ) {
     var program = this;
+    gl.viewport( 0, 0, sourceFrameBuffer.width, sourceFrameBuffer.height );
     gl.useProgram( program );
+
+    gl.activeTexture( gl.TEXTURE0 );
+    gl.bindTexture( gl.TEXTURE_2D, volumeTexture );
+    gl.uniform1i( program.volumeTexture, 0 );
+
+    gl.activeTexture( gl.TEXTURE1 );
+    gl.bindTexture( gl.TEXTURE_2D, sourceFrameBuffer.texture ); //fbo texture to read from
+    gl.uniform1i( program.distanceFieldTexture, 1 );
+
+    //TODO don't do this every render pass
+    gl.uniform2f( program.tiles, slices.x, slices.y );
+    gl.uniform2f( program.sourceTexelSize, 1. / width, 1. / height );
+    gl.uniform3f( program.seedOrigin, seedOrigin[ 0 ], seedOrigin[ 1 ], seedOrigin[ 2 ] );
+    gl.uniform3f( program.volumeDimensions, width, height, slices.x * slices.y );
+
+    gl.bindFramebuffer( gl.FRAMEBUFFER, targetFrameBuffer.buffer ); //fbo texture to write to
+
+    renderQuad( program );
+
+    gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+}
+
+function renderTextureToViewport( texture ) {
+    var program = this;
+
     gl.viewport( 0, 0, renderCanvas.width, renderCanvas.height );
+
+    gl.useProgram( program );
 
     gl.activeTexture( gl.TEXTURE0 );
     gl.bindTexture( gl.TEXTURE_2D, texture );
@@ -558,58 +658,63 @@ function renderToDebugTexture( texture ) {
     gl.bindTexture( gl.TEXTURE_2D, null );
 }
 
-function renderBackfaces( frameBuffer ) {
+function renderFaces( frameBuffer, backfacing ) {
     var program = this;
-    
+
     gl.enable( gl.CULL_FACE );
     gl.enable( gl.DEPTH_TEST );
-    gl.cullFace( gl.FRONT );
+    if( backfacing ) {
+        gl.cullFace( gl.FRONT );
+    } else {
+        gl.cullFace( gl.BACK );
+    }
+    gl.bindFramebuffer( gl.FRAMEBUFFER, frameBuffer.buffer ); //render to framebuffer, not screen
 
     gl.viewport( 0, 0, renderCanvas.width, renderCanvas.height );
-    gl.clearColor( 0.2, 0.2, 0.2, 0.0 );
-    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
     gl.useProgram( program );
 
     gl.uniformMatrix4fv( program.projectionMatrix, false, camera.projectionMatrix );
     gl.uniformMatrix4fv( program.modelViewMatrix, false, camera.modelViewMatrix );
 
-    gl.bindFramebuffer( gl.FRAMEBUFFER, frameBuffer.buffer );
-
-    renderBox( program );
+    renderCube( program );
 
     gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+
+    gl.disable( gl.CULL_FACE );
+    gl.disable( gl.DEPTH_TEST );
 }
 
-function renderRaytrace( volumeTexture, sdfTexture, backfaceTexture ) {
+function renderRaytrace( volumeTexture, distanceFieldTexture, frontfaceTexture, backfaceTexture ) {
     var program = this;
     gl.viewport( 0, 0, renderCanvas.width, renderCanvas.height );
 
-    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
-    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT  );
-
     gl.useProgram( program );
+
     gl.activeTexture( gl.TEXTURE0 );
-    gl.bindTexture( gl.TEXTURE_2D, sdfTexture );
-    gl.uniform1i( program.sdfBuffer, 0 );
+    gl.bindTexture( gl.TEXTURE_2D, backfaceTexture );
+    gl.uniform1i( program.backfaceTexture, 0 );
 
     gl.activeTexture( gl.TEXTURE1 );
-    gl.bindTexture( gl.TEXTURE_2D, backfaceTexture );
-    gl.uniform1i( program.backfaceBuffer, 1 );
+    gl.bindTexture( gl.TEXTURE_2D, frontfaceTexture );
+    gl.uniform1i( program.frontfaceTexture, 1 );
 
     gl.activeTexture( gl.TEXTURE2 );
     gl.bindTexture( gl.TEXTURE_2D, volumeTexture );
     gl.uniform1i( program.volumeTexture, 2 );
 
+    gl.activeTexture( gl.TEXTURE3 );
+    gl.bindTexture( gl.TEXTURE_2D, distanceFieldTexture );
+    gl.uniform1i( program.distanceFieldTexture, 3 );
+
+    //todo: don't unnecessarily update uniforms every time
     gl.uniform1f( program.iGlobalTime, ( Date.now() - start ) / 1000.0 );
-    gl.uniform2f( program.iResolution, renderCanvas.width, renderCanvas.height );
+    gl.uniform2f( program.resolution, renderCanvas.width, renderCanvas.height );
+    gl.uniform3f( program.volumeDimensions, width, height, slices.x * slices.y );
+    gl.uniform3f( program.seedOrigin, seedOrigin[ 0 ], seedOrigin[ 1 ], seedOrigin[ 2 ] );
 
     gl.uniformMatrix4fv( program.projectionMatrix, false, camera.projectionMatrix );
     gl.uniformMatrix4fv( program.modelViewMatrix, false, camera.modelViewMatrix );
 
-
-    //gl.enable( gl.BLEND );
-    gl.cullFace( gl.BACK );
-
-    //renderQuad( program )
-    renderBox( program );
+    renderCube( program );
 }

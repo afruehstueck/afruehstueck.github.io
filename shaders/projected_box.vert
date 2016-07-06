@@ -8,9 +8,12 @@ uniform mat4 projectionMatrix;
 
 varying vec3 worldSpaceCoordinate;
 varying vec3 textureCoordinate;
+varying vec4 projectedCoordinate;
 
 void main( void ) {
-	worldSpaceCoordinate = position + vec3( 0.5 );
+	worldSpaceCoordinate = position;// + vec3( 0.5 );
     textureCoordinate = texCoord;
-	gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+
+    projectedCoordinate = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+	gl_Position = projectedCoordinate;
 }

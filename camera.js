@@ -1,69 +1,94 @@
-function Camera() {
-    this.rotate = [ 0.0, 0.0, 0.0, 1.0 ];		// rotation quat
-    this.translate = [ 0.0, 0.0, -7.0 ];		// translation vector
-    this.zoom = 0.0;
+'use strict';
 
-    this.zNear = 0.5;
-    this.zFar = 100.0;
-    this.panSpeed = 20.0;
-    this.zoomSpeed = 1.0;
+//Arcball camera
+//based on orbit-camera by mikolalysenko
+//https://github.com/mikolalysenko/orbit-camera
+//uses gl-matrix 2.2
 
-    // flags
-    this.bRotate = false;
-    this.bTranslate = false;
-    this.bPan = false;
+function Camera( rotation, center, distance ) {
+    this.rotation = rotation;
+    this.center   = center;
+    this.distance = distance;
 
-    this.vLast = [ 0.0, 0.0, 0.0 ];
-    this.vCurr = [ 0.0, 0.0, 0.0 ];
-
-    // arcball params
-    this.width	  = 0.0;
-    this.height   = 0.0;
-    this.radius   = 1.0;
-    // matrices
-    this.projectionMatrix = mat4.create();
+    this.modelMatrix = mat4.create();
+    this.viewMatrix = mat4.create();
     this.modelViewMatrix = mat4.create();
+    this.projectionMatrix = mat4.create();
 }
 
-Camera.prototype.start = function( x, y ) {
-    this.vLast = this.screenToVector( x, y );
+function createCamera( eye, target, up ) {
+    eye     = eye     || [ 0, 0, -1 ];
+    target  = target  || [ 0, 0,  0 ];
+    up      = up      || [ 0, 1,  0 ];
+    var camera = new Camera( quat.create(), vec3.create(), 1.0 );
+    camera.lookAt( eye, target, up );
+    return camera;
+}
+
+Camera.prototype.setAspectRatio = function( width, height ) {
+    mat4.perspective( this.projectionMatrix, Math.PI / 4.0, width / height, 0.1, 100.0);
 };
 
-// flags: zoom, rotate, pan
-// to do: add zoom, pan
-Camera.prototype.update = function( x, y ) {
-    if ( this.bRotate ) {
-        // compute quaternion representing rotation from vLast to vCurr
-        var u = vec3.normalize( this.vLast );
-        this.vCurr = this.screenToVector( x, y );
-        var v = vec3.normalize( this.vCurr );
+Camera.prototype.update = function() {
+    var conjugate = mat4.create();
+    quat.conjugate( conjugate, this.rotation );
+    var translation = vec3.fromValues( 0.0, 0.0, -this.distance );
 
-        var w = vec3.cross( u, v, w );
-        var a = 1 + vec3.dot( u, v );
+    var fromRotationTranslation = mat4.create();
+    mat4.fromRotationTranslation( fromRotationTranslation, conjugate, translation );
+    mat4.translate( this.viewMatrix, fromRotationTranslation, vec3.negate( vec3.create(), this.center ) );
+    mat4.multiply( this.modelViewMatrix, this.modelMatrix, this.viewMatrix );
+};
 
-        var quatUpdate = [ w[ 0 ], w[ 1 ], w[ 2 ], a ];
-        this.rotate = quat4.normalize( quat4.multiply( quatUpdate, this.rotate, this.rotate ) );
+Camera.prototype.lookAt = function( eye, center, up ) {
+    var result = mat4.create();
+    mat4.lookAt( result, eye, center, up );
+    mat3.fromMat4( result, result );
+    quat.fromMat3( this.rotation, result );
+    vec3.copy( this.center, center );
+    this.distance = vec3.distance( eye, center );
+};
+
+Camera.prototype.pan = function( dpan ) {
+    var d = this.distance;
+    var transform = vec3.fromValues( -d * (dpan[ 0 ] || 0 ),
+        d * (dpan[ 1 ] || 0 ),
+        d * (dpan[ 2 ] || 0 ) );
+    vec3.transformQuat( transform, transform, this.rotation );
+    vec3.add( this.center, this.center, transform );
+};
+
+Camera.prototype.zoom = function( d ) {
+    this.distance += d;
+    if( this.distance < 0.0 ) {
+        this.distance = 0.0;
     }
-    mat4.perspective( 30, this.width / this.height, 0.1, 100.0, this.projectionMatrix );
-    mat4.identity( this.modelViewMatrix );
-    mat4.translate( this.modelViewMatrix, this.translate );
-    mat4.multiply( this.modelViewMatrix, mat4.inverse( quat4.toMat4( this.rotate) ) );
-
-    this.vLast = this.vCurr;
 };
 
-Camera.prototype.screenToVector = function( x, y ) {
-    var result 	= [];
+function quatFromVec( out, vec ) {
+    var x = vec[ 0 ];
+    var y = vec[ 1 ];
+    var z = vec[ 2 ];
+    var s = x * x + y * y;
+    if(s > 1.0) {
+        s = 1.0
+    }
+    out[ 0 ] = -vec[ 0 ];
+    out[ 1 ] =  vec[ 1 ];
+    out[ 2 ] =  vec[ 2 ] || Math.sqrt( 1.0 - s );
+    out[ 3 ] =  0.0
+}
 
-    result[ 0 ]	= ( x - this.width / 2.0 ) / ( this.radius * this.width / 2.0 );
-    result[ 1 ]	= -( y - this.height / 2.0 ) / ( this.radius * this.width / 2.0 );
-    result[ 2 ]	= 0;
-
-    var len2 = result[ 0 ] * result[ 0 ] + result[ 1 ] * result[ 1 ];
-
-    if ( len2 <= 1.0 )
-        result[ 2 ] = Math.sqrt( 1.0 - len2 );
-    else
-        result = vec3.normalize( result ); // nearest point
-    return result;
+Camera.prototype.rotate = function( current, previous ) {
+    var quat1 = mat4.create();
+    var quat2 = mat4.create();
+    quatFromVec( quat1, current );
+    quatFromVec( quat2, previous );
+    quat.invert( quat2, quat2 );
+    quat.multiply( quat1, quat1, quat2 );
+    if( quat.length( quat1 ) < 1e-6 ) {
+        return;
+    }
+    quat.multiply( this.rotation, this.rotation, quat1 );
+    quat.normalize( this.rotation, this.rotation );
 };
