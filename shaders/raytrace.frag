@@ -203,7 +203,7 @@ float getSDFSample( sampler2D volume, vec3 texCoord ) {
 }
 
 vec3 doMaterial( vec3 position, vec3 normal ) {
-  return vec3( 0.4, 0.768, 1.0 ) * 0.5;
+  return vec3( 0.2, 0.768, 1.0 ) * 0.7;
 }
 
 vec3 doLighting( vec3 position, vec3 normal, vec3 material ) {
@@ -211,11 +211,11 @@ vec3 doLighting( vec3 position, vec3 normal, vec3 material ) {
 
     vec3 diffuse = vec3( 0.0 );
 
-    vec3 light = normalize( vec3( -1.0, 1.0, -0.9 ) );
+    vec3 light = normalize( vec3( -.8, .8, 1.5 ) );
 
     float cosTheta = clamp( dot( normal, light ), 0., 1. );
 
-    diffuse += cosTheta * vec3( 2 );
+    diffuse += cosTheta * vec3( 2. );
     diffuse += vec3( 0.05 );
 
     vec3 color = ambient + material * diffuse * cosTheta/*/ ( distance * distance )*/;
@@ -316,9 +316,8 @@ vec4 raySurface( vec3 rayStart, vec3 ray, int steps ) {
     if( distance <= rayLength ) {
         //position = rayStart + distance * direction;
         //vec3 normal = calcNormal( position );
-        vec3 normal = sampleAs3DTexture( distanceFieldTexture, position ).gba;//calcNormal( position );
-        if( length( normal ) == 0. ) normal = calcNormal( position );
-        //color.xyz = normal * .5 + .5;
+        vec3 normal = sampleAs3DTexture( distanceFieldTexture, position ).bga;//calcNormal( position );
+        color.xyz = normal * .5 + .5;
 
         //vec3 material = doMaterial( position, normal );
 
@@ -395,7 +394,7 @@ void main() {
     vec4 accumulatedColor = rayAccumulate( rayStart, ray, steps );
     accumulatedColor.a = 1.0;
     vec4 SDFcolor = raySurface( rayStart, ray, steps );
-    SDFcolor.a = 0.5;
+    SDFcolor.a = 0.8;
     color = accumulatedColor + SDFcolor;
 
     //vec4 sampleColor = sampleAs3DTexture( volumeTexture, rayStart );
