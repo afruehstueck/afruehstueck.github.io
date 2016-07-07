@@ -45,16 +45,12 @@ void main( void ) {
     //normalize distance value to [0, 1] range
     float normalizedDistance = ( clampDistance + 1. ) / 2.;
 
-    /*gl_FragColor.r = normalizedDistance;
-    gl_FragColor.g = normalizedDistance;
-    gl_FragColor.b = normalizedDistance;
-    */
-    gl_FragColor.r = 1.0 - distanceToOrigin;
-    gl_FragColor.g = 1.0 - distanceToOrigin;
-    gl_FragColor.b = 1.0 - distanceToOrigin;
+    gl_FragColor.r = normalizedDistance;
+    gl_FragColor.g = 0.;
+    gl_FragColor.b = 0.;
 
     //DEBUG: draws a nice circle around the seed region with unused green and blue values
     //gl_FragColor.rgb = vec3( normalizedDistance, ( abs( clampDistance ) < 0.01 ) ? 1. : 0., ( abs( clampDistance ) < 0.01 ) ? 1. : 0. );
 
-    gl_FragColor.a = 1.;
+    gl_FragColor.a = 0.;
 }

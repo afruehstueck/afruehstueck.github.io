@@ -147,7 +147,7 @@ float noise(vec4 v)
 //////////////////////// END NOISE
 
 //sample volumetric data from tiled 2d texture - do trilinear filtering
-vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
+vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord, bool flip_y ) {
     if( texCoord.x < 0. || texCoord.x > 1. ||
         texCoord.y < 0. || texCoord.y > 1. ||
         texCoord.z < 0. || texCoord.z > 1. ) {
@@ -165,12 +165,17 @@ vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
 
     float dx1 = mod( slice1_z, tiles.x );
     //examples inverted y values (they are like this in the example volumes) - do we want this?
-    //for inverted values do float dy1 = floor( ( max_slice - slice1_z ) / tiles.x );
-    float dy1 = floor( slice1_z / tiles.x ); // same for dy2
+    //for inverted values do
+    //float dy1 = floor( ( max_slice - slice1_z ) / tiles.x );
+    //float dy1 = floor( slice1_z / tiles.x ); // same for dy2
+    float dy1 = floor( slice1_z / tiles.x );
+    if( flip_y ) dy1 = tiles.y - 1. - dy1;
 
     float dx2 = mod( slice2_z, tiles.x );
-    float dy2 = floor( slice2_z / tiles.x );
+    //float dy2 = floor( slice2_z / tiles.x );
     //float dy2 = floor( ( max_slice - slice2_z ) / tiles.x );
+    float dy2 = floor( slice2_z / tiles.x );
+    if( flip_y ) dy2 = tiles.y - 1. - dy2;
 
     slice1.x = ( texCoord.x + dx1 ) / tiles.x;
     slice1.y = ( texCoord.y + dy1 ) / tiles.y;
@@ -188,38 +193,48 @@ vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
     return mix( color1, color2, zDifference );
 }
 
-float getNormalizedSample( sampler2D volume, vec3 texCoord ) {
-    return sampleAs3DTexture( volume, texCoord ).x * 2.0 - 1.0;
+vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
+    return sampleAs3DTexture( volume, texCoord, false );
 }
 
-vec3 doMaterial( vec3 pos, vec3 nor ) {
+float getSDFSample( sampler2D volume, vec3 texCoord ) {
+    return sampleAs3DTexture( volume, texCoord ).r * 2.0 - 1.0;
+}
+
+vec3 doMaterial( vec3 position, vec3 normal ) {
   return vec3( 0.4, 0.768, 1.0 ) * 0.5;
 }
 
-vec3 doLighting( vec3 pos, vec3 nor, vec3 rd, float dis, vec3 mal ) {
-  vec3 lin = vec3( 0.0 );
+vec3 doLighting( vec3 position, vec3 normal, vec3 material ) {
+    vec3 ambient = vec3( 0.1, 0.1, 0.1 );
 
-  vec3  lig = normalize( vec3( 1.0, 0.7, 0.9 ) );
-  float dif = max( dot( nor, lig ) ,0.0 );
+    vec3 diffuse = vec3( 0.0 );
 
-  lin += dif * vec3( 2 );
-  lin += vec3( 0.05 );
+    vec3 light = normalize( vec3( -1.0, 1.0, -0.9 ) );
 
-  return mal*lin;
+    float cosTheta = clamp( dot( normal, light ), 0., 1. );
+
+    diffuse += cosTheta * vec3( 2 );
+    diffuse += vec3( 0.05 );
+
+    vec3 color = ambient + material * diffuse * cosTheta/*/ ( distance * distance )*/;
+
+    return color;
+    //return ambient + material * lin;
 }
 
 vec3 calcNormal( vec3 pos ) {
-  const float eps = 0.05;
+  const float eps = 0.01;
 
   const vec3 v1 = vec3(  1.0, -1.0, -1.0 );
   const vec3 v2 = vec3( -1.0, -1.0,  1.0 );
   const vec3 v3 = vec3( -1.0,  1.0, -1.0 );
   const vec3 v4 = vec3(  1.0,  1.0,  1.0 );
 
-  return normalize( v1 * getNormalizedSample( distanceFieldTexture, pos + v1 * eps ) +
-                    v2 * getNormalizedSample( distanceFieldTexture, pos + v2 * eps ) +
-                    v3 * getNormalizedSample( distanceFieldTexture, pos + v3 * eps ) +
-                    v4 * getNormalizedSample( distanceFieldTexture, pos + v4 * eps ) );
+  return normalize( v1 * getSDFSample( distanceFieldTexture, pos + v1 * eps ) +
+                    v2 * getSDFSample( distanceFieldTexture, pos + v2 * eps ) +
+                    v3 * getSDFSample( distanceFieldTexture, pos + v3 * eps ) +
+                    v4 * getSDFSample( distanceFieldTexture, pos + v4 * eps ) );
 }
 
 vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
@@ -233,23 +248,17 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
     vec3 deltaDirection = normalize ( ray ) / float( steps );
     float deltaLength = length ( deltaDirection );
 
-
     vec3 position = rayStart;
 
     for ( int i = 0; i < MAX_STEPS; ++i ) {
         vec4 sampleColor = sampleAs3DTexture( volumeTexture, position );
 
-        //sampleColor.xyz = ( sampleColor.xyz ) * 2.0 - 1.0;
+        //todo: determine which value is sampled. currently .x because some data do not have alpha
         float sampleValue = sampleColor.x;
-        sampleValue = sampleValue * 2. - 1.; // go back to [ -1, 1 ] range
 
-        //sampleValue = clamp( sampleValue, 0., 1. );
-        //todo: determine which value is sampled. currently .x because some data does not have alpha
-        //float sampleAlpha = sampleColor.x * alphaCorrection;
         float sampleAlpha = sampleValue * alphaCorrection;
 
-        accumulatedColor += ( 1.0 - accumulatedAlpha ) * vec4( vec3( sampleValue ), 1. ) * sampleAlpha;
-
+        accumulatedColor += ( 1. - accumulatedAlpha ) * vec4( vec3( sampleValue ), 1. ) * sampleAlpha;
         accumulatedAlpha += sampleAlpha;
 
         /*MIP // do not have tf, otherwise sample it
@@ -260,7 +269,7 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
         position += deltaDirection;
         accumulatedLength += deltaLength;
 
-        if( accumulatedLength >= rayLength || accumulatedAlpha >= 1.0 ) {
+        if( accumulatedLength >= rayLength || accumulatedAlpha >= 1. ) {
             break;
         }
     }
@@ -269,49 +278,52 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
 
 
 vec4 raySurface( vec3 rayStart, vec3 ray, int steps ) {
-
+    float precis = 0.005;
     float rayLength = length( ray );
+    vec3 direction = normalize ( ray );
 
-    vec3 deltaDirection = normalize ( ray ) / float( steps );
-    float deltaLength = length ( deltaDirection );
-
-
-    float alphaCorrection = 0.2;
-    vec4 accumulatedColor = vec4( 0.0 );
-    float accumulatedAlpha = 0.0;
-    float accumulatedLength = 0.0;
+    vec4 color = vec4( 0., 0., 0., 1. );
 
     vec3 position = rayStart;
 
-    for ( int i = 0; i < steps; ++i ) {
-        vec4 sampleColor = sampleAs3DTexture( volumeTexture, position );
+    float distance = 0.;
+    float sampleValue = getSDFSample( distanceFieldTexture, position );
+    float prev = sampleValue;
 
-        //sampleColor.xyz = ( sampleColor.xyz ) * 2.0 - 1.0;
-        float sampleValue = sampleColor.x;
-        sampleValue = sampleValue * 2. - 1.; // go back to [ -1, 1 ] range
-
-        //sampleValue = clamp( sampleValue, 0., 1. );
-        //todo: determine which value is sampled. currently .x because some data does not have alpha
-        //float sampleAlpha = sampleColor.x * alphaCorrection;
-        float sampleAlpha = sampleValue * alphaCorrection;
-
-        accumulatedColor += ( 1.0 - accumulatedAlpha ) * vec4( vec3( sampleValue ), 1. ) * sampleAlpha;
-
-        accumulatedAlpha += sampleAlpha;
-
-        /*MIP // do not have tf, otherwise sample it
-        src = vec4( acc.aaaa );
-        if ( src.a >= dst.a )
-            dst = src;
-        */
-        position += deltaDirection;
-        accumulatedLength += deltaLength;
-
-        if( accumulatedLength >= rayLength || accumulatedAlpha >= 1.0 ) {
+    for ( int i = 0; i < MAX_STEPS; ++i ) {
+        if( sampleValue < precis || sign( sampleValue ) != sign( prev ) || distance >= rayLength ) {
             break;
         }
+        distance += sampleValue;
+
+        position = rayStart + distance * direction;
+        prev = sampleValue;
+        sampleValue = getSDFSample( distanceFieldTexture, position );
+
+        /*if( abs( sampleValue ) < 0.05 ) {
+            vec3 normal = calcNormal( position );
+            vec3 material = doMaterial( position, normal );
+
+            color.xyz = doLighting( position, normal, direction, material );
+
+            //color.xyz = normal * .5 + .5;
+            break;
+        }*/
+        //accumulatedLength += deltaLength;
     }
-    return accumulatedColor;
+
+    if( distance <= rayLength ) {
+        position = rayStart + distance * direction;
+        vec3 normal = calcNormal( position );
+        //vec3 normal = sampleAs3DTexture( distanceFieldTexture, position ).gba;//calcNormal( position );
+        //if( length( normal ) == 0. ) normal = calcNormal( position );
+        color.xyz = normal * .5 + .5;
+
+        //vec3 material = doMaterial( position, normal );
+
+        //color.xyz = doLighting( position, normal, material );
+    }
+    return color;
 }
 
 //////////////////////// BEGIN GLSL-RAYTRACE
@@ -327,7 +339,7 @@ float raytraceSDF( vec3 rayOrigin, vec3 rayDir, float maxd, float precis ) {
 
     vec3 pos = rayOrigin + rayDir * dist;
 
-    latest = getNormalizedSample( distanceFieldTexture, pos );
+    latest = getSDFSample( distanceFieldTexture, pos );
     dist  += latest;
   }
 
@@ -338,9 +350,6 @@ float raytraceSDF( vec3 rayOrigin, vec3 rayDir, float maxd, float precis ) {
   return res;
 }
 
-float raytraceSDF( vec3 rayOrigin, vec3 rayDir ) {
-  return raytraceSDF( rayOrigin, rayDir, 20.0, 0.001 );
-}
 //////////////////////// END GLSL-RAYTRACE
 
 /*
@@ -381,24 +390,15 @@ void main() {
     vec3 ray = rayEnd - rayStart;
     vec3 rayDirection = normalize ( ray );
 
-    vec4 color = vec4( 1. );
-    color = rayAccumulate( rayStart, ray, steps );
-
-
-    /*float t = raytraceSDF( rayStart, rayDirection ); //find first ray intersection
-    if ( t > -0.5 ) {
-        vec3 pos = rayStart + t * rayDirection;
-        vec3 nor = calcNormal( pos );
-        vec3 mal = doMaterial( pos, nor );
-
-        //color.xyz = doLighting( pos, nor, rayDirection, t, mal );
-        color.xyz = vec3( t );
-        //color.xyz = nor * 0.5 + 0.5;
-    }*/
-
+    vec4 color = vec4( 0. );
+    vec4 accumulatedColor = rayAccumulate( rayStart, ray, steps );
+    accumulatedColor.a = 1.0;
+    vec4 SDFcolor = raySurface( rayStart, ray, steps );
+    SDFcolor.a = 0.5;
+    color = accumulatedColor + SDFcolor;
 
     //vec4 sampleColor = sampleAs3DTexture( volumeTexture, rayStart );
     //gl_FragColor  = vec4(sampleColor.xyz, 1.0);
     //gl_FragColor = vec4( texture2D( frontfaceTexture, gl_FragCoord.xy / vec2( resolution.x, resolution.y ) ).xyz, 1.0 );
-    gl_FragColor = vec4( color.xyz, 1.0 );
+    gl_FragColor = color;//vec4( color.xyz, 1.0 );
 }

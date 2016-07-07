@@ -6,13 +6,14 @@ uniform vec2  sourceTexelSize;
 uniform vec3  seedOrigin;
 uniform sampler2D distanceFieldTexture;
 uniform sampler2D volumeTexture;
+uniform float targetIntensity;
 
 varying vec2 pos;
 varying vec2 textureCoordinate;
 
 //todo: make these uniform
 //const vec2 tiles = vec2( 16., 16. );
-const float epsilon = 0.5;
+const float epsilon = 0.1;
 const float alpha = 0.9;
 
 //sample volumetric data from tiled 2d texture
@@ -33,7 +34,9 @@ vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
 
     float dx = mod( slice_z, tiles.x ); //zB mod( 255, 16 ) = 15 || 1.0 , 1/16
     //examples inverted y values (they are like this in the example volumes) - do we want this?
-    //for inverted values do float dy = floor( ( max_slice - slice_z ) / tiles.x );
+    //for inverted values do
+    //float dy = floor( ( max_slice - slice_z ) / tiles.x );
+    //float dy = tiles.y - 1. - floor( slice_z / tiles.x ); //??
     float dy = floor( slice_z / tiles.x );
 
     slice.x = ( texCoord.x + dx ) / tiles.x;
@@ -67,12 +70,11 @@ vec4 sampleWithOffset( sampler2D volume, vec3 pos, vec3 offset ) {
     //todo theck if offset coord goes outside of volume - currently returning black for sampling outside of volume
     vec3 offsetCoord = pos + offset / volumeDimensions;
 
-    //todo normalizing here is not super smart
     return sampleAs3DTexture( volume, offsetCoord );
 }
 
 float getNormalizedSample( sampler2D volume, vec3 texCoord, vec3 offset ) {
-    return sampleWithOffset( volume, texCoord, offset ).x * 2.0 - 1.0;
+    return sampleWithOffset( volume, texCoord, offset ).r * 2.0 - 1.0;
 }
 
 /*void getNeigborhood( sampler2D volume, vec3 pos, out float[ 27 ] neighborhood ) {
@@ -99,10 +101,10 @@ void main( void ) {
     vec3 currentPosition = tiledTextureCoordToVolumeCoord( textureCoordinate );
 
     vec4 encodedDistance = texture2D( distanceFieldTexture, textureCoordinate );
-    //encodedDistance = sampleWithOffset( distanceFieldTexture, currentPosition, vec3( 0., 0., 40. ) );
+    //equal to:
+    //vec4 encodedDistance = sampleAs3DTexture( distanceFieldTexture, currentPosition );
     float currentDistance = encodedDistance.r * 2. - 1.; //de-normalize
 
-    //encodedDistance = sampleAs3DTexture( distanceFieldTexture, currentPosition );
 
     /* calculate all the values
     | u6 | u7 | u8 |
@@ -139,17 +141,17 @@ void main( void ) {
     float Dy   = ( u7   - u1 ) / 2.;
     float Dz   = ( u4pz - u4mz ) / 2.;
     float Dxp  = ( u5   - u4 );
-    float Dyp  = ( u7   - u4 );
-    float Dzp  = ( u4pz - u4 );
     float Dxm  = ( u4   - u3 );
+    float Dyp  = ( u7   - u4 );
     float Dym  = ( u4   - u1 );
+    float Dzp  = ( u4pz - u4 );
     float Dzm  = ( u4   - u4mz );
     float Dxpy = ( u8   - u6 ) / 2.;
     float Dxmy = ( u2   - u0 ) / 2.;
-    float Dxpz = ( u5pz - u3pz ) / 2.;
-    float Dxmz = ( u5mz - u3mz ) / 2.;
     float Dypx = ( u8   - u2 ) / 2.;
     float Dymx = ( u6   - u0 ) / 2.;
+    float Dxpz = ( u5pz - u3pz ) / 2.;
+    float Dxmz = ( u5mz - u3mz ) / 2.;
     float Dypz = ( u7pz - u1pz ) / 2.;
     float Dymz = ( u7mz - u1mz ) / 2.;
     float Dzpx = ( u5pz - u5mz ) / 2.;
@@ -157,11 +159,8 @@ void main( void ) {
     float Dzpy = ( u7pz - u7mz ) / 2.;
     float Dzmy = ( u1pz - u1mz ) / 2.;
 
-    if( Dx == 0. || Dy == 0. || Dz == 0. ) {
-        gl_FragColor = encodedDistance;
-        return;
-    }
-    /*if( Dx == 0. ) {
+    /* todo something's not right with some of the tiles :( check!
+    if( Dx == 0. ) {
         gl_FragColor = vec4( 1., 0., 0., 1. ); //todo: check?
         return;
     }
@@ -171,10 +170,15 @@ void main( void ) {
         return;
     }
 
-    if( Dz == 0. ) {
+    if( u4mz == 0. ) {
         gl_FragColor = vec4( 0., 0., 1., 1. ); //todo: check?
         return;
     }*/
+    if( Dx == 0. || Dy == 0. || Dz == 0. ) {
+        gl_FragColor = encodedDistance;
+        return;
+    }
+
 
     float nxp_dif1 = ( Dypx + Dy ) / 2.;
     float nxp_dif2 = ( Dzpx + Dz ) / 2.;
@@ -192,6 +196,7 @@ void main( void ) {
     float nxp = Dxp / ( ( nxp_denom > 0. ) ? nxp_denom : 1. );
     float nyp = Dyp / ( ( nyp_denom > 0. ) ? nyp_denom : 1. );
     float nzp = Dzp / ( ( nzp_denom > 0. ) ? nzp_denom : 1. );
+
 
     float nxm_dif1 = ( Dymx + Dy ) / 2.;
     float nxm_dif2 = ( Dzmx + Dz ) / 2.;
@@ -243,6 +248,7 @@ void main( void ) {
                                  sqrt( min_Dyp * min_Dyp + min_mDym * min_mDym ),
                                  sqrt( min_Dzp * min_Dzp + min_mDzm * min_mDzm ) );
 
+    //float targetValue = targetIntensity;//
     float targetValue = sampleAs3DTexture( volumeTexture, seedOrigin ).r;
 
     //todo: figure out which component (rgba)
@@ -252,19 +258,24 @@ void main( void ) {
     float D = epsilon - abs( sourceValue - targetValue );
 
     //speed function is composed from speed function D and curvature function H, controlled by alpha value
-    //TODO curvature H is currently broken
+    //TODO look at curvature H which is probably broken
     float speedFunction = alpha * D + ( 1. - alpha ) * H;
     //choose gradient magnitude according to speed function
-    float gradientMagnitude = (speedFunction > 0.) ? length( grad_phi_max ) : length( grad_phi_min );
+    float gradientMagnitude = ( speedFunction > 0. ) ? length( grad_phi_max ) : length( grad_phi_min );
     float updateDistance = gradientMagnitude * speedFunction;
 
-    float finalDistance = currentDistance + updateDistance;
+    float distance = currentDistance + updateDistance;
+    float clampDistance = clamp( distance, -1., 1. );
 
     //update values in distance field
-    float normalizedFinalDistance = ( finalDistance + 1. ) / 2.;
+    float normalizedDistance = ( clampDistance + 1. ) / 2.;
 
-    //gl_FragColor = vec4( 0.0, textureCoordinate, 1.);
-    //gl_FragColor = vec4( encodedDistance.rgb, 1.);
-    gl_FragColor = vec4( normalizedFinalDistance, normalizedFinalDistance, normalizedFinalDistance, 1. );
-    //gl_FragColor = vec4( normalizedFinalDistance, gradientMagnitude, 0., 0. );
+    vec3 gradient1 = vec3( u3, u1, u4mz );
+    vec3 gradient2 = vec3( u5, u7, u4pz );
+    //calculate normal vector for lighting
+    vec3 N  = normalize( gradient1 - gradient2 );
+
+    //gl_FragColor = vec4( normalizedDistance, ( abs( clampDistance ) < 0.05 ) ? 1. : 0., ( abs( clampDistance ) < 0.05 ) ? 1. : 0., normalizedDistance );
+    gl_FragColor.r = normalizedDistance;
+    gl_FragColor.gba = N;
 }

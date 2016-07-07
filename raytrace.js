@@ -34,8 +34,8 @@ gl.getExtension( 'OES_texture_float' );
 gl.getExtension( 'OES_texture_float_linear' );
 
 var start = Date.now();
-var width = 128,
-    height = 128,
+var width = 256,
+    height = width,
     slices = { x: 16, y: 16 };
 
 var frameBuffers,
@@ -44,6 +44,7 @@ var frameBuffers,
     sourceVolume;
 var seedOrigin;
 var seedRadius;
+var targetIntensity;
 
 var programs = {};
 
@@ -98,6 +99,8 @@ var rightMouseDown = false;
 renderCanvas.onmousedown = onMouseDownEvent;
 document.onmouseup 		= onMouseUpEvent;
 document.onmousemove 	= onMouseMoveEvent;
+document.onkeypress     = onKeyPressEvent;
+
 //suppress context menu on right-click
 document.oncontextmenu  = function( event ) {
     return false;
@@ -152,6 +155,12 @@ function onMouseMoveEvent( event ) {
     camera.update();
     render();
 }
+
+function onKeyPressEvent( event ) {
+    if( iteration < MAX_ITERATION ) iteration++;
+    render();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // CAMERA SETUP
 ////////////////////////////////////////////////////////////////////////////////
@@ -307,6 +316,7 @@ var getUpdateUniforms = function ( program ) {
     program.sourceTexelSize = gl.getUniformLocation( program, 'sourceTexelSize' );
     program.volumeDimensions = gl.getUniformLocation( program, 'volumeDimensions' );
     program.seedOrigin = gl.getUniformLocation( program, 'seedOrigin' );
+    program.targetIntensity = gl.getUniformLocation( program, 'targetIntensity' );
     program.distanceFieldTexture = gl.getUniformLocation( program, 'distanceFieldTexture' );
     program.volumeTexture = gl.getUniformLocation( program, 'volumeTexture' );
 }
@@ -486,11 +496,14 @@ function init() {
     };
     sourceImage.src = 'res/bonsai128x128x256.png';
     //sourceImage.src = 'res/bonsai256x256x256.png';
-    //sourceImage.src = 'res/heart128x128x256.png';
+    //sourceImage.src = 'res/foot256x256x256.png';
+    //sourceImage.src = 'res/male128x128x256.png';
     //sourceImage.src = 'res/teapot256x256x256.png';
 
-    seedOrigin = [ 0.5, 0.5, 0.5 ];
+    //todo make selectable
+    seedOrigin = [ 0.5, 0.3, 0.25 ];
     seedRadius = 0.2;
+    targetIntensity = 0.4;
 
     create3DBuffers();
     create2DBuffers();
@@ -565,7 +578,7 @@ function renderOnce() {
 
 var backfacing = true;
 var iteration = 0;
-var MAX_ITERATION = 200;
+var MAX_ITERATION = 500;
 
 function render() {
     //stats.begin();
@@ -585,10 +598,10 @@ function render() {
     program_backfaces.render( frontfaceFrameBuffer, !backfacing );
     program_backfaces.render( backfaceFrameBuffer, backfacing );
 
-    program_raytrace.render( frameBuffers[ ( iteration + 1 ) % 2 ].texture, frameBuffers[ 0 ].texture, frontfaceFrameBuffer.texture, backfaceFrameBuffer.texture );
-    //program_raytrace.render( frameBuffers[ 0 ].texture, frameBuffers[ 0 ].texture, frontfaceFrameBuffer.texture, backfaceFrameBuffer.texture );
+    program_raytrace.render( sourceVolume, frameBuffers[ ( iteration + 1 ) % 2 ].texture, frontfaceFrameBuffer.texture, backfaceFrameBuffer.texture );
+    //program_raytrace.render( frameBuffers[ ( iteration + 1 ) % 2 ].texture, frameBuffers[ 0 ].texture, frontfaceFrameBuffer.texture, backfaceFrameBuffer.texture );
 
-    if( iteration < MAX_ITERATION ) iteration++;
+    //if( iteration < MAX_ITERATION ) iteration++;
 
     //program_debug.render( backfaceFrameBuffer.texture );
     //stats.end();
@@ -633,6 +646,7 @@ function updateDistanceField( volumeTexture, sourceFrameBuffer, targetFrameBuffe
     gl.uniform2f( program.tiles, slices.x, slices.y );
     gl.uniform2f( program.sourceTexelSize, 1. / width, 1. / height );
     gl.uniform3f( program.seedOrigin, seedOrigin[ 0 ], seedOrigin[ 1 ], seedOrigin[ 2 ] );
+    gl.uniform1f( program.targetIntensity, targetIntensity );
     gl.uniform3f( program.volumeDimensions, width, height, slices.x * slices.y );
 
     gl.bindFramebuffer( gl.FRAMEBUFFER, targetFrameBuffer.buffer ); //fbo texture to write to
