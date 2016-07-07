@@ -38,8 +38,10 @@ void main( void ) {
     float distanceToOrigin = distance( seedOrigin, currentPosition );
     //WATCH OUT, different from other example
     //distance in distance function is *positive* outside of seed and *negative* inside of seed (required this way by glsl-raytrace
-    // normalize distance value by dividing through fbo resolution
+    // todo normalize distance value by dividing through fbo resolution
     float distance = distanceToOrigin - seedRadius;
+
+    distance = distance / seedRadius;
 
     float clampDistance = clamp( distance, -1., 1. );
     //normalize distance value to [0, 1] range

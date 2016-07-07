@@ -14,7 +14,7 @@ varying vec2 textureCoordinate;
 //todo: make these uniform
 //const vec2 tiles = vec2( 16., 16. );
 const float epsilon = 0.1;
-const float alpha = 0.9;
+const float alpha = 0.95;
 
 //sample volumetric data from tiled 2d texture
 vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {

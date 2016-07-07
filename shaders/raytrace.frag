@@ -8,6 +8,7 @@ uniform sampler2D distanceFieldTexture;
 uniform sampler2D backfaceTexture;
 uniform sampler2D frontfaceTexture;
 uniform sampler2D volumeTexture;
+uniform float seedRadius;
 
 //#pragma glslify: raytrace = require( 'glsl-raytrace' , map = sampleVolumeSimple, MAX_STEPS = 150 )
 //#pragma glslify: normal   = require( 'glsl-sdf-normal', map = doModel)
@@ -20,7 +21,7 @@ uniform sampler2D volumeTexture;
 const float numSlices = 256.0;
 //todo: make this uniform
 const vec2 tiles = vec2( 16., 16. );
-const int MAX_STEPS = 250;
+const int MAX_STEPS = 150;
 
 varying vec3 textureCoordinate;
 varying vec4 projectedCoordinate;
@@ -278,7 +279,7 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
 
 
 vec4 raySurface( vec3 rayStart, vec3 ray, int steps ) {
-    float precis = 0.005;
+    float precis = 0.001;
     float rayLength = length( ray );
     vec3 direction = normalize ( ray );
 
@@ -291,10 +292,10 @@ vec4 raySurface( vec3 rayStart, vec3 ray, int steps ) {
     float prev = sampleValue;
 
     for ( int i = 0; i < MAX_STEPS; ++i ) {
-        if( sampleValue < precis || sign( sampleValue ) != sign( prev ) || distance >= rayLength ) {
+        if( sign( sampleValue ) != sign( prev ) || abs( sampleValue ) < precis ||  distance >= rayLength ) {
             break;
         }
-        distance += sampleValue;
+        distance += sampleValue * seedRadius;
 
         position = rayStart + distance * direction;
         prev = sampleValue;
@@ -313,11 +314,11 @@ vec4 raySurface( vec3 rayStart, vec3 ray, int steps ) {
     }
 
     if( distance <= rayLength ) {
-        position = rayStart + distance * direction;
-        vec3 normal = calcNormal( position );
-        //vec3 normal = sampleAs3DTexture( distanceFieldTexture, position ).gba;//calcNormal( position );
-        //if( length( normal ) == 0. ) normal = calcNormal( position );
-        color.xyz = normal * .5 + .5;
+        //position = rayStart + distance * direction;
+        //vec3 normal = calcNormal( position );
+        vec3 normal = sampleAs3DTexture( distanceFieldTexture, position ).gba;//calcNormal( position );
+        if( length( normal ) == 0. ) normal = calcNormal( position );
+        //color.xyz = normal * .5 + .5;
 
         //vec3 material = doMaterial( position, normal );
 

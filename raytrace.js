@@ -137,6 +137,8 @@ function onMouseUpEvent( event ) {
     rightMouseDown = false;
 }
 
+var lastCalledTime;
+
 function onMouseMoveEvent( event ) {
     if( ! ( leftMouseDown  || rightMouseDown ) ) return;
 
@@ -153,10 +155,28 @@ function onMouseMoveEvent( event ) {
     }
     prevMousePos = mousePos;
     camera.update();
-    render();
+
+    if( !lastCalledTime ) {
+        lastCalledTime = Date.now();
+    }
+    var delta = ( Date.now() - lastCalledTime ) / 1000;
+
+    if( delta > 0.01 ) {
+        render();
+        lastCalledTime = Date.now();
+    }
 }
 
 function onKeyPressEvent( event ) {
+    if( !lastCalledTime ) {
+        lastCalledTime = Date.now();
+    }
+    var delta = ( Date.now() - lastCalledTime ) / 1000;
+
+    if( delta < 0.01 ) return;
+
+    lastCalledTime = Date.now();
+
     if( iteration < MAX_ITERATION ) iteration++;
     render();
 }
@@ -279,6 +299,7 @@ var getRaytraceUniforms = function ( program ) {
     program.volumeTexture = gl.getUniformLocation( program, 'volumeTexture' );
     program.projectionMatrix = gl.getUniformLocation( program, 'projectionMatrix' );
     program.modelViewMatrix = gl.getUniformLocation( program, 'modelViewMatrix' );
+    program.seedRadius = gl.getUniformLocation( program, 'seedRadius' );
 
     gl.enableVertexAttribArray( program.position );
     gl.enableVertexAttribArray( program.texCoord );
@@ -501,7 +522,7 @@ function init() {
     //sourceImage.src = 'res/teapot256x256x256.png';
 
     //todo make selectable
-    seedOrigin = [ 0.5, 0.3, 0.25 ];
+    seedOrigin = [ 0.5, 0.3, 0.6 ];
     seedRadius = 0.2;
     targetIntensity = 0.4;
 
@@ -723,6 +744,7 @@ function renderRaytrace( volumeTexture, distanceFieldTexture, frontfaceTexture, 
 
     //todo: don't unnecessarily update uniforms every time
     gl.uniform1f( program.iGlobalTime, ( Date.now() - start ) / 1000.0 );
+    gl.uniform1f( program.seedRadius, seedRadius );
     gl.uniform2f( program.resolution, renderCanvas.width, renderCanvas.height );
     gl.uniform3f( program.volumeDimensions, width, height, slices.x * slices.y );
     gl.uniform3f( program.seedOrigin, seedOrigin[ 0 ], seedOrigin[ 1 ], seedOrigin[ 2 ] );
