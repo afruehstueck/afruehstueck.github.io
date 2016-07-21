@@ -41,7 +41,7 @@ void main( void ) {
     // todo normalize distance value by dividing through fbo resolution
     float distance = distanceToOrigin - seedRadius;
 
-    distance = distance / seedRadius;
+    //distance = distance / ( seedRadius / 2. );
 
     float clampDistance = clamp( distance, -1., 1. );
     //normalize distance value to [0, 1] range
@@ -56,3 +56,27 @@ void main( void ) {
 
     gl_FragColor.a = 0.;
 }
+
+/*
+void main( void ) {
+
+    //vec3 currentPosition = vec3( x, y, z );
+    vec3 currentPosition = tiledTextureCoordToVolumeCoord( textureCoordinate );
+
+    //float distanceToOrigin = distance( seedOrigin, currentPosition );
+    //WATCH OUT, different from other example
+    //distance in distance function is *positive* outside of seed and *negative* inside of seed (required this way by glsl-raytrace
+    //float distance = max( 0.3 - distanceToOrigin, 0.0);// - seedRadius;
+
+    bool color = currentPosition.x > 0.25 && currentPosition.x < 0.75 && currentPosition.y > 0.25 && currentPosition.y < 0.75 && currentPosition.z > 0.25 && currentPosition.z < 0.75;
+    gl_FragColor.r = color ? 0.2 : 0.;
+    gl_FragColor.g = color ? 0.2 : 0.;
+    gl_FragColor.b = color ? 0.2 : 0.;
+
+    //DEBUG: draws a nice circle around the seed region with unused green and blue values
+    //gl_FragColor.rgb = vec3( normalizedDistance, ( abs( clampDistance ) < 0.01 ) ? 1. : 0., ( abs( clampDistance ) < 0.01 ) ? 1. : 0. );
+
+    gl_FragColor.a = 1.;
+}
+
+*/

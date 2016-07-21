@@ -1,9 +1,9 @@
 precision highp float;
 
 uniform vec2  resolution;
+uniform vec2 tiles;
 uniform vec3  volumeDimensions;
 uniform vec3  seedOrigin;
-uniform float iGlobalTime;
 uniform sampler2D distanceFieldTexture;
 uniform sampler2D backfaceTexture;
 uniform sampler2D frontfaceTexture;
@@ -18,137 +18,17 @@ uniform float seedRadius;
 //#pragma glslify: camera2   = require( 'glsl-camera-ray' )
 //#pragma glslify: camera  = require( 'glsl-turntable-camera' )
 
-const float numSlices = 256.0;
 //todo: make this uniform
-const vec2 tiles = vec2( 16., 16. );
-const int MAX_STEPS = 150;
+//const vec2 tiles = vec2( 16., 16. );
+const int MAX_STEPS = 125;
 
 varying vec3 textureCoordinate;
+varying vec3 worldSpaceCoordinate;
+varying vec3 frontFaceCoordinate;
 varying vec4 projectedCoordinate;
 
-//////////////////////// BEGIN NOISE
-
-vec4 mod289_1_1(vec4 x) {
-  return x - floor(x * (1.0 / 289.0)) * 289.0; }
-
-float mod289_1_1(float x) {
-  return x - floor(x * (1.0 / 289.0)) * 289.0; }
-
-vec4 permute_1_2(vec4 x) {
-     return mod289_1_1(((x*34.0)+1.0)*x);
-}
-
-float permute_1_2(float x) {
-     return mod289_1_1(((x*34.0)+1.0)*x);
-}
-
-vec4 taylorInvSqrt_1_3(vec4 r)
-{
-  return 1.79284291400159 - 0.85373472095314 * r;
-}
-
-float taylorInvSqrt_1_3(float r)
-{
-  return 1.79284291400159 - 0.85373472095314 * r;
-}
-
-vec4 grad4_1_4(float j, vec4 ip)
-  {
-  const vec4 ones = vec4(1.0, 1.0, 1.0, -1.0);
-  vec4 p,s;
-
-  p.xyz = floor( fract (vec3(j) * ip.xyz) * 7.0) * ip.z - 1.0;
-  p.w = 1.5 - dot(abs(p.xyz), ones.xyz);
-  s = vec4(lessThan(p, vec4(0.0)));
-  p.xyz = p.xyz + (s.xyz*2.0 - 1.0) * s.www;
-
-  return p;
-  }
-
-// (sqrt(5) - 1)/4 = F4, used once below
-#define F4 0.309016994374947451
-
-float noise(vec4 v)
-  {
-  const vec4  C = vec4( 0.138196601125011,  // (5 - sqrt(5))/20  G4
-                        0.276393202250021,  // 2 * G4
-                        0.414589803375032,  // 3 * G4
-                       -0.447213595499958); // -1 + 4 * G4
-
-// First corner
-  vec4 i  = floor(v + dot(v, vec4(F4)) );
-  vec4 x0 = v -   i + dot(i, C.xxxx);
-
-// Other corners
-
-// Rank sorting originally contributed by Bill Licea-Kane, AMD (formerly ATI)
-  vec4 i0;
-  vec3 isX = step( x0.yzw, x0.xxx );
-  vec3 isYZ = step( x0.zww, x0.yyz );
-//  i0.x = dot( isX, vec3( 1.0 ) );
-  i0.x = isX.x + isX.y + isX.z;
-  i0.yzw = 1.0 - isX;
-//  i0.y += dot( isYZ.xy, vec2( 1.0 ) );
-  i0.y += isYZ.x + isYZ.y;
-  i0.zw += 1.0 - isYZ.xy;
-  i0.z += isYZ.z;
-  i0.w += 1.0 - isYZ.z;
-
-  // i0 now contains the unique values 0,1,2,3 in each channel
-  vec4 i3 = clamp( i0, 0.0, 1.0 );
-  vec4 i2 = clamp( i0-1.0, 0.0, 1.0 );
-  vec4 i1 = clamp( i0-2.0, 0.0, 1.0 );
-
-  //  x0 = x0 - 0.0 + 0.0 * C.xxxx
-  //  x1 = x0 - i1  + 1.0 * C.xxxx
-  //  x2 = x0 - i2  + 2.0 * C.xxxx
-  //  x3 = x0 - i3  + 3.0 * C.xxxx
-  //  x4 = x0 - 1.0 + 4.0 * C.xxxx
-  vec4 x1 = x0 - i1 + C.xxxx;
-  vec4 x2 = x0 - i2 + C.yyyy;
-  vec4 x3 = x0 - i3 + C.zzzz;
-  vec4 x4 = x0 + C.wwww;
-
-// Permutations
-  i = mod289_1_1(i);
-  float j0 = permute_1_2( permute_1_2( permute_1_2( permute_1_2(i.w) + i.z) + i.y) + i.x);
-  vec4 j1 = permute_1_2( permute_1_2( permute_1_2( permute_1_2 (
-             i.w + vec4(i1.w, i2.w, i3.w, 1.0 ))
-           + i.z + vec4(i1.z, i2.z, i3.z, 1.0 ))
-           + i.y + vec4(i1.y, i2.y, i3.y, 1.0 ))
-           + i.x + vec4(i1.x, i2.x, i3.x, 1.0 ));
-
-// Gradients: 7x7x6 points over a cube, mapped onto a 4-cross polytope
-// 7*7*6 = 294, which is close to the ring size 17*17 = 289.
-  vec4 ip = vec4(1.0/294.0, 1.0/49.0, 1.0/7.0, 0.0) ;
-
-  vec4 p0_1_6 = grad4_1_4(j0,   ip);
-  vec4 p1 = grad4_1_4(j1.x, ip);
-  vec4 p2 = grad4_1_4(j1.y, ip);
-  vec4 p3 = grad4_1_4(j1.z, ip);
-  vec4 p4 = grad4_1_4(j1.w, ip);
-
-// Normalise gradients
-  vec4 norm = taylorInvSqrt_1_3(vec4(dot(p0_1_6,p0_1_6), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
-  p0_1_6 *= norm.x;
-  p1 *= norm.y;
-  p2 *= norm.z;
-  p3 *= norm.w;
-  p4 *= taylorInvSqrt_1_3(dot(p4,p4));
-
-// Mix contributions from the five corners
-  vec3 m0 = max(0.6 - vec3(dot(x0,x0), dot(x1,x1), dot(x2,x2)), 0.0);
-  vec2 m1 = max(0.6 - vec2(dot(x3,x3), dot(x4,x4)            ), 0.0);
-  m0 = m0 * m0;
-  m1 = m1 * m1;
-  return 49.0 * ( dot(m0*m0, vec3( dot( p0_1_6, x0 ), dot( p1, x1 ), dot( p2, x2 )))
-               + dot(m1*m1, vec2( dot( p3, x3 ), dot( p4, x4 ) ) ) ) ;
-
-  }
-//////////////////////// END NOISE
-
 //sample volumetric data from tiled 2d texture - do trilinear filtering
-vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord, bool flip_y ) {
+vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
     if( texCoord.x < 0. || texCoord.x > 1. ||
         texCoord.y < 0. || texCoord.y > 1. ||
         texCoord.z < 0. || texCoord.z > 1. ) {
@@ -156,7 +36,7 @@ vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord, bool flip_y ) {
     }
 
     float volumeDepth = tiles.x * tiles.y;
-    float max_slice = volumeDepth - 1.0;
+    float max_slice = volumeDepth;// - 1.0;
     vec2 slice1, slice2;
 
     //z coordinate determines which 2D tile we sample from
@@ -170,13 +50,13 @@ vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord, bool flip_y ) {
     //float dy1 = floor( ( max_slice - slice1_z ) / tiles.x );
     //float dy1 = floor( slice1_z / tiles.x ); // same for dy2
     float dy1 = floor( slice1_z / tiles.x );
-    if( flip_y ) dy1 = tiles.y - 1. - dy1;
+    //if( flip_y ) dy1 = tiles.y - 1. - dy1;
 
     float dx2 = mod( slice2_z, tiles.x );
     //float dy2 = floor( slice2_z / tiles.x );
     //float dy2 = floor( ( max_slice - slice2_z ) / tiles.x );
     float dy2 = floor( slice2_z / tiles.x );
-    if( flip_y ) dy2 = tiles.y - 1. - dy2;
+    //if( flip_y ) dy2 = tiles.y - 1. - dy2;
 
     slice1.x = ( texCoord.x + dx1 ) / tiles.x;
     slice1.y = ( texCoord.y + dy1 ) / tiles.y;
@@ -194,9 +74,35 @@ vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord, bool flip_y ) {
     return mix( color1, color2, zDifference );
 }
 
-vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
-    return sampleAs3DTexture( volume, texCoord, false );
+/*
+vec2 computeSliceOffset(float slice, float slicesPerRow, vec2 sliceSize) {
+  return sliceSize * vec2(mod(slice, slicesPerRow),
+                          floor(slice / slicesPerRow));
 }
+
+vec4 sampleAs3DTexture( sampler2D tex, vec3 texCoord ) {
+  float numRows = tiles.y;
+  float slicesPerRow = tiles.x;
+  float size = tiles.x * tiles.y;
+  float slice   = texCoord.z * size;
+  float sliceZ  = floor(slice);                         // slice we need
+  float zOffset = fract(slice);                         // dist between slices
+
+  vec2 sliceSize = vec2(1.0 / slicesPerRow,             // u space of 1 slice
+                        1.0 / numRows);                 // v space of 1 slice
+
+  vec2 slice0Offset = computeSliceOffset(sliceZ, slicesPerRow, sliceSize);
+  vec2 slice1Offset = computeSliceOffset(sliceZ + 1.0, slicesPerRow, sliceSize);
+
+  vec2 slicePixelSize = sliceSize / size;               // space of 1 pixel
+  vec2 sliceInnerSize = slicePixelSize * (size - 1.0);  // space of size pixels
+
+  vec2 uv = slicePixelSize * 0.5 + texCoord.xy * sliceInnerSize;
+  vec4 slice0Color = texture2D(tex, slice0Offset + uv);
+  vec4 slice1Color = texture2D(tex, slice1Offset + uv);
+  return mix(slice0Color, slice1Color, zOffset);
+}
+*/
 
 float getSDFSample( sampler2D volume, vec3 texCoord ) {
     return sampleAs3DTexture( volume, texCoord ).r * 2.0 - 1.0;
@@ -246,22 +152,39 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
 
     float rayLength = length( ray );
 
-    vec3 deltaDirection = normalize ( ray ) / float( steps );
+    //vec3 deltaDirection = normalize ( ray ) / float( steps );
+    vec3 deltaDirection = ray / float( steps );
     float deltaLength = length ( deltaDirection );
 
     vec3 position = rayStart;
+    vec4 sampleColor = vec4( 0. );
+    float sampleValue = sampleColor.x;
+    float sampleAlpha = 0.;
+
+    bool foundIsoSurface = false;
+    float sdfSample = 1.;
+    float prev = 1.;
 
     for ( int i = 0; i < MAX_STEPS; ++i ) {
-        vec4 sampleColor = sampleAs3DTexture( volumeTexture, position );
 
-        //todo: determine which value is sampled. currently .x because some data do not have alpha
-        float sampleValue = sampleColor.x;
+        prev = sdfSample;
+        sdfSample = getSDFSample( distanceFieldTexture, position );
+        if( sign( sdfSample ) != sign( prev ) ) {
+            foundIsoSurface = true;
+            break;
+        }
 
-        float sampleAlpha = sampleValue * alphaCorrection;
+        if( accumulatedAlpha < 1. ) {
+            sampleColor = sampleAs3DTexture( volumeTexture, position );
 
-        accumulatedColor += ( 1. - accumulatedAlpha ) * vec4( vec3( sampleValue ), 1. ) * sampleAlpha;
-        accumulatedAlpha += sampleAlpha;
+            //todo: determine which value is sampled. currently .x because some data do not have alpha
+            sampleValue = sampleColor.x;
 
+            sampleAlpha = sampleValue * alphaCorrection;
+
+            accumulatedColor += ( 1. - accumulatedAlpha ) * vec4( vec3( sampleValue ), 1. ) * sampleAlpha;
+            accumulatedAlpha += sampleAlpha;
+        }
         /*MIP // do not have tf, otherwise sample it
         src = vec4( acc.aaaa );
         if ( src.a >= dst.a )
@@ -270,9 +193,14 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
         position += deltaDirection;
         accumulatedLength += deltaLength;
 
-        if( accumulatedLength >= rayLength || accumulatedAlpha >= 1. ) {
+        if( /*accumulatedAlpha >= 1. || */accumulatedLength >= rayLength ) {
             break;
         }
+    }
+
+    if( foundIsoSurface ) {
+        vec3 normal = sampleAs3DTexture( distanceFieldTexture, position ).bga;//calcNormal( position );
+        accumulatedColor.xyz += normal * .5 + .5;
     }
     return accumulatedColor;
 }
@@ -289,7 +217,10 @@ vec4 raySurface( vec3 rayStart, vec3 ray, int steps ) {
 
     float distance = 0.;
     float sampleValue = getSDFSample( distanceFieldTexture, position );
+
+
     float prev = sampleValue;
+
 
     for ( int i = 0; i < MAX_STEPS; ++i ) {
         if( sign( sampleValue ) != sign( prev ) || abs( sampleValue ) < precis ||  distance >= rayLength ) {
@@ -317,8 +248,8 @@ vec4 raySurface( vec3 rayStart, vec3 ray, int steps ) {
         //position = rayStart + distance * direction;
         //vec3 normal = calcNormal( position );
         vec3 normal = sampleAs3DTexture( distanceFieldTexture, position ).bga;//calcNormal( position );
-        color.xyz = normal * .5 + .5;
-
+        color.xyz += normal * .5 + .5;
+        color.a = 1.0;
         //vec3 material = doMaterial( position, normal );
 
         //color.xyz = doLighting( position, normal, material );
@@ -379,26 +310,35 @@ void main() {
 */
 
 void main() {
+
+    //gl_FragColor = vec4( 0.3, 0.4, 0.8, 1.0 );
     int steps = MAX_STEPS;
 
-    vec2 texc = vec2( ( ( projectedCoordinate.x / projectedCoordinate.w ) + 1.0 ) / 2.0,
+    vec2 tex = vec2( ( ( projectedCoordinate.x / projectedCoordinate.w ) + 1.0 ) / 2.0,
                        ( ( projectedCoordinate.y / projectedCoordinate.w ) + 1.0 ) / 2.0 );
 
-    vec3 rayStart = texture2D( frontfaceTexture, texc ).xyz;
-    vec3 rayEnd = texture2D( backfaceTexture, texc ).xyz;
+    vec3 rayStart = texture2D( frontfaceTexture, tex ).xyz;
+    //vec3 rayStart = worldSpaceCoordinate.xyz * 0.5 + 0.5;// frontFaceCoordinate;//texture2D( frontfaceTexture, texc ).xyz;
+    vec3 rayEnd = texture2D( backfaceTexture, tex ).xyz;
 
     vec3 ray = rayEnd - rayStart;
-    vec3 rayDirection = normalize ( ray );
 
     vec4 color = vec4( 0. );
     vec4 accumulatedColor = rayAccumulate( rayStart, ray, steps );
-    accumulatedColor.a = 1.0;
-    vec4 SDFcolor = raySurface( rayStart, ray, steps );
-    SDFcolor.a = 0.8;
-    color = accumulatedColor + SDFcolor;
+    //accumulatedColor.a = 1.0;
+    /*vec4 SDFcolor = raySurface( rayStart, ray, steps );
+    SDFcolor.a = 0.8;*/
+    color = accumulatedColor;// + SDFcolor;
 
     //vec4 sampleColor = sampleAs3DTexture( volumeTexture, rayStart );
     //gl_FragColor  = vec4(sampleColor.xyz, 1.0);
     //gl_FragColor = vec4( texture2D( frontfaceTexture, gl_FragCoord.xy / vec2( resolution.x, resolution.y ) ).xyz, 1.0 );
-    gl_FragColor = color;//vec4( color.xyz, 1.0 );
+    gl_FragColor = vec4( color.xyz, 1.0 );
+
+   /* bool x_edge = abs( worldSpaceCoordinate.x ) > 0.9;
+    bool y_edge = abs( worldSpaceCoordinate.y ) > 0.9;
+    bool z_edge = abs( worldSpaceCoordinate.z ) > 0.9;
+
+    if( ( x_edge && y_edge ) || ( x_edge && z_edge ) || ( y_edge && z_edge ) )
+       gl_FragColor = vec4( x_edge ? 1.0 : 0.0, y_edge ? 1.0 : 0.0, z_edge ? 1.0 : 0.0, 1.0 );*/
 }

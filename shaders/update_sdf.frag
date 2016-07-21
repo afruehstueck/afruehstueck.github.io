@@ -17,7 +17,7 @@ const float epsilon = 0.1;
 const float alpha = 0.95;
 
 //sample volumetric data from tiled 2d texture
-vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
+/*vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
     if( texCoord.x < 0. || texCoord.x > 1. ||
         texCoord.y < 0. || texCoord.y > 1. ||
         texCoord.z < 0. || texCoord.z > 1. ) {
@@ -44,6 +44,33 @@ vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
 
     //bilinear filtering is done at each texture2D lookup by default
     return texture2D( volume, slice );
+}*/
+
+
+vec2 computeSliceOffset(float slice, float slicesPerRow, vec2 sliceSize) {
+  return sliceSize * vec2(mod(slice, slicesPerRow),
+                          floor(slice / slicesPerRow));
+}
+
+vec4 sampleAs3DTexture( sampler2D tex, vec3 texCoord ) {
+  float numRows = tiles.y;
+  float slicesPerRow = tiles.x;
+  float size = tiles.x * tiles.y;
+  float slice   = texCoord.z * size;
+  float sliceZ  = floor(slice);                         // slice we need
+  float zOffset = fract(slice);                         // dist between slices
+
+  vec2 sliceSize = vec2(1.0 / slicesPerRow,             // u space of 1 slice
+                        1.0 / numRows);                 // v space of 1 slice
+
+  vec2 slice0Offset = computeSliceOffset(sliceZ, slicesPerRow, sliceSize);
+
+  vec2 slicePixelSize = sliceSize / size;               // space of 1 pixel
+  vec2 sliceInnerSize = slicePixelSize * (size - 1.0);  // space of size pixels
+
+  vec2 uv = slicePixelSize * 0.5 + texCoord.xy * sliceInnerSize;
+  vec4 slice0Color = texture2D(tex, slice0Offset + uv);
+  return slice0Color;
 }
 
 vec3 tiledTextureCoordToVolumeCoord( vec2 textureCoordinate ) {
@@ -278,4 +305,5 @@ void main( void ) {
     //gl_FragColor = vec4( normalizedDistance, ( abs( clampDistance ) < 0.05 ) ? 1. : 0., ( abs( clampDistance ) < 0.05 ) ? 1. : 0., normalizedDistance );
     gl_FragColor.r = normalizedDistance;
     gl_FragColor.gba = N;
+    //gl_FragColor.a = currentPosition.z;
 }
