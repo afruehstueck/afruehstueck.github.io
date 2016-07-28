@@ -342,7 +342,8 @@ function setupInterface() {
     $( '#renderCanvas' ).mousedown( startDraw );
     $( '#renderCanvas' ).mouseup( endDraw );
     $( '#renderCanvas' ).mouseout( endDraw );
-
+    $( '#renderCanvas' ).touchstart( startDraw );
+    $( '#renderCanvas' ).touchend( endDraw );
 }
 
 // once document is loaded, then load images, set up textures and framebuffers, and render
