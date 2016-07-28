@@ -46,7 +46,7 @@ void main( void ) {
     // todo normalize distance value by dividing through fbo resolution
     float distance = distanceToOrigin - seedRadius;
 
-    distance = distance / ( seedRadius /*/ 2.*/ );
+    distance = distance / ( seedRadius * 2. );
 
     float clampDistance = clamp( distance, -1., 1. );
     //normalize distance value to [0, 1] range

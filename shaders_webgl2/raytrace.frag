@@ -12,8 +12,6 @@ in vec4 projectedCoordinate;
 out vec4 color;
 
 uniform sampler2D backfaceTexture;
-uniform sampler2D frontfaceTexture;
-
 uniform sampler3D volumeTexture;
 uniform sampler3D distanceFieldTexture;
 
@@ -58,7 +56,7 @@ vec3 calcNormal( vec3 pos ) {
                     v4 * textureSDF( distanceFieldTexture, pos + v4 * eps ) );
 }
 
-vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps, bool renderDistanceField ) {
+vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
     vec3 accumulatedColor = vec3( 0.0 );
     float accumulatedAlpha = 0.0;
     float accumulatedLength = 0.0;
@@ -73,16 +71,18 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps, bool renderDistanceField
     float sampleValue = sampleColor.x;
     float sampleAlpha = 0.;
 
-    bool foundIsoSurface = false;
     float sdfSample = 1.;
     float prev = 1.;
 
     for ( int i = 0; i < MAX_STEPS; ++i ) {
-
         prev = sdfSample;
         sdfSample = texture( distanceFieldTexture, position ).r * 2.0 - 1.0;
         if( sign( sdfSample ) != sign( prev ) ) {
-            foundIsoSurface = true;
+            //found isosurface, stop raycasting
+            vec3 normal = texture( distanceFieldTexture, position ).bga;//
+            //vec3 normal = calcNormal( position );
+            accumulatedColor.xyz += normal * .5 + .5;
+            //accumulatedColor.xyz += vec3( .5, 0., 0. );
             break;
         }
 
@@ -102,32 +102,26 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps, bool renderDistanceField
         accumulatedLength += deltaLength;
 
         if( /*accumulatedAlpha >= 1. ||*/ accumulatedLength >= rayLength ) {
+            //ray is outside of box
             break;
         }
-    }
-
-    if( foundIsoSurface ) {
-        vec3 normal = texture( distanceFieldTexture, position ).bga;//
-        //vec3 normal = calcNormal( position );
-        accumulatedColor.xyz += normal * .5 + .5;
-        //accumulatedColor.xyz += vec3( .5, 0., 0. );
     }
     return vec4( accumulatedColor, accumulatedAlpha );
 }
 
 
 void main() {
-    int steps = 100;
+    int steps = 75;
 
     vec2 tex = vec2( ( ( projectedCoordinate.x / projectedCoordinate.w ) + 1.0 ) / 2.0,
                        ( ( projectedCoordinate.y / projectedCoordinate.w ) + 1.0 ) / 2.0 );
 
-    vec3 rayStart = texture( frontfaceTexture, tex ).xyz;
+    vec3 rayStart = worldSpaceCoordinate.xyz * 0.5 + 0.5; //front face of box
     vec3 rayEnd = texture( backfaceTexture, tex ).xyz;
 
     vec3 ray = rayEnd - rayStart;
 
-    vec4 accumulatedColor = rayAccumulate( rayStart, ray, steps, true );
+    vec4 accumulatedColor = rayAccumulate( rayStart, ray, steps );
 
     color = vec4( accumulatedColor.xyz, 1.0 );
 }

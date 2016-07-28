@@ -35,8 +35,8 @@ var width = 128,
     height = width,
     depth = slices.x * slices.y;
 
-//todo make selectable
-var seedOrigin = [ 0.5, 0.55, 0.45 ];
+var seedOrigin = [ 0.58, 0.11, 0.3 ];
+//var seedOrigin = [ 0.5, 0.55, 0.45 ];
 var seedRadius = 0.1;
 var targetIntensity = 0.2;
 
@@ -52,13 +52,13 @@ var volumePath;
 
 
 volumePath = 'res/bonsai128x128x256.png';
+//volumePath = 'res/heart128x128x256.png';
 //volumePath = 'res/bonsai256x256x256.png';
 //volumePath = 'res/foot256x256x256.png';
 //volumePath = 'res/male128x128x256.png';
 //volumePath = 'res/teapot256x256x256.png';
 
 var frameBuffers,
-    frontfaceFrameBuffer,
     backfaceFrameBuffer,
     volumeFrameBuffer,
     tiledVolume;
@@ -83,7 +83,6 @@ function resizeCanvas() {
     renderCanvas.style.position = renderCanvas.style.position || 'absolute';
 
     backfaceFrameBuffer = createFBO( gl, [ canvas_width, canvas_height ] );
-    frontfaceFrameBuffer = createFBO( gl, [ canvas_width, canvas_height ] );
 
     if( camera ) {
         camera.setAspectRatio( renderCanvas.width, renderCanvas.height );
@@ -263,9 +262,9 @@ function create3DTexture( gl, dimensions ) {
 }
 
 /* Loading fragment and vertex shaders using xhr */
-var setupShaders = function ( fragmentShaderPath, vertexShaderPath ) {
+var setupShaders = function ( vertexShaderPath, fragmentShaderPath, uniforms ) {
     var deferred = $.Deferred();
-    var shaders = loadShaders( [ fragmentShaderPath, vertexShaderPath ],
+    var shaders = loadShaders( [ vertexShaderPath, fragmentShaderPath ],
         /* Callback function initializing shaders when all resources have been loaded */
         function() {
             var program = gl.createProgram();
@@ -290,14 +289,15 @@ var setupShaders = function ( fragmentShaderPath, vertexShaderPath ) {
 
             gl.linkProgram( program );
 
-            program.name = fragmentShaderPath.slice( 0, -5 );
+            //name program by fragment shader name minus extension minus folder
+            program.name = fragmentShaderPath.slice( 0, -5 ).slice( fragmentShaderPath.indexOf( '/' ) + 1 );
 
             if ( !gl.getProgramParameter( program, gl.LINK_STATUS ) ) {
                 alert( 'could not initialise shaders for ' + program.name + ' program' );
             }
 
             //Todo init attrib & uniforms?
-            deferred.resolve( program );
+            deferred.resolve( [ program, uniforms ] );
         } );
 
     return deferred.promise();
@@ -335,90 +335,6 @@ function loadShaders( shaders, callback ) {
     return shaders;
 };
 
-var getRaytraceUniforms = function ( program ) {
-    program.position = gl.getAttribLocation( program, 'position' );
-    program.texCoord = gl.getAttribLocation( program, 'texCoord' );
-    program.resolution = gl.getUniformLocation( program, 'resolution' );
-    program.volumeDimensions = gl.getUniformLocation( program, 'volumeDimensions' );
-    program.tiles = gl.getUniformLocation( program, 'tiles' );
-    program.seedOrigin = gl.getUniformLocation( program, 'seedOrigin' );
-    program.iGlobalTime = gl.getUniformLocation( program, 'iGlobalTime' );
-    program.distanceFieldTexture = gl.getUniformLocation( program, 'distanceFieldTexture' );
-    program.backfaceTexture = gl.getUniformLocation( program, 'backfaceTexture' );
-    program.frontfaceTexture = gl.getUniformLocation( program, 'frontfaceTexture' );
-    program.volumeTexture = gl.getUniformLocation( program, 'volumeTexture' );
-    program.projectionMatrix = gl.getUniformLocation( program, 'projectionMatrix' );
-    program.modelViewMatrix = gl.getUniformLocation( program, 'modelViewMatrix' );
-    program.seedRadius = gl.getUniformLocation( program, 'seedRadius' );
-
-    gl.enableVertexAttribArray( program.position );
-    gl.enableVertexAttribArray( program.texCoord );
-};
-
-var getBackfacesUniforms = function ( program ) {
-    program.position = gl.getAttribLocation( program, 'position' );
-    program.texCoord = gl.getAttribLocation( program, 'texCoord' );
-    program.projectionMatrix = gl.getUniformLocation( program, 'projectionMatrix' );
-    program.modelViewMatrix = gl.getUniformLocation( program, 'modelViewMatrix' );
-
-    gl.enableVertexAttribArray( program.position );
-    gl.enableVertexAttribArray( program.texCoord );
-};
-
-//TODO: parse uniforms from shader? create shader and add uniforms to shader string?
-//parsing uniforms from shader code shouldn't be too hard actually
-var getInitVolumeUniforms = function ( program ) {
-    gl.useProgram( program );
-
-    program.position = gl.getAttribLocation( program, 'position' );
-    program.texCoord = gl.getAttribLocation( program, 'texCoord' );
-    program.tiles = gl.getUniformLocation( program, 'tiles' );
-    program.layer = gl.getUniformLocation( program, 'layer' );
-
-    gl.enableVertexAttribArray( program.position );
-    gl.enableVertexAttribArray( program.texCoord );
-};
-
-
-var getFillUniforms = function ( program ) {
-    gl.useProgram( program );
-    program.position = gl.getAttribLocation( program, 'position' );
-    program.texCoord = gl.getAttribLocation( program, 'texCoord' );
-    program.layer = gl.getUniformLocation( program, 'layer' );
-    program.tiles = gl.getUniformLocation( program, 'tiles' );
-    program.seedOrigin = gl.getUniformLocation( program, 'seedOrigin' );
-    program.seedRadius = gl.getUniformLocation( program, 'seedRadius' );
-
-    gl.enableVertexAttribArray( program.position );
-    gl.enableVertexAttribArray( program.texCoord );
-};
-
-var getUpdateUniforms = function ( program ) {
-    gl.useProgram( program );
-    program.position = gl.getAttribLocation( program, 'position' );
-    program.texCoord = gl.getAttribLocation( program, 'texCoord' );
-    program.layer = gl.getUniformLocation( program, 'layer' );
-    program.tiles = gl.getUniformLocation( program, 'tiles' );
-    program.sourceTexelSize = gl.getUniformLocation( program, 'sourceTexelSize' );
-    program.volumeDimensions = gl.getUniformLocation( program, 'volumeDimensions' );
-    program.seedOrigin = gl.getUniformLocation( program, 'seedOrigin' );
-    program.targetIntensity = gl.getUniformLocation( program, 'targetIntensity' );
-    program.distanceFieldTexture = gl.getUniformLocation( program, 'distanceFieldTexture' );
-    program.volumeTexture = gl.getUniformLocation( program, 'volumeTexture' );
-
-    gl.enableVertexAttribArray( program.position );
-    gl.enableVertexAttribArray( program.texCoord );
-}
-
-var getDebugUniforms = function ( program ) {
-    program.position = gl.getAttribLocation( program, 'position' );
-    program.texCoord = gl.getAttribLocation( program, 'texCoord' );
-    program.tex = gl.getUniformLocation( program, 'tex' );
-
-    gl.enableVertexAttribArray( program.position );
-    gl.enableVertexAttribArray( program.texCoord );
-};
-
 //TODO: make floating point optional
 //also TODO: make polyfill for non-extension-supporting browsers (eventually)
 function createFBO( gl, dimensions ) {
@@ -449,7 +365,7 @@ function createFBO( gl, dimensions ) {
     }
 
     console.log( '... created FBO with dimensions ' + dimensions[ 0 ] + 'x' + dimensions[ 1 ] + ( dimensions[ 2 ] ? ( 'x' + dimensions[ 2 ] ) : '' ) );
-    return { buffer: fbo, texture: fboTexture, width: width, height: height, depth: depth };
+    return { buffer: fbo, texture: fboTexture, width: width, height: height, depth: dimensions.length > 2 ? depth : undefined };
 }
 
 function create2DBuffers() {
@@ -569,6 +485,7 @@ function renderQuad( program ) {
     gl.bindBuffer( gl.ARRAY_BUFFER, null );
 }
 
+//Render a 2D quad to all layers of 3D texture using current program
 function renderTo3DTexture( program, framebuffer, depth ) {
     gl.bindFramebuffer( gl.FRAMEBUFFER, framebuffer.buffer );
 
@@ -584,24 +501,6 @@ function renderTo3DTexture( program, framebuffer, depth ) {
 
 init();
 
-/*function fillVolumeArray ( sourceImage, width, height, depth ) {
- var data3d = new Float64Array( width * height * depth * 4 ); //RGBA array
-
- for( var x = 0; x < width; x++ ) {
- for( var y = 0; y < height; y++ ) {
- for( var z = 0; z < depth; z++ ) {
- array[ x ][ y ][ z ][ 0 ] = 0;
- 255;
- array[ x ][ y ][ z ][ 1 ] = 0;
- 255;
- array[ x ][ y ][ z ][ 2 ] = 0;
- }
- }
- }
-
- return data3d;
- }*/
-
 function init() {
 
     resizeCanvas();
@@ -611,13 +510,10 @@ function init() {
 
     var sourceImage = new Image();
     sourceImage.onload = function () {
-        //var data3d = fillVolumeArray( sourceImage, width, height, depth );
+        //load tiled volume from PNG to texture
         tiledVolume = createTextureFromImage( gl, sourceImage );
+        //create 3D FBO for 3D volume texture
         volumeFrameBuffer = createFBO( gl, [ width, height, depth ] );
-        //sourceVolume = create3DTexture( gl, width, height, depth );
-
-        var sourceWidth = sourceImage.width; // should equal width * slices.x
-        var sourceHeight = sourceImage.height; // should equal height * slices.y
 
         //create two fbos to alternately draw to them during iterations
         frameBuffers = [ createFBO( gl, [ width, height, depth ] ),
@@ -627,88 +523,115 @@ function init() {
     };
     sourceImage.src = volumePath;
 
-    create3DBuffers();
     create2DBuffers();
+    create3DBuffers();
 
-    var initvolume_async_load = setupShaders( 'shaders_webgl2/initialize_volume.frag', 'shaders_webgl2/quad.vert' );
-    var fillsdf_async_load = setupShaders( 'shaders_webgl2/initialize_sdf.frag', 'shaders_webgl2/quad.vert' );
-    var updatesdf_async_load = setupShaders( 'shaders_webgl2/update_sdf.frag', 'shaders_webgl2/quad.vert' );
-    var debug_async_load = setupShaders( 'shaders_webgl2/debug_texture.frag', 'shaders_webgl2/quad.vert' );
-    var backfaces_async_load = setupShaders( 'shaders_webgl2/backfaces.frag', 'shaders_webgl2/projected_box.vert' );
-    var raytrace_async_load = setupShaders( 'shaders_webgl2/raytrace.frag', 'shaders_webgl2/projected_box.vert' );
+
+    var quad_vert = 'shaders_webgl2/quad.vert';
+    var box_vert  = 'shaders_webgl2/projected_box.vert';
+
+    var attribs = [ 'position', 'texCoord' ];
+
+    //TODO: parse uniforms from shader? create shader and add uniforms to shader string?
+    //parsing uniforms from shader code shouldn't be too hard ... actually
+
+    //list of shaders
+    //format: [ vertexShaderPath, fragmentShaderPath, Array_of_uniforms, renderFunction
+    var shaderPairs = [
+        [ quad_vert, 'shaders_webgl2/initialize_volume.frag',
+            [   'tiles',
+                'layer' ]
+        ],
+        [ quad_vert, 'shaders_webgl2/initialize_sdf.frag',
+            [   'tiles',
+                'layer',
+                'seedOrigin',
+                'seedRadius' ]
+        ],
+        [ quad_vert, 'shaders_webgl2/update_sdf.frag',
+            [   'tiles',
+                'layer',
+                'volumeDimensions',
+                'seedOrigin',
+                'targetIntensity',
+                'distanceFieldTexture',
+                'volumeTexture' ]
+        ],
+        [ quad_vert, 'shaders_webgl2/debug_texture.frag',
+            [   'tex' ]
+        ],
+        [ box_vert,  'shaders_webgl2/backfaces.frag',
+            [   'projectionMatrix',
+                'modelViewMatrix' ]
+        ],
+        [ box_vert,  'shaders_webgl2/raytrace.frag',
+            [   'distanceFieldTexture',
+                'backfaceTexture',
+                'volumeTexture',
+                'projectionMatrix',
+                'modelViewMatrix' ]
+        ]
+    ];
+
+    var deferreds = $.map( shaderPairs, function( current ) {
+        return setupShaders( current[ 0 ], current[ 1 ], current[ 2 ] );
+    });
+
+    deferreds.push( volume_async_load );
+
+    var getLocations = function ( program, attribs, uniforms ) {
+        $.map( attribs, function( attrib ) {
+            program[ attrib ] = gl.getAttribLocation( program, attrib );
+        });
+        $.map( uniforms, function( uniform ) {
+            program[ uniform ] = gl.getUniformLocation( program, uniform );
+        });
+    };
 
     //todo: make execution of deferred and their resolve objects cleaner
-    $.when( initvolume_async_load,
-        fillsdf_async_load,
-        debug_async_load,
-        backfaces_async_load,
-        raytrace_async_load,
-        updatesdf_async_load,
-        volume_async_load ).done(
-        function ( program_initVolume,
-                   program_fill,
-                   program_debug,
-                   program_backfaces,
-                   program_raytrace,
-                   program_update ) {
-            getInitVolumeUniforms( program_initVolume );
-            program_initVolume.render = initializeVolume;
-            programs[ 'initVolume' ] = program_initVolume;
+    //when all deferreds are resolved, then
+    $.when.apply( $, deferreds ).done( function() {
 
-            getFillUniforms( program_fill );
-            program_fill.render = initializeDistanceField;
-            programs[ 'fill' ] = program_fill;
+        //step through all created shader programs and obtain their uniform and attrib locations
+        //store created programs to programs array under the name of their fragment shader
+        for( var i = 0; i < arguments.length; i++ ) {
+            if ( arguments[ i ] === undefined ) {
+                continue;
+            }
+            var program = arguments[ i ][ 0 ];
+            var uniforms = arguments[ i ][ 1 ];
+            getLocations( program, attribs, uniforms );
+            programs[ program.name ] = program;
+        }
 
-            getDebugUniforms( program_debug );
-            program_debug.render = renderTextureToViewport;
-            programs[ 'debug' ] = program_debug;
+        gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+        updateDistanceFieldUniforms( programs[ 'update_sdf' ] );
 
-            getBackfacesUniforms( program_backfaces );
-            program_backfaces.render = renderFaces;
-            programs[ 'backfaces' ] = program_backfaces;
+        gl.enableVertexAttribArray( programs[ 'raytrace' ].position );
+        gl.enableVertexAttribArray( programs[ 'raytrace' ].texCoord );
+        //updateRaytraceUniforms( programs[ 'raytrace' ] );
+        renderOnce();
+        animate();
+    } );
+}
 
-            getRaytraceUniforms( program_raytrace );
-            program_raytrace.render = renderRaytrace;
-            programs[ 'raytrace' ] = program_raytrace;
-
-            getUpdateUniforms( program_update );
-            program_update.render = updateDistanceField;
-            programs[ 'update' ] = program_update;
-
-            gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
-            updateDistanceFieldUniforms( program_update );
-            updateRaytraceUniforms( program_raytrace );
-            renderOnce();
-            animate();
-
-            /*(function iterate( i ) {
-             setTimeout( function () {
-             render();
-             if ( --i ) {          // If i > 0, keep going
-             iterate( i );// Call the loop again, and pass it the current value of i
-             }
-             }, 50 );
-             })( 100 );*/
-
-            /*(function loop() {
-             window.update( loop );
-             render();
-             })();*/
-        } );
+function updateDistanceFieldUniforms( program ) {
+    gl.useProgram( program );
+    gl.uniform2f( program.tiles, slices.x, slices.y );
+    gl.uniform3f( program.seedOrigin, seedOrigin[ 0 ], seedOrigin[ 1 ], seedOrigin[ 2 ] );
+    gl.uniform1f( program.targetIntensity, targetIntensity );
+    gl.uniform3f( program.volumeDimensions, width, height, slices.x * slices.y );
 }
 
 function renderOnce() {
     if( $.isEmptyObject( programs ) ) return;
 
-    var program_initializeVolume = programs[ 'initVolume' ];
-
-    program_initializeVolume.render( volumeFrameBuffer, tiledVolume );
-
-    //if( programs === undefined || programs.length == 0 ) return;
-    var program_fill = programs[ 'fill' ];
+    console.log( 'initialize...' );
+    //transfer the volume from the two tiled texture into the volume 3D texture
+    initializeVolume( programs[ 'initialize_volume' ], volumeFrameBuffer, tiledVolume );
 
     //initialize the SDF - render initial SDF to FBO
-    program_fill.render( frameBuffers[ 0 ], seedOrigin, seedRadius );
+    initializeDistanceField( programs[ 'initialize_sdf' ], frameBuffers[ 0 ], seedOrigin, seedRadius );
 }
 
 var backfacing = true;
@@ -741,52 +664,35 @@ function nextIteration() {
     lastCalledTime = Date.now();
 
     if( iteration < MAX_ITERATION ) {
-        var program_update = programs[ 'update' ];
-        program_update.render( volumeFrameBuffer, frameBuffers[ iteration % 2 ], frameBuffers[ ( iteration + 1 ) % 2 ] );
+        updateDistanceField( programs[ 'update_sdf' ], volumeFrameBuffer, frameBuffers[ iteration % 2 ], frameBuffers[ ( iteration + 1 ) % 2 ] );
         iteration++;
     }
     console.log( 'iteration ' + iteration );
 }
 
 function render() {
-    //stats.begin();
     if( $.isEmptyObject( programs ) ) return;
-    //if( programs === undefined || programs.length == 0 ) return;
 
-    var program_debug = programs[ 'debug' ];
-    var program_backfaces = programs[ 'backfaces' ];
-    var program_raytrace = programs[ 'raytrace' ];
-
-    //render back and front faces
-    program_backfaces.render( backfaceFrameBuffer, backfacing );
-    program_backfaces.render( frontfaceFrameBuffer, !backfacing );
-    program_raytrace.render( volumeFrameBuffer.texture, frameBuffers[ iteration % 2 ].texture, frontfaceFrameBuffer.texture, backfaceFrameBuffer.texture );
-
-    //program_raytrace.render( volumeFrameBuffer.texture, frameBuffers[ ( iteration ) % 2 ].texture, frontfaceFrameBuffer.texture, backfaceFrameBuffer.texture );
-    //program_raytrace.render( frameBuffers[ ( iteration + 1 ) % 2 ].texture, frameBuffers[ 0 ].texture, frontfaceFrameBuffer.texture, backfaceFrameBuffer.texture );
+    //render backface
+    renderBackface( programs[ 'backfaces' ], backfaceFrameBuffer );
+    //raytrace volume
+    renderRaytrace( programs[ 'raytrace' ], volumeFrameBuffer.texture, frameBuffers[ iteration % 2 ].texture, backfaceFrameBuffer.texture );
 
     //render a texture to fullscreen (for debug purposes)
-    //program_debug.render( tiledVolume );
+    //renderTextureToViewport(programs[ 'debug_texture' ], tiledVolume );
 
     /*
      //debug: write rendercanvas to download folder
      var image = renderCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream");  // here is the most important part because if you dont replace you will get a DOM 18 exception.
      window.location.href = image;
+
      */
-
-
-    //if( iteration < MAX_ITERATION ) iteration++;
-
-    //program_debug.render( backfaceFrameBuffer.texture );
-    //stats.end();
-    //window.update( render );
-    /*if( iteration++ < MAX_ITERATION ) {
-     render();
-     }*/
 }
 
-function initializeVolume ( volumeFrameBuffer, tiledTexture ) {
-    var program = this;
+// RENDER FUNCTIONS
+
+//transfer volume from tiled 2D format into 3D texture
+function initializeVolume ( program, volumeFrameBuffer, tiledTexture ) {
     gl.viewport( 0, 0, width, height );
     gl.useProgram( program );
 
@@ -799,8 +705,8 @@ function initializeVolume ( volumeFrameBuffer, tiledTexture ) {
     renderTo3DTexture( program, volumeFrameBuffer, depth );
 }
 
-function initializeDistanceField( frameBuffer, seedOrigin, seedRadius ) {
-    var program = this;
+//initialize distance field from seed
+function initializeDistanceField( program, frameBuffer, seedOrigin, seedRadius ) {
     gl.viewport( 0, 0, width, height );
     gl.useProgram( program );
 
@@ -811,8 +717,8 @@ function initializeDistanceField( frameBuffer, seedOrigin, seedRadius ) {
     renderTo3DTexture( program, frameBuffer, depth );
 }
 
-function updateDistanceField( volumeFrameBuffer, sourceFrameBuffer, targetFrameBuffer ) {
-    var program = this;
+//update distance field by looking up values from one texture and updating it into other
+function updateDistanceField( program, volumeFrameBuffer, sourceFrameBuffer, targetFrameBuffer ) {
     gl.viewport( 0, 0, width, height );
     gl.useProgram( program );
 
@@ -825,17 +731,10 @@ function updateDistanceField( volumeFrameBuffer, sourceFrameBuffer, targetFrameB
     gl.uniform1i( program.distanceFieldTexture, 1 );
 
     renderTo3DTexture( program, targetFrameBuffer, depth );
-
-    /*gl.bindFramebuffer( gl.FRAMEBUFFER, targetFrameBuffer.buffer ); //fbo texture to write to
-
-     renderQuad( program );
-
-     gl.bindFramebuffer( gl.FRAMEBUFFER, null );*/
 }
 
-function renderTextureToViewport( texture ) {
-    var program = this;
-
+//render texture into screen / for debugging
+function renderTextureToViewport( program, texture ) {
     gl.viewport( 0, 0, renderCanvas.width, renderCanvas.height );
 
     gl.useProgram( program );
@@ -850,16 +749,13 @@ function renderTextureToViewport( texture ) {
     gl.bindTexture( gl.TEXTURE_2D, null );
 }
 
-function renderFaces( frameBuffer, backfacing ) {
-    var program = this;
-
+//render backface of cube
+function renderBackface( program, frameBuffer ) {
     gl.enable( gl.CULL_FACE );
     gl.enable( gl.DEPTH_TEST );
-    if( backfacing ) {
-        gl.cullFace( gl.FRONT );
-    } else {
-        gl.cullFace( gl.BACK );
-    }
+
+    gl.cullFace( gl.FRONT );
+
     gl.bindFramebuffer( gl.FRAMEBUFFER, frameBuffer.buffer ); //render to framebuffer, not screen
 
     gl.viewport( 0, 0, renderCanvas.width, renderCanvas.height );
@@ -877,9 +773,8 @@ function renderFaces( frameBuffer, backfacing ) {
     gl.disable( gl.DEPTH_TEST );
 }
 
-function renderRaytrace( volumeTexture, distanceFieldTexture, frontfaceTexture, backfaceTexture ) {
-    var program = this;
-
+//do raytracing of cube
+function renderRaytrace( program, volumeTexture, distanceFieldTexture, backfaceTexture ) {
     gl.viewport( 0, 0, renderCanvas.width, renderCanvas.height );
 
     gl.useProgram( program );
@@ -889,16 +784,12 @@ function renderRaytrace( volumeTexture, distanceFieldTexture, frontfaceTexture, 
     gl.uniform1i( program.backfaceTexture, 0 );
 
     gl.activeTexture( gl.TEXTURE1 );
-    gl.bindTexture( gl.TEXTURE_2D, frontfaceTexture );
-    gl.uniform1i( program.frontfaceTexture, 1 );
+    gl.bindTexture( gl.TEXTURE_3D, volumeTexture );
+    gl.uniform1i( program.volumeTexture, 1 );
 
     gl.activeTexture( gl.TEXTURE2 );
-    gl.bindTexture( gl.TEXTURE_3D, volumeTexture );
-    gl.uniform1i( program.volumeTexture, 2 );
-
-    gl.activeTexture( gl.TEXTURE3 );
     gl.bindTexture( gl.TEXTURE_3D, distanceFieldTexture );
-    gl.uniform1i( program.distanceFieldTexture, 3 );
+    gl.uniform1i( program.distanceFieldTexture, 2 );
 
     gl.uniformMatrix4fv( program.projectionMatrix, false, camera.projectionMatrix );
     gl.uniformMatrix4fv( program.modelViewMatrix, false, camera.modelViewMatrix );
@@ -907,16 +798,7 @@ function renderRaytrace( volumeTexture, distanceFieldTexture, frontfaceTexture, 
     renderCube( program );
 }
 
-function updateDistanceFieldUniforms( program ) {
-    gl.useProgram( program );
-    gl.uniform2f( program.tiles, slices.x, slices.y );
-    gl.uniform2f( program.sourceTexelSize, 1. / width, 1. / height );
-    gl.uniform3f( program.seedOrigin, seedOrigin[ 0 ], seedOrigin[ 1 ], seedOrigin[ 2 ] );
-    gl.uniform1f( program.targetIntensity, targetIntensity );
-    gl.uniform3f( program.volumeDimensions, width, height, slices.x * slices.y );
-
-}
-
+/*
 function updateRaytraceUniforms( program ) {
     gl.useProgram( program );
     //gl.uniform1f( program.iGlobalTime, ( Date.now() - start ) / 1000.0 );
@@ -925,4 +807,4 @@ function updateRaytraceUniforms( program ) {
     gl.uniform2f( program.tiles, slices.x, slices.y );
     gl.uniform3f( program.volumeDimensions, width, height, slices.x * slices.y );
     gl.uniform3f( program.seedOrigin, seedOrigin[ 0 ], seedOrigin[ 1 ], seedOrigin[ 2 ] );
-}
+}*/

@@ -18,7 +18,7 @@ uniform float targetIntensity;
 
 //todo: make these uniform
 const float eps = 1e-9;
-const float epsilon = 0.15;
+const float epsilon = 0.1;
 const float alpha = 1.;
 
 vec4 sampleWithOffset( sampler3D volume, vec3 pos, vec3 offset ) {
@@ -39,6 +39,7 @@ void main( void ) {
 
     vec4 encodedDistance = texture( distanceFieldTexture, currentPosition );
     float currentDistance = encodedDistance.r * 2. - 1.; //de-normalize
+
 
     /* calculate all the values
     | u6 | u7 | u8 |
