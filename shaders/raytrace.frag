@@ -248,11 +248,11 @@ vec4 raySurface( vec3 rayStart, vec3 ray, int steps ) {
         //position = rayStart + distance * direction;
         //vec3 normal = calcNormal( position );
         vec3 normal = sampleAs3DTexture( distanceFieldTexture, position ).bga;//calcNormal( position );
-        color.xyz += normal * .5 + .5;
-        color.a = 1.0;
-        //vec3 material = doMaterial( position, normal );
+        //color.xyz += normal * .5 + .5;
+        //color.a = 1.0;
+        vec3 material = doMaterial( position, normal );
 
-        //color.xyz = doLighting( position, normal, material );
+        color.xyz = doLighting( position, normal, material );
     }
     return color;
 }
