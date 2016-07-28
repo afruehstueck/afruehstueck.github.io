@@ -19,8 +19,8 @@ vec4 sampleAs3DTexture( sampler2D volume, vec2 texCoord ) {
 
     vec2 slice;
 
-    float dx = mod( layer, tiles.x );
-    float dy = floor( layer / tiles.x );
+    float dx = mod( layer * 2., tiles.x );
+    float dy = floor( layer * 2. / tiles.x );
 
     slice.x = ( texCoord.x + dx ) / tiles.x;
     slice.y = ( texCoord.y + dy ) / tiles.y;

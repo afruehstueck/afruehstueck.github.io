@@ -10,7 +10,7 @@ out vec4 color;
 
 uniform float layer;
 uniform vec3  volumeDimensions;
-uniform vec2  tiles;
+uniform float numLayers;
 uniform vec3  seedOrigin;
 uniform sampler3D distanceFieldTexture;
 uniform sampler3D volumeTexture;
@@ -18,12 +18,12 @@ uniform float targetIntensity;
 
 //todo: make these uniform
 const float eps = 1e-9;
-const float epsilon = 0.1;
+const float epsilon = 0.25;
 const float alpha = 1.;
 
-vec4 sampleWithOffset( sampler3D volume, vec3 pos, vec3 offset ) {
+vec4 sampleWithOffset( sampler3D volume, vec3 texCoord, vec3 offset ) {
     //todo theck if offset coord goes outside of volume - currently returning black for sampling outside of volume
-    vec3 offsetCoord = pos + offset / volumeDimensions;
+    vec3 offsetCoord = texCoord + offset / volumeDimensions;
 
     return texture( volume, offsetCoord );
 }
@@ -34,8 +34,9 @@ float getNormalizedSample( sampler3D volume, vec3 texCoord, vec3 offset ) {
 
 void main( void ) {
     //calculate volume position from texture coordinate
-    float numLayers = tiles.x * tiles.y;
-    vec3 currentPosition = vec3( textureCoordinate.x, textureCoordinate.y, layer / numLayers );
+
+    float currentLayer = layer / numLayers + 0.5 / numLayers;
+    vec3 currentPosition = vec3( textureCoordinate.x, textureCoordinate.y, currentLayer );
 
     vec4 encodedDistance = texture( distanceFieldTexture, currentPosition );
     float currentDistance = encodedDistance.r * 2. - 1.; //de-normalize
@@ -56,14 +57,6 @@ void main( void ) {
     float u7 = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  1.,  0. ) );
     float u4pz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  0.,  1. ) );
     float u4mz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  0., -1. ) );
-    //calculate derivatives of level set
-    float Dx   = ( u5   - u3 ) / 2.;
-    float Dy   = ( u7   - u1 ) / 2.;
-    float Dz   = ( u4pz - u4mz ) / 2.;
-    if( abs( Dx ) < eps || abs( Dy ) < eps || abs ( Dz ) < eps ) {
-        color = encodedDistance;
-        return;
-    }
 
     float u0 = getNormalizedSample( distanceFieldTexture, currentPosition, vec3( -1., -1.,  0. ) );
     float u2 = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  1., -1.,  0. ) );
@@ -80,7 +73,10 @@ void main( void ) {
     float u5mz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  1.,  0., -1. ) );
     float u7mz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  1., -1. ) );
 
-
+    //calculate derivatives of level set by calculating central differences
+    float Dx   = ( u5   - u3 ) / 2.;
+    float Dy   = ( u7   - u1 ) / 2.;
+    float Dz   = ( u4pz - u4mz ) / 2.; // tmp
     float Dxp  = ( u5   - u4 );
     float Dxm  = ( u4   - u3 );
     float Dyp  = ( u7   - u4 );
@@ -95,10 +91,16 @@ void main( void ) {
     float Dxmz = ( u5mz - u3mz ) / 2.;
     float Dypz = ( u7pz - u1pz ) / 2.;
     float Dymz = ( u7mz - u1mz ) / 2.;
-    float Dzpx = ( u5pz - u5mz ) / 2.;
-    float Dzmx = ( u3pz - u3mz ) / 2.;
-    float Dzpy = ( u7pz - u7mz ) / 2.;
-    float Dzmy = ( u1pz - u1mz ) / 2.;
+
+    float Dzpx = ( u5pz - u5mz ) / 2.; // tmp
+    float Dzmx = ( u3pz - u3mz ) / 2.; // tmp
+    float Dzpy = ( u7pz - u7mz ) / 2.; // tmp
+    float Dzmy = ( u1pz - u1mz ) / 2.; // tmp
+
+    /*if( abs( Dx ) < eps && abs( Dy ) < eps && abs ( Dz ) < eps ) {
+        color = encodedDistance;
+        return;
+    }*/
 
     /* todo something's not right with some of the tiles :( check!
     if( Dx == 0. ) {
@@ -155,11 +157,11 @@ void main( void ) {
     //calculate mean curvature
     float H = ( nxp - nxm + nyp - nym + nzp - nzm ) / 2.;
 
-    if( abs( u1 ) == 1. ||
-        abs( u3 ) == 1. ||
-        abs( u4 ) == 1. ||
-        abs( u5 ) == 1. ||
-        abs( u7 ) == 1. ) {
+    if( abs( u1 ) > 1. - eps ||
+        abs( u3 ) > 1. - eps ||
+        abs( u4 ) > 1. - eps ||
+        abs( u5 ) > 1. - eps ||
+        abs( u7 ) > 1. - eps ) {
             // region with (potentially) clamped values
         H = 0.;
     }

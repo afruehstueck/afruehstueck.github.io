@@ -33,12 +33,12 @@ var start = Date.now();
 var slices = { x: 16, y: 16 };
 var width = 128,
     height = width,
-    depth = slices.x * slices.y;
+    depth = 128;//slices.x * slices.y;
 
-var seedOrigin = [ 0.58, 0.11, 0.3 ];
-//var seedOrigin = [ 0.5, 0.55, 0.45 ];
+//var seedOrigin = [ 0.58, 0.11, 0.3 ];
+var seedOrigin = [ 0.5, 0.5, 0.55 ];
 var seedRadius = 0.1;
-var targetIntensity = 0.2;
+var targetIntensity = 0.1;
 
 var updating = false;
 
@@ -543,13 +543,13 @@ function init() {
                 'layer' ]
         ],
         [ quad_vert, 'shaders_webgl2/initialize_sdf.frag',
-            [   'tiles',
+            [   'numLayers',
                 'layer',
                 'seedOrigin',
                 'seedRadius' ]
         ],
         [ quad_vert, 'shaders_webgl2/update_sdf.frag',
-            [   'tiles',
+            [   'numLayers',
                 'layer',
                 'volumeDimensions',
                 'seedOrigin',
@@ -617,10 +617,11 @@ function init() {
 
 function updateDistanceFieldUniforms( program ) {
     gl.useProgram( program );
-    gl.uniform2f( program.tiles, slices.x, slices.y );
+    //gl.uniform2f( program.tiles, slices.x, slices.y );
+    gl.uniform1f( program.numLayers, depth );
     gl.uniform3f( program.seedOrigin, seedOrigin[ 0 ], seedOrigin[ 1 ], seedOrigin[ 2 ] );
     gl.uniform1f( program.targetIntensity, targetIntensity );
-    gl.uniform3f( program.volumeDimensions, width, height, slices.x * slices.y );
+    gl.uniform3f( program.volumeDimensions, width, height, depth );
 }
 
 function renderOnce() {
@@ -710,7 +711,7 @@ function initializeDistanceField( program, frameBuffer, seedOrigin, seedRadius )
     gl.viewport( 0, 0, width, height );
     gl.useProgram( program );
 
-    gl.uniform2f( program.tiles, slices.x, slices.y );
+    gl.uniform1f( program.numLayers, depth );
     gl.uniform3f( program.seedOrigin, seedOrigin[ 0 ], seedOrigin[ 1 ], seedOrigin[ 2 ] );
     gl.uniform1f( program.seedRadius, seedRadius );
 

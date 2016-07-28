@@ -11,7 +11,7 @@ uniform float layer;
 
 uniform vec3 seedOrigin;
 uniform float seedRadius;
-uniform vec2 tiles;
+uniform float numLayers;
 /*
 vec3 tiledTextureCoordToVolumeCoord( vec2 textureCoordinate ) {
     //scale textureCoordinate from [ 0, 1 ] to [ 0, tiles{x,y} ]
@@ -37,8 +37,8 @@ void main( void ) {
 
     //vec3 currentPosition = vec3( x, y, z );
     //vec3 currentPosition = tiledTextureCoordToVolumeCoord( textureCoordinate );
-    float numLayers = tiles.x * tiles.y;
-    vec3 currentPosition = vec3( textureCoordinate.x, textureCoordinate.y, layer / numLayers );
+    float currentLayer = layer / numLayers + 0.5 / numLayers;
+    vec3 currentPosition = vec3( textureCoordinate.x, textureCoordinate.y, currentLayer );
 
     float distanceToOrigin = distance( seedOrigin, currentPosition );
     //WATCH OUT, different from other example
@@ -46,7 +46,7 @@ void main( void ) {
     // todo normalize distance value by dividing through fbo resolution
     float distance = distanceToOrigin - seedRadius;
 
-    distance = distance / ( seedRadius * 2. );
+    //distance = distance / ( seedRadius * 2. );
 
     float clampDistance = clamp( distance, -1., 1. );
     //normalize distance value to [0, 1] range
