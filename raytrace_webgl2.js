@@ -88,7 +88,7 @@ function resizeCanvas() {
         camera.setAspectRatio( renderCanvas.width, renderCanvas.height );
     }
 
-    animate();
+    //animate();
 }
 
 //adjust canvas dimensions and re-render on resize
@@ -146,6 +146,7 @@ function onMouseUpEvent( event ) {
 function onMouseMoveEvent( event ) {
     if( ! ( leftMouseDown  || rightMouseDown ) ) return;
 
+
     var mousePos = getNormalizedMousePos( renderCanvas, event );
 
     //only rerender if mouseposition has changed from previous
@@ -158,7 +159,18 @@ function onMouseMoveEvent( event ) {
         camera.pan( [ mousePos.x - prevMousePos.x , mousePos.y - prevMousePos.y ] );
     }
     prevMousePos = mousePos;
+
+    if( !lastCalledTime ) {
+        lastCalledTime = Date.now();
+    }
+    var delta = ( Date.now() - lastCalledTime ) / 1000;
+
+    if( delta < 0.01 ) return;
+
+    lastCalledTime = Date.now();
+
     camera.update();
+    render();
 
     /*if( !lastCalledTime ) {
      lastCalledTime = Date.now();
@@ -173,6 +185,7 @@ function onMouseMoveEvent( event ) {
 
 function onKeyPressEvent( event ) {
     updating = true;
+    nextIteration();
     //render();
 }
 
@@ -611,7 +624,7 @@ function init() {
         gl.enableVertexAttribArray( programs[ 'raytrace' ].texCoord );
         //updateRaytraceUniforms( programs[ 'raytrace' ] );
         renderOnce();
-        animate();
+        render();
     } );
 }
 
@@ -669,6 +682,7 @@ function nextIteration() {
         iteration++;
     }
     console.log( 'iteration ' + iteration );
+    render();
 }
 
 function render() {
