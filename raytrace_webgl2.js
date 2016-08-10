@@ -7,9 +7,9 @@ let width = 128,
     depth = 128;//slices.x * slices.y;
 
 //let seedOrigin = [ 0.58, 0.11, 0.3 ];
-let seedOrigin = [ 0.5, 0.5, 0.55 ];
-let seedRadius = 0.1;
-let targetIntensity = 0.1;
+let seedOrigin = { x: 0.4, y: 0.83, z: 0.22 };
+let seedRadius = 0.13;
+let targetIntensity = -1.;
 
 let updating = false;
 
@@ -21,10 +21,10 @@ let volumePath;
 //volumePath = 'res/test/smallercubeg128x128x256.png';
 //volumePath = 'res/test/smallercube256x256x256.png';
 
-volumePath = 'res/bonsai128x128x256.png';
+//volumePath = 'res/bonsai128x128x256.png';
 //volumePath = 'res/heart128x128x256.png';
 //volumePath = 'res/bonsai256x256x256.png';
-//volumePath = 'res/foot256x256x256.png';
+volumePath = 'res/foot256x256x256.png';
 //volumePath = 'res/male128x128x256.png';
 //volumePath = 'res/teapot256x256x256.png';
 
@@ -166,10 +166,6 @@ let setupShaders = function ( vertexShaderPath, fragmentShaderPath, uniforms ) {
 
                 if( gl.type === 'webgl' ) {
                     shaderSource = convertShader( shaderSource, shaderObject.type );
-
-                    if( fragmentShaderPath.slice( 0, -5 ).slice( fragmentShaderPath.indexOf( '/' ) + 1 ) == 'raytrace' ) {
-                            console.log( shaderSource );
-                    }
                 }
 
                 gl.shaderSource( shader, shaderSource );
@@ -272,7 +268,7 @@ uniform vec2 tiles;
 
 vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
     float volumeDepth = tiles.x * tiles.y;
-    float max_slice = volumeDepth;
+    float max_slice = volumeDepth - 1.;
     vec2 slice1, slice2;
     
     //z coordinate determines which 2D tile we sample from
@@ -526,7 +522,7 @@ for( let index = 0; index < canvases.length; index++ ) {
 
     let isGL = !!gl;
     if( !isGL ) {
-        $( 'body' ).prepend( '<div id="log"></div>' );
+        //$( 'body' ).prepend( '<div id="log"></div>' );
         if( glType === 'webgl2' ) {
             $( '#log' ).html( 'WebGL 2.0 is not available in your browser.  See <a href="https://www.khronos.org/webgl/wiki/Getting_a_WebGL_Implementation">How to run WebGL 2.0</a>' );
         } else {
@@ -546,6 +542,44 @@ for( let index = 0; index < canvases.length; index++ ) {
         //gl.renderCanvas = canvas;
     }
 }
+
+function getSeedValue( img ) {
+    var canvas = document.createElement( 'canvas' );
+
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    var context = canvas.getContext( '2d' );
+    context.drawImage( img, 0, 0 );
+
+    let numTiles = tiles.x * tiles.y;
+    let dx = ( seedOrigin.z * numTiles ) % tiles.x;
+    let dy = Math.floor( ( seedOrigin.z * numTiles ) / tiles.x );
+
+    let px = ( seedOrigin.x + dx ) / tiles.x;
+    let py = ( seedOrigin.y + dy ) / tiles.y;
+
+    px *= img.width;
+    py *= img.height;
+
+    if( px > img.width || py > img.height || px < 0 || py < 0 ) {
+        console.log('fu');
+    }
+
+    var imageData = context.getImageData( px, py, 1, 1 );
+    var pixel = imageData.data;
+    //return texture( volume, slice );
+
+    var rgba = 'rgba(' + pixel[ 0 ] + ',' + pixel[ 1 ] + ',' + pixel[ 2 ] + ',' + pixel[ 3 ] + ')';
+    //$('#log')[0].style.background = rgba;
+    $('#log').css( 'background-color', rgba );
+    $('#log').html( rgba );
+
+    console.log(rgba);
+    targetIntensity = pixel[ 0 ];
+    return pixel;
+}
+
 function init( canvas ) {
     canvas.busy = false;
 
@@ -557,6 +591,11 @@ function init( canvas ) {
 
     let sourceImage = new Image();
     sourceImage.onload = function () {
+
+        if( targetIntensity == -1. ) {
+            getSeedValue( sourceImage );
+        }
+
         //load tiled volume from PNG to texture
         canvas.tiledVolume = createTextureFromImage.call( canvas, sourceImage );
         //create 3D FBO for 3D volume texture
@@ -665,7 +704,6 @@ function init( canvas ) {
         gl.enableVertexAttribArray( canvas.programs[ 'raytrace' ].texCoord );
         //updateRaytraceUniforms( programs[ 'raytrace' ] );
         renderOnce.call( canvas );
-        render.call( canvas );
     } );
 }
 
@@ -675,7 +713,7 @@ function updateDistanceFieldUniforms( program ) {
     gl.useProgram( program );
     //gl.uniform2f( program.tiles, slices.x, slices.y );
     gl.uniform1f( program.numLayers, depth );
-    gl.uniform3f( program.seedOrigin, seedOrigin[ 0 ], seedOrigin[ 1 ], seedOrigin[ 2 ] );
+    gl.uniform3f( program.seedOrigin, seedOrigin.x, seedOrigin.y, seedOrigin.z );
     gl.uniform1f( program.targetIntensity, targetIntensity );
     gl.uniform3f( program.volumeDimensions, width, height, depth );
 }
@@ -689,6 +727,8 @@ function renderOnce() {
 
     //initialize the SDF - render initial SDF to FBO
     initializeDistanceField.call( this, this.programs[ 'initialize_sdf' ], this.frameBuffers[ 0 ], seedOrigin, seedRadius );
+
+    update.call( this );
 }
 
 let backfacing = true;
@@ -707,26 +747,27 @@ let MAX_ITERATION = 500;
 
 
 function nextIteration() {
-    if( $.isEmptyObject( this.programs ) ) return;
 
-    if( !lastCalledTime ) {
-        lastCalledTime = Date.now();
-    }
-    let delta = ( Date.now() - lastCalledTime ) / 1000;
+  /*  let delta = ( Date.now() - lastCalledTime ) / 1000;
 
     if( delta < 0.01 ) return;
 
     lastCalledTime = Date.now();
 
-    this.busy = true;
+    this.busy = true;*/
 
     if( iteration < MAX_ITERATION ) {
-        updateDistanceField.call( this, this.programs[ 'update_sdf' ], this.volumeFrameBuffer, this.frameBuffers[ iteration % 2 ], this.frameBuffers[ ( iteration + 1 ) % 2 ] );
         iteration++;
+        $( '#log' ).html( 'iteration ' + iteration );
+        console.log( 'iteration ' + iteration );
     }
-    console.log( 'iteration ' + iteration );
+}
+
+function update() {
+    if( $.isEmptyObject( this.programs ) ) return;
+
+    updateDistanceField.call( this, this.programs[ 'update_sdf' ], this.volumeFrameBuffer, this.frameBuffers[ iteration % 2 ], this.frameBuffers[ ( iteration + 1 ) % 2 ] );
     render.call( this );
-    this.busy = false;
 }
 
 function render() {
@@ -776,7 +817,7 @@ function initializeDistanceField( program, frameBuffer, seedOrigin, seedRadius )
     gl.uniform2f( program.tiles, tiles.x, tiles.y );
 
     gl.uniform1f( program.numLayers, depth );
-    gl.uniform3f( program.seedOrigin, seedOrigin[ 0 ], seedOrigin[ 1 ], seedOrigin[ 2 ] );
+    gl.uniform3f( program.seedOrigin, seedOrigin.x, seedOrigin.y, seedOrigin.z );
     gl.uniform1f( program.seedRadius, seedRadius );
 
     renderTo3DTexture.call( this, program, frameBuffer, depth );
@@ -937,7 +978,6 @@ function renderTo3DTexture( program, framebuffer, depth ) {
     let gl = this.context;
 
     gl.bindFramebuffer( gl.FRAMEBUFFER, framebuffer.buffer );
-    gl.clearColor( 0.2, 0.2, 0.5, 1.0);
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
     let tile_width = framebuffer.width / tiles.x;
