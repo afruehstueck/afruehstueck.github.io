@@ -1,6 +1,4 @@
 #version 300 es
-#define POSITION_LOCATION 0
-#define TEXCOORD_LOCATION 1
 
 precision highp float;
 precision highp int;

@@ -29,7 +29,17 @@ a:link {
     color: purple;
 }
 
+.renderWrapper {
+    display: flex;
+    width: 90%;
+}
+
+.renderCanvas {
+    flex-basis: 100%;
+}
+
 .floatingCanvas {
+    width: 50%;
     position: relative !important;
     float: left;
 }

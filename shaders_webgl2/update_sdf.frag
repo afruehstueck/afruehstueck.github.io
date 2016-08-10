@@ -19,7 +19,7 @@ uniform float targetIntensity;
 //todo: make these uniform
 const float eps = 1e-9;
 const float epsilon = 0.25;
-const float alpha = 1.;
+const float alpha = 0.95;
 
 vec4 sampleWithOffset( sampler3D volume, vec3 texCoord, vec3 offset ) {
     //todo theck if offset coord goes outside of volume - currently returning black for sampling outside of volume

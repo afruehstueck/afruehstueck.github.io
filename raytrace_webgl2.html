@@ -9,13 +9,15 @@
     <script src="scripts/dat.gui.min.js"></script>
     <script src="scripts/webgl-debug.js"></script>
     <link rel="stylesheet" href="main.css"/>
+    <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:400|Ubuntu+Mono' rel='stylesheet' type='text/css'>
 </head>
 <body>
-
-<canvas id="renderCanvas"></canvas>
-
+<div class="renderWrapper">
+    <canvas class="renderCanvas" tabindex="1" data-gltype="webgl"></canvas>
+    <canvas class="renderCanvas" tabindex="2" data-gltype="webgl2"></canvas>
+</div>
 <script src="camera.js"></script>
 <script src="raytrace_webgl2.js"></script>
-<script src="raytrace_gui.js"></script>
+<script src="raytrace_ui.js"></script>
 </body>
 </html>

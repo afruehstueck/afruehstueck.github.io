@@ -11,14 +11,16 @@ out vec4 color;
 
 // Passed in from the vertex shader.
 in vec2 textureCoordinate;
-const float layer = 64.;
+uniform float layer;
+//uniform vec2 tiles;
+//const float layer = 64.;
 const vec2 tiles = vec2( 16., 16. );
 
 
 vec4 sampleAs3DTexture( sampler2D volume, vec2 texCoord ) {
 
     vec2 slice;
-
+    float layer = 100.;
     float dx = mod( layer, tiles.x );
     float dy = floor( layer / tiles.x );
 
@@ -36,6 +38,6 @@ void main() {
     //gl_FragColor.rgb = vec3( texture2D( texture, textureCoordinate ).a );
     gl_FragColor.a = 1.;*/
 
-    //color = texture( tex, textureCoordinate ).rgba;
-    color = sampleAs3DTexture( tex, textureCoordinate );
+    color = texture( tex, textureCoordinate ).rgba;
+    //color = sampleAs3DTexture( tex, textureCoordinate );
 }

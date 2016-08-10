@@ -76,6 +76,7 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
 
     for ( int i = 0; i < MAX_STEPS; ++i ) {
         prev = sdfSample;
+
         sdfSample = texture( distanceFieldTexture, position ).r * 2.0 - 1.0;
         if( sign( sdfSample ) != sign( prev ) ) {
             //found isosurface, stop raycasting
@@ -90,7 +91,7 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
             sampleColor = texture( volumeTexture, position );
 
             //todo: determine which value is sampled. currently .x because some data do not have alpha
-            sampleValue = sampleColor.x;
+            sampleValue = sampleColor.x;// < 0.6 ? sampleColor.x : 0.0;
 
             sampleAlpha = sampleValue * alphaCorrection;
 
@@ -108,7 +109,6 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
     }
     return vec4( accumulatedColor, accumulatedAlpha );
 }
-
 
 void main() {
     int steps = 75;

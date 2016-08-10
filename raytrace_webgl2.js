@@ -1,55 +1,25 @@
 'use strict';
 
-//var drawTriangle = require( 'a-big-triangle' );
-//var createTexture = require( 'gl-texture2d' );
-//var createFBO = require( 'gl-fbo' );
-//var context = require( 'gl-context' );
-//var Shader = require( 'gl-shader' );
-//var glslify = require( 'glslify' );
-//var ndarray = require( 'ndarray' );
-//var fill = require( 'ndarray-fill' );
-
-
-// get renderCanvas from DOM
-var renderCanvas = document.querySelector( '#renderCanvas' );
-
-// OpenGL context
-var gl = renderCanvas.getContext( 'webgl2', { antialias: false } );
-var isWebGL2 = !!gl;
-if( !isWebGL2 ) {
-    document.body.innerHTML = 'WebGL 2.0 is not available in your browser.  See <a href="https://www.khronos.org/webgl/wiki/Getting_a_WebGL_Implementation">How to run WebGL 2.0</a>';
-}
-
-var stats = new Stats();
-stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
-document.body.appendChild( stats.dom );
-
-
-// load extensions for float textures
-gl.getExtension( 'OES_texture_float' );
-gl.getExtension( 'OES_texture_float_linear' );
-
-var start = Date.now();
-var slices = { x: 16, y: 16 };
-var width = 128,
+let slices = { x: 16, y: 16 };
+let tiles = slices;
+let width = 128,
     height = width,
     depth = 128;//slices.x * slices.y;
 
-//var seedOrigin = [ 0.58, 0.11, 0.3 ];
-var seedOrigin = [ 0.5, 0.5, 0.55 ];
-var seedRadius = 0.1;
-var targetIntensity = 0.1;
+//let seedOrigin = [ 0.58, 0.11, 0.3 ];
+let seedOrigin = [ 0.5, 0.5, 0.55 ];
+let seedRadius = 0.1;
+let targetIntensity = 0.1;
 
-var updating = false;
+let updating = false;
 
-var volumePath;
+let volumePath;
 //volumePath = 'res/test/testball128x128x256.png';
 //volumePath = 'res/test/testball128x128x128.png';
 //volumePath = 'res/test/multiballs128x128x128.png';
 //volumePath = 'res/test/smallercubeg128x128x128.png';
 //volumePath = 'res/test/smallercubeg128x128x256.png';
 //volumePath = 'res/test/smallercube256x256x256.png';
-
 
 volumePath = 'res/bonsai128x128x256.png';
 //volumePath = 'res/heart128x128x256.png';
@@ -58,168 +28,67 @@ volumePath = 'res/bonsai128x128x256.png';
 //volumePath = 'res/male128x128x256.png';
 //volumePath = 'res/teapot256x256x256.png';
 
-var frameBuffers,
-    backfaceFrameBuffer,
-    volumeFrameBuffer,
-    tiledVolume;
 
-var programs = {};
+function resizeCanvases() {
+    for( let index = 0; index < canvases.length; index++ ) {
+        let canvas = canvases[ index ];
+        resizeCanvas( canvas );
+    }
+}
 
-var position2DBuffer,
-    texCoord2DBuffer,
-    position3DBuffer,
-    texCoord3DBuffer;
+// make canvases fullscreen
+function resizeCanvas( canvas ) {
 
-// make canvas fullscreen
-function resizeCanvas() {
-    var canvas_width = window.innerWidth;//debug set canvas width width * slices.x;//
-    var canvas_height = window.innerHeight; //debug set canvas height height * slices.y;//
+    let canvas_width = Math.floor( window.innerWidth / canvases.length );//debug set canvas width width * slices.x;//
+    let canvas_height = window.innerHeight; //debug set canvas height height * slices.y;//
 
-    renderCanvas.width = canvas_width;
-    renderCanvas.height = canvas_height;
+    canvas.width = canvas_width;
+    canvas.height = canvas_height;
 
-    renderCanvas.style.width = canvas_width + 'px';
-    renderCanvas.style.height = canvas_height + 'px';
-    renderCanvas.style.position = renderCanvas.style.position || 'absolute';
+    canvas.style.width = canvas_width + 'px';
+    canvas.style.height = canvas_height + 'px';
+    //canvas.style.position = canvas.style.position || 'absolute';
 
-    backfaceFrameBuffer = createFBO( gl, [ canvas_width, canvas_height ] );
+    canvas.backfaceFrameBuffer = createFBO.call( canvas, [ canvas_width, canvas_height ] );
 
     if( camera ) {
-        camera.setAspectRatio( renderCanvas.width, renderCanvas.height );
+        camera.setAspectRatio( canvas.width, canvas.height );
+        camera.update();
     }
 
     //animate();
 }
 
 //adjust canvas dimensions and re-render on resize
-window.addEventListener( 'resize', resizeCanvas, false );
-
-////////////////////////////////////////////////////////////////////////////////
-// MOUSE EVENTS
-////////////////////////////////////////////////////////////////////////////////
-
-var leftMouseDown = false;
-var rightMouseDown = false;
-renderCanvas.onmousedown = onMouseDownEvent;
-document.onmouseup 		= onMouseUpEvent;
-document.onmousemove 	= onMouseMoveEvent;
-document.onkeypress     = onKeyPressEvent;
-document.onkeyup        = onKeyReleaseEvent;
-document.ontouchstart   = onKeyPressEvent;
-
-//suppress context menu on right-click
-document.oncontextmenu  = function( event ) {
-    return false;
-};
-
-var prevMousePos;
-
-// converts global mouse coordinates to canvas-specific coordinates
-function getMousePos( elem, event ) {
-    var rect = elem.getBoundingClientRect();
-    return {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top
-    };
-}
-
-function getNormalizedMousePos( elem, event ) {
-    var mouseCoords = getMousePos( elem, event );
-    return [ mouseCoords.x / elem.width - 0.5, mouseCoords.y / elem.height - 0.5 ];
-}
-
-function onMouseDownEvent( event ) {
-    if ( event.button == 0 )
-        leftMouseDown = true;
-    else if ( event.button == 2 )
-        rightMouseDown = true;
-
-    prevMousePos = getNormalizedMousePos( renderCanvas, event );
-}
-
-function onMouseUpEvent( event ) {
-    event.preventDefault();
-    leftMouseDown = false;
-    rightMouseDown = false;
-}
-
-function onMouseMoveEvent( event ) {
-    if( ! ( leftMouseDown  || rightMouseDown ) ) return;
-
-
-    var mousePos = getNormalizedMousePos( renderCanvas, event );
-
-    //only rerender if mouseposition has changed from previous
-    if( Math.abs( mousePos[ 0 ] - prevMousePos[ 0 ] ) < 1e-6
-        && Math.abs( mousePos[ 1 ] - prevMousePos[ 1 ] ) < 1e-6 ) return;
-
-    if( leftMouseDown ) {
-        camera.rotate( mousePos, prevMousePos );
-    } else if( rightMouseDown ) {
-        camera.pan( [ mousePos.x - prevMousePos.x , mousePos.y - prevMousePos.y ] );
-    }
-    prevMousePos = mousePos;
-
-    if( !lastCalledTime ) {
-        lastCalledTime = Date.now();
-    }
-    var delta = ( Date.now() - lastCalledTime ) / 1000;
-
-    if( delta < 0.01 ) return;
-
-    lastCalledTime = Date.now();
-
-    camera.update();
-    render();
-
-    /*if( !lastCalledTime ) {
-     lastCalledTime = Date.now();
-     }
-     var delta = ( Date.now() - lastCalledTime ) / 1000;
-
-     if( delta > 0.01 ) {
-     render();
-     lastCalledTime = Date.now();
-     }*/
-}
-
-function onKeyPressEvent( event ) {
-    updating = true;
-    nextIteration();
-    //render();
-}
-
-function onKeyReleaseEvent( event ) {
-    updating = false;
-}
+window.addEventListener( 'resize', resizeCanvases, false );
 
 ////////////////////////////////////////////////////////////////////////////////
 // CAMERA SETUP
 ////////////////////////////////////////////////////////////////////////////////
 
-var camera;
+let camera;
 
 function initCamera() {
     camera = createCamera(  [ 0, 0, -4 ], /* eye vector */
         [ 0, 0, 0 ], /* target */
         [ 0, 1, 0 ] ); /* up vector */
-    camera.setAspectRatio( renderCanvas.width, renderCanvas.height );
-    camera.update();
+    //camera.setAspectRatio( canvases[ 0 ].width, canvases[ 0 ].height );
+    //camera.update();
 }
 
 /////////////////////////////////
 
 //todo consider non-power of two support
-function createTextureFromImage( gl, image ) {
-    var texture = gl.createTexture();
+function createTextureFromImage( image ) {
+    let gl = this.context;
+
+    let texture = gl.createTexture();
 
     gl.activeTexture( gl.TEXTURE0 );
     gl.bindTexture( gl.TEXTURE_2D, texture );
     //TODO: make flip_y optional
     gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
     gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image );
-    /*gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
-     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );*/
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
@@ -229,8 +98,10 @@ function createTextureFromImage( gl, image ) {
     return texture;
 }
 
-function createTextureFromSize( gl, dimensions ) {
-    var texture = gl.createTexture();
+function createTextureFromSize( dimensions ) {
+    let gl = this.context;
+
+    let texture = gl.createTexture();
 
     gl.activeTexture( gl.TEXTURE0 );
     gl.bindTexture( gl.TEXTURE_2D, texture );
@@ -247,8 +118,9 @@ function createTextureFromSize( gl, dimensions ) {
     return texture;
 }
 
-function create3DTexture( gl, dimensions ) {
-    var texture = gl.createTexture();
+function create3DTexture( dimensions ) {
+    let gl = this.context;
+    let texture = gl.createTexture();
 
     gl.activeTexture( gl.TEXTURE0 );
     gl.bindTexture( gl.TEXTURE_3D, texture );
@@ -275,22 +147,38 @@ function create3DTexture( gl, dimensions ) {
 }
 
 /* Loading fragment and vertex shaders using xhr */
-var setupShaders = function ( vertexShaderPath, fragmentShaderPath, uniforms ) {
-    var deferred = $.Deferred();
+let setupShaders = function ( vertexShaderPath, fragmentShaderPath, uniforms ) {
+    let gl = this.context;
+
+    let deferred = $.Deferred();
     var shaders = loadShaders( [ vertexShaderPath, fragmentShaderPath ],
         /* Callback function initializing shaders when all resources have been loaded */
         function() {
-            var program = gl.createProgram();
+            let program = gl.createProgram();
+
+            var success = true;
 
             shaders.forEach(function( shaderObject ) {
-                var shader = gl.createShader(
+                let shader = gl.createShader(
                     shaderObject.type == 'fragment' ? gl.FRAGMENT_SHADER : gl.VERTEX_SHADER
                 );
-                gl.shaderSource( shader, shaderObject.source );
+                let shaderSource = shaderObject.source;
+
+                if( gl.type === 'webgl' ) {
+                    shaderSource = convertShader( shaderSource, shaderObject.type );
+
+                    if( fragmentShaderPath.slice( 0, -5 ).slice( fragmentShaderPath.indexOf( '/' ) + 1 ) == 'raytrace' ) {
+                            console.log( shaderSource );
+                    }
+                }
+
+                gl.shaderSource( shader, shaderSource );
+
                 gl.compileShader( shader );
                 if ( !gl.getShaderParameter( shader, gl.COMPILE_STATUS ) ) {
-                    alert( 'could not compile ' + shaderObject.type + ' shader \'' + shaderObject.path + '\'' );
+                    //alert( 'could not compile ' + shaderObject.type + ' shader \'' + shaderObject.path + '\'' );
                     console.log( gl.getShaderInfoLog( shader ) );
+                    success = false;
                     return false;
                 } else {
                     console.log( 'compiled ' + shaderObject.type + ' shader \'' + shaderObject.path + '\'' );
@@ -300,13 +188,17 @@ var setupShaders = function ( vertexShaderPath, fragmentShaderPath, uniforms ) {
                 gl.deleteShader( shader );
             });
 
+            if( !success ) {
+                deferred.reject();
+            }
+
             gl.linkProgram( program );
 
             //name program by fragment shader name minus extension minus folder
             program.name = fragmentShaderPath.slice( 0, -5 ).slice( fragmentShaderPath.indexOf( '/' ) + 1 );
 
             if ( !gl.getProgramParameter( program, gl.LINK_STATUS ) ) {
-                alert( 'could not initialise shaders for ' + program.name + ' program' );
+                //alert( 'could not initialise shaders for ' + program.name + ' program' );
             }
 
             //Todo init attrib & uniforms?
@@ -315,6 +207,130 @@ var setupShaders = function ( vertexShaderPath, fragmentShaderPath, uniforms ) {
 
     return deferred.promise();
 };
+
+function convertShader( shaderSource, shaderType ) {
+    /* Remove occurrences of “#version” until next newline */
+    let index = shaderSource.search( /#version/ );
+    if( index >= 0 ) {
+        let nextLinebreak = shaderSource.substr( index ).search( /\r|\n/ );
+        shaderSource = shaderSource.slice( 0, index ).concat( shaderSource.slice( index + nextLinebreak + 1 ) );
+    }
+    switch( shaderType ) {
+        case 'vertex':
+            /* Vertex shaders: exchange “in” for “attribute”, exchange “out” for “varying” */
+            shaderSource = shaderSource.replace( /\b(in)\b/g, 'attribute' );
+            shaderSource = shaderSource.replace( /\b(out)\b/g, 'varying' );
+            break;
+        case 'fragment':
+            /* Fragment shaders: exchange “in” for “varying” */
+            shaderSource = shaderSource.replace( /\b(in)\b/g, 'varying' );
+
+            /* parse name of out vec4 and replace name with gl_FragColor */
+            index = shaderSource.search( /\b(out vec4)\b/g );
+            let nextSemicolon = shaderSource.substr( index + 9 ).search( /(;)/ );
+            let outName = shaderSource.slice( index + 9, index + 9 + nextSemicolon );
+            //remove line containing out vec4 from shader
+            shaderSource = shaderSource.slice( 0, index ).concat( shaderSource.slice( index + 9 + nextSemicolon + 1 ) );
+
+            let regexOutName = new RegExp( '\\b(' + outName + ')\\b', 'g' );
+            shaderSource = shaderSource.replace( regexOutName, 'gl_FragColor' );
+            break;
+    }
+
+    /* Look for occurrences of “sampler” and make list of “sampler2D” variable names and “sampler3D” variable names */
+    let sampler2Ds = [],
+        sampler3Ds = [];
+    let regex = /sampler[23]D/g, regexLength = 9, result;
+
+    while ( ( result = regex.exec( shaderSource ) ) != null ) {
+        let nextSemicolonOrComma = shaderSource.substr( result.index + regexLength ).search( /[;,]/ );
+        if( nextSemicolonOrComma > 0 ) {
+            let inbetween = shaderSource.substr( result.index + regexLength, nextSemicolonOrComma ).trim();
+
+            if( /2/.test(result[ 0 ] ) ) {
+                sampler2Ds.push( inbetween );
+            }
+
+            if( /3/.test(result[ 0 ] ) ) {
+                sampler3Ds.push( inbetween );
+            }
+        } else {
+            //todo otherwise delete entire line (precision specifier)
+        }
+    }
+
+    /* Substitute “sampler3D” with “sampler2D” */
+    shaderSource = shaderSource.replace( regex, 'sampler2D' );
+
+    if( sampler3Ds.length > 0 ) {
+        //find first function in shader
+        let firstCurlyBrace = shaderSource.search( /{/ );
+        let firstSemicolonBeforeThat = shaderSource.lastIndexOf( ';', firstCurlyBrace );
+
+        let polyfill3Dtextures = `
+uniform vec2 tiles;
+
+vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
+    float volumeDepth = tiles.x * tiles.y;
+    float max_slice = volumeDepth;
+    vec2 slice1, slice2;
+    
+    //z coordinate determines which 2D tile we sample from
+    //z slice number runs from 0 to 255.
+    float slice1_z = floor( texCoord.z * max_slice );
+    float slice2_z = clamp( slice1_z + 1., 0., max_slice );
+    
+    float dx1 = mod( slice1_z, tiles.x );
+    float dy1 = floor( slice1_z / tiles.x );
+    
+    float dx2 = mod( slice2_z, tiles.x );
+    float dy2 = floor( slice2_z / tiles.x );
+    
+    slice1.x = ( texCoord.x + dx1 ) / tiles.x;
+    slice1.y = ( texCoord.y + dy1 ) / tiles.y;
+    
+    slice2.x = ( texCoord.x + dx2 ) / tiles.x;
+    slice2.y = ( texCoord.y + dy2 ) / tiles.y;
+    
+    //bilinear filtering is done at each texture2D lookup by default
+    vec4 color1 = texture2D( volume, slice1 );
+    vec4 color2 = texture2D( volume, slice2 );
+    
+    float zDifference = mod( texCoord.z * max_slice, 1.0 );
+    //interpolate between the two intermediate colors of each slice
+    return mix( color1, color2, zDifference );
+}`;
+        //insert polyfill function as first function in shader
+        shaderSource = shaderSource.slice( 0, firstSemicolonBeforeThat + 1 ).concat( polyfill3Dtextures ).concat( shaderSource.slice( firstSemicolonBeforeThat + 2 ) );
+    }
+
+    regex = /\btexture\(/g;
+    while ( result = regex.exec( shaderSource ) ) {
+        //comma has to follow since texture requires two arguments
+        let nextComma = shaderSource.substr( result.index + regexLength ).search( /,/ );
+        if( nextComma == 0 ) continue;
+
+        let inbetween = shaderSource.substr( result.index + regexLength, nextComma ).trim();
+
+        let find2D = sampler2Ds.indexOf( inbetween );
+        let find3D = sampler3Ds.indexOf( inbetween );
+
+        if( find2D > -1 ) {
+            shaderSource = shaderSource.slice( 0, result.index ).concat( 'texture2D' ).concat( shaderSource.slice( result.index + 7 ) );
+        } else if( find3D > -1 ) {
+            shaderSource = shaderSource.slice( 0, result.index ).concat( 'sampleAs3DTexture' ).concat( shaderSource.slice( result.index + 7 ) );
+        }
+    }
+
+    /* trim excess whitespace and superfluous newlines from both sides of the code */
+    shaderSource = shaderSource.replace(/^\s+|\s+$/g, '');
+
+    /* remove >2 linebreaks and replace with single empty line (for OCD people) */
+    shaderSource = shaderSource.replace(/\n\s*\n\s*\n/g, '\n\n');
+
+    return shaderSource;
+}
+
 
 /*
  request shaders using asynchronous (or synchronous, but deprecated) XMLHttpRequest
@@ -350,24 +366,42 @@ function loadShaders( shaders, callback ) {
 
 //TODO: make floating point optional
 //also TODO: make polyfill for non-extension-supporting browsers (eventually)
-function createFBO( gl, dimensions ) {
+function createFBO( dimensions ) {
+    let gl = this.context;
     // create a texture for the frame buffer
 
-    var fbo = gl.createFramebuffer();
+    let fbo = gl.createFramebuffer();
     gl.bindFramebuffer( gl.FRAMEBUFFER, fbo );
     gl.clearColor( 0.5, 0.5, 0.5, 1.0 );
 
-    var fboTexture;
+    let fboTexture;
     //create 2D or 3D framebuffer
-    if( dimensions.length == 2 ) {
-        fboTexture = createTextureFromSize( gl, dimensions );
+    switch ( dimensions.length ) {
+        case 3:
+            if( gl.type === 'webgl2' ) {
+                fboTexture = create3DTexture.call( this, dimensions );
+                for( let layer = 0; layer < depth; layer++ ) {
+                    gl.framebufferTextureLayer( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, fboTexture, 0, layer );
+                }
+                break;
+            } else {
+                tiles = { x: slices.x, y: Math.ceil( dimensions[ 2 ] / slices.x ) };
+                console.log(' creating tiled texture with ' + tiles.x + ' by ' + tiles.y + ' tiles for WebGL compatibility. ');
 
-        gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fboTexture, 0 );
-    } else {
-        fboTexture = create3DTexture( gl, dimensions );
-        for( var layer = 0; layer < depth; layer++ ) {
-            gl.framebufferTextureLayer( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, fboTexture, 0, layer );
-        }
+                dimensions[ 0 ] *= tiles.x;
+                dimensions[ 1 ] *= tiles.y;
+                dimensions.splice( 2, 1 );
+
+                // fallthrough: continue to 2d case
+                /*fboTexture = createTextureFromSize.call( this, dimensions );
+                gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fboTexture, 0 );*/
+            }
+        case 2:
+            fboTexture = createTextureFromSize.call( this, dimensions );
+            gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fboTexture, 0 );
+            break;
+        default:
+            console.log( dimensions.length + ' is not a valid number of dimensions for FBO creation.');
     }
 
     gl.clear( gl.COLOR_BUFFER_BIT );
@@ -378,49 +412,58 @@ function createFBO( gl, dimensions ) {
     }
 
     console.log( '... created FBO with dimensions ' + dimensions[ 0 ] + 'x' + dimensions[ 1 ] + ( dimensions[ 2 ] ? ( 'x' + dimensions[ 2 ] ) : '' ) );
-    return { buffer: fbo, texture: fboTexture, width: width, height: height, depth: dimensions.length > 2 ? depth : undefined };
+    return { buffer:    fbo,
+             texture:   fboTexture,
+             type:      dimensions.length == 2 ? gl.TEXTURE_2D : gl.TEXTURE_3D,
+             width:     dimensions[ 0 ],
+             height:    dimensions[ 1 ],
+             depth:     dimensions.length > 2 ? dimensions[ 2 ] : undefined };
 }
 
 function create2DBuffers() {
-    position2DBuffer = gl.createBuffer();
-    var positionVertices =  // GL_TRIANGLE_STRIP
+    let gl = this.context;
+
+    this.position2DBuffer = gl.createBuffer();
+    let positionVertices =  // GL_TRIANGLE_STRIP
         [   -1., -1., 0.,     // bottom left corner
             1., -1., 0.,     // bottom right corner
             -1.,  1., 0.,     // top left corner
             1.,  1., 0. ];   // top right corner
-    var positionVerticesTriangle = //GL_TRIANGLES
+    let positionVerticesTriangle = //GL_TRIANGLES
         [   -1., -1.,
             1., -1.,
             -1.,  1.,
             -1.,  1.,
             1., -1.,
             1.,  1. ];
-    gl.bindBuffer( gl.ARRAY_BUFFER, position2DBuffer );
+    gl.bindBuffer( gl.ARRAY_BUFFER, this.position2DBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( positionVerticesTriangle ), gl.STATIC_DRAW );
     gl.bindBuffer( gl.ARRAY_BUFFER, null );
 
-    texCoord2DBuffer = gl.createBuffer();
-    var textureCoords =  // GL_TRIANGLE_STRIP
+    this.texCoord2DBuffer = gl.createBuffer();
+    let textureCoords =  // GL_TRIANGLE_STRIP
         [   0., 0.,
             1., 0.,
             0., 1.,
             1., 1. ];
-    var textureCoordsTriangle = //GL_TRIANGLES
+    let textureCoordsTriangle = //GL_TRIANGLES
         [   0., 0.,
             1., 0.,
             0., 1.,
             0., 1.,
             1., 0.,
             1., 1. ];
-    gl.bindBuffer( gl.ARRAY_BUFFER, texCoord2DBuffer );
+    gl.bindBuffer( gl.ARRAY_BUFFER, this.texCoord2DBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( textureCoordsTriangle ), gl.STATIC_DRAW );
     gl.bindBuffer( gl.ARRAY_BUFFER, null );
 }
 
 function create3DBuffers() {
-    position3DBuffer = gl.createBuffer();
+    let gl = this.context;
 
-    var v0 = [ -1, -1, -1 ], t0 = [ 0, 0, 0 ],
+    this.position3DBuffer = gl.createBuffer();
+
+    let v0 = [ -1, -1, -1 ], t0 = [ 0, 0, 0 ],
         v1 = [ -1, -1,  1 ], t1 = [ 0, 0, 1 ],
         v2 = [ -1,  1,  1 ], t2 = [ 0, 1, 1 ],
         v3 = [  1,  1, -1 ], t3 = [ 1, 1, 0 ],
@@ -429,7 +472,7 @@ function create3DBuffers() {
         v6 = [  1, -1, -1 ], t6 = [ 1, 0, 0 ],
         v7 = [  1,  1,  1 ], t7 = [ 1, 1, 1 ];
 
-    var positionVertices = [];
+    let positionVertices = [];
     positionVertices = positionVertices.concat( v0, v1, v2 ); //left
     positionVertices = positionVertices.concat( v3, v0, v4 ); //back
     positionVertices = positionVertices.concat( v5, v0, v6 ); //bottom
@@ -443,11 +486,11 @@ function create3DBuffers() {
     positionVertices = positionVertices.concat( v7, v4, v2 ); //top
     positionVertices = positionVertices.concat( v7, v2, v5 ); //front
 
-    gl.bindBuffer( gl.ARRAY_BUFFER, position3DBuffer );
+    gl.bindBuffer( gl.ARRAY_BUFFER, this.position3DBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( positionVertices ), gl.STATIC_DRAW );
 
-    texCoord3DBuffer = gl.createBuffer();
-    var textureCoords = [];
+    this.texCoord3DBuffer = gl.createBuffer();
+    let textureCoords = [];
     textureCoords = textureCoords.concat( t0, t1, t2 ); //left
     textureCoords = textureCoords.concat( t3, t0, t4 ); //back
     textureCoords = textureCoords.concat( t5, t0, t6 ); //bottom
@@ -461,102 +504,94 @@ function create3DBuffers() {
     textureCoords = textureCoords.concat( t7, t4, t2 ); //top
     textureCoords = textureCoords.concat( t7, t2, t5 ); //front
 
-    gl.bindBuffer( gl.ARRAY_BUFFER, texCoord3DBuffer );
+    gl.bindBuffer( gl.ARRAY_BUFFER, this.texCoord3DBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( textureCoords ), gl.STATIC_DRAW );
 }
 
-//Render a 3D box using current program
-function renderCube( program ) {
-    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+initCamera();
+let canvases = document.querySelectorAll( '.renderCanvas' );
+/*
+ // get gl2Canvas from DOM
+ let gl2Canvas = document.querySelector( '#gl2Canvas' );
+ let glCanvas = document.querySelector( '#glCanvas' );
+ */
 
-    gl.enable( gl.DEPTH_TEST );
+for( let index = 0; index < canvases.length; index++ ) {
+    let canvas = canvases[ index ];
 
-    gl.bindBuffer( gl.ARRAY_BUFFER, position3DBuffer );
-    gl.vertexAttribPointer( program.position, 3, gl.FLOAT, false, 0, 0 );
+    // OpenGL context
+    let glType = $( canvas ).data( 'gltype' );
 
-    gl.bindBuffer( gl.ARRAY_BUFFER, texCoord3DBuffer );
-    gl.vertexAttribPointer( program.texCoord, 3, gl.FLOAT, false, 0, 0 );
+    let gl = canvas.getContext( glType, { antialias: false, preserveDrawingBuffer: true } );
 
-    gl.drawArrays( gl.TRIANGLES, 0, 36 );
-
-    gl.disable( gl.DEPTH_TEST );
-
-    gl.bindBuffer( gl.ARRAY_BUFFER, null );
-}
-
-//Render a 2D quad using current program
-function renderQuad( program ) {
-    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-
-    gl.bindBuffer( gl.ARRAY_BUFFER, position2DBuffer );
-    gl.vertexAttribPointer( program.position, 2, gl.FLOAT, false, 0, 0 );
-
-    gl.bindBuffer( gl.ARRAY_BUFFER, texCoord2DBuffer );
-    gl.vertexAttribPointer( program.texCoord, 2, gl.FLOAT, false, 0, 0 );
-
-    gl.drawArrays( gl.TRIANGLES, 0, 6 );
-    gl.bindBuffer( gl.ARRAY_BUFFER, null );
-}
-
-//Render a 2D quad to all layers of 3D texture using current program
-function renderTo3DTexture( program, framebuffer, depth ) {
-    gl.bindFramebuffer( gl.FRAMEBUFFER, framebuffer.buffer );
-
-    for( var layer = 0; layer < depth; layer++ ) {
-        gl.uniform1f( program.layer, layer );
-        gl.framebufferTextureLayer( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, framebuffer.texture, 0, layer );
-
-        renderQuad( program );
+    let isGL = !!gl;
+    if( !isGL ) {
+        $( 'body' ).prepend( '<div id="log"></div>' );
+        if( glType === 'webgl2' ) {
+            $( '#log' ).html( 'WebGL 2.0 is not available in your browser.  See <a href="https://www.khronos.org/webgl/wiki/Getting_a_WebGL_Implementation">How to run WebGL 2.0</a>' );
+        } else {
+            $( '#log' ).html( 'WebGL is not available in your browser.  See <a href="https://www.khronos.org/webgl/wiki/Getting_a_WebGL_Implementation">How to run WebGL</a>' );
+        }
     }
 
-    gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+    if( gl ){
+        canvas.context = gl;
+        gl.type = glType;
+
+        // load extensions for float textures
+        gl.getExtension( 'OES_texture_float' );
+        gl.getExtension( 'OES_texture_float_linear' );
+
+        init( canvas );
+        //gl.renderCanvas = canvas;
+    }
 }
+function init( canvas ) {
+    canvas.busy = false;
 
-init();
+    let gl = canvas.context;
 
-function init() {
+    resizeCanvas( canvas );
 
-    resizeCanvas();
-    initCamera();
+    let volume_async_load = jQuery.Deferred();
 
-    var volume_async_load = jQuery.Deferred();
-
-    var sourceImage = new Image();
+    let sourceImage = new Image();
     sourceImage.onload = function () {
         //load tiled volume from PNG to texture
-        tiledVolume = createTextureFromImage( gl, sourceImage );
+        canvas.tiledVolume = createTextureFromImage.call( canvas, sourceImage );
         //create 3D FBO for 3D volume texture
-        volumeFrameBuffer = createFBO( gl, [ width, height, depth ] );
+        canvas.volumeFrameBuffer = createFBO.call( canvas, [ width, height, depth ] );
 
         //create two fbos to alternately draw to them during iterations
-        frameBuffers = [ createFBO( gl, [ width, height, depth ] ),
-            createFBO( gl, [ width, height, depth ] ) ];
+        canvas.frameBuffers = [ createFBO.call( canvas, [ width, height, depth ] ),
+            createFBO.call( canvas, [ width, height, depth ] ) ];
 
         volume_async_load.resolve();
     };
     sourceImage.src = volumePath;
 
-    create2DBuffers();
-    create3DBuffers();
+    create2DBuffers.call( canvas );
+    create3DBuffers.call( canvas );
 
 
-    var quad_vert = 'shaders_webgl2/quad.vert';
-    var box_vert  = 'shaders_webgl2/projected_box.vert';
+    let quad_vert = 'shaders_webgl2/quad.vert';
+    let box_vert  = 'shaders_webgl2/projected_box.vert';
 
-    var attribs = [ 'position', 'texCoord' ];
+    let attribs = [ 'position', 'texCoord' ];
 
     //TODO: parse uniforms from shader? create shader and add uniforms to shader string?
     //parsing uniforms from shader code shouldn't be too hard ... actually
 
     //list of shaders
     //format: [ vertexShaderPath, fragmentShaderPath, Array_of_uniforms, renderFunction
-    var shaderPairs = [
+    let shaderPairs = [
         [ quad_vert, 'shaders_webgl2/initialize_volume.frag',
             [   'tiles',
                 'layer' ]
         ],
         [ quad_vert, 'shaders_webgl2/initialize_sdf.frag',
             [   'numLayers',
+                'tiles',
                 'layer',
                 'seedOrigin',
                 'seedRadius' ]
@@ -564,6 +599,7 @@ function init() {
         [ quad_vert, 'shaders_webgl2/update_sdf.frag',
             [   'numLayers',
                 'layer',
+                'tiles',
                 'volumeDimensions',
                 'seedOrigin',
                 'targetIntensity',
@@ -571,7 +607,8 @@ function init() {
                 'volumeTexture' ]
         ],
         [ quad_vert, 'shaders_webgl2/debug_texture.frag',
-            [   'tex' ]
+            [   'tex',
+                'tiles' ]
         ],
         [ box_vert,  'shaders_webgl2/backfaces.frag',
             [   'projectionMatrix',
@@ -579,6 +616,7 @@ function init() {
         ],
         [ box_vert,  'shaders_webgl2/raytrace.frag',
             [   'distanceFieldTexture',
+                'tiles',
                 'backfaceTexture',
                 'volumeTexture',
                 'projectionMatrix',
@@ -586,13 +624,13 @@ function init() {
         ]
     ];
 
-    var deferreds = $.map( shaderPairs, function( current ) {
-        return setupShaders( current[ 0 ], current[ 1 ], current[ 2 ] );
+    let deferreds = $.map( shaderPairs, function( current ) {
+        return setupShaders.call( canvas, current[ 0 ], current[ 1 ], current[ 2 ] );
     });
 
     deferreds.push( volume_async_load );
 
-    var getLocations = function ( program, attribs, uniforms ) {
+    let getLocations = function ( program, attribs, uniforms ) {
         $.map( attribs, function( attrib ) {
             program[ attrib ] = gl.getAttribLocation( program, attrib );
         });
@@ -607,28 +645,33 @@ function init() {
 
         //step through all created shader programs and obtain their uniform and attrib locations
         //store created programs to programs array under the name of their fragment shader
-        for( var i = 0; i < arguments.length; i++ ) {
+        canvas.programs = {};
+
+        for( let i = 0; i < arguments.length; i++ ) {
             if ( arguments[ i ] === undefined ) {
                 continue;
             }
-            var program = arguments[ i ][ 0 ];
-            var uniforms = arguments[ i ][ 1 ];
+            let program = arguments[ i ][ 0 ];
+            let uniforms = arguments[ i ][ 1 ];
+            //get uniform locatios for all uniforms in list
             getLocations( program, attribs, uniforms );
-            programs[ program.name ] = program;
+            canvas.programs[ program.name ] = program;
         }
 
         gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
-        updateDistanceFieldUniforms( programs[ 'update_sdf' ] );
+        updateDistanceFieldUniforms.call( canvas, canvas.programs[ 'update_sdf' ] );
 
-        gl.enableVertexAttribArray( programs[ 'raytrace' ].position );
-        gl.enableVertexAttribArray( programs[ 'raytrace' ].texCoord );
+        gl.enableVertexAttribArray( canvas.programs[ 'raytrace' ].position );
+        gl.enableVertexAttribArray( canvas.programs[ 'raytrace' ].texCoord );
         //updateRaytraceUniforms( programs[ 'raytrace' ] );
-        renderOnce();
-        render();
+        renderOnce.call( canvas );
+        render.call( canvas );
     } );
 }
 
 function updateDistanceFieldUniforms( program ) {
+    let gl = this.context;
+
     gl.useProgram( program );
     //gl.uniform2f( program.tiles, slices.x, slices.y );
     gl.uniform1f( program.numLayers, depth );
@@ -638,22 +681,21 @@ function updateDistanceFieldUniforms( program ) {
 }
 
 function renderOnce() {
-    if( $.isEmptyObject( programs ) ) return;
+    if( $.isEmptyObject( this.programs ) ) return;
 
-    console.log( 'initialize...' );
+    console.log( 'initializing...' );
     //transfer the volume from the two tiled texture into the volume 3D texture
-    initializeVolume( programs[ 'initialize_volume' ], volumeFrameBuffer, tiledVolume );
+    initializeVolume.call( this, this.programs[ 'initialize_volume' ], this.volumeFrameBuffer, this.tiledVolume );
 
     //initialize the SDF - render initial SDF to FBO
-    initializeDistanceField( programs[ 'initialize_sdf' ], frameBuffers[ 0 ], seedOrigin, seedRadius );
+    initializeDistanceField.call( this, this.programs[ 'initialize_sdf' ], this.frameBuffers[ 0 ], seedOrigin, seedRadius );
 }
 
-var backfacing = true;
-var iteration = 0;
-var MAX_ITERATION = 500;
+let backfacing = true;
+let iteration = 0;
+let MAX_ITERATION = 500;
 
-
-function animate() {
+/*function animate() {
     stats.begin();
 
     if( updating ) nextIteration();
@@ -661,44 +703,47 @@ function animate() {
 
     stats.end();
     requestAnimationFrame( animate );
-}
+}*/
 
-var lastCalledTime;
 
 function nextIteration() {
-    if( $.isEmptyObject( programs ) ) return;
+    if( $.isEmptyObject( this.programs ) ) return;
 
     if( !lastCalledTime ) {
         lastCalledTime = Date.now();
     }
-    var delta = ( Date.now() - lastCalledTime ) / 1000;
+    let delta = ( Date.now() - lastCalledTime ) / 1000;
 
     if( delta < 0.01 ) return;
 
     lastCalledTime = Date.now();
 
+    this.busy = true;
+
     if( iteration < MAX_ITERATION ) {
-        updateDistanceField( programs[ 'update_sdf' ], volumeFrameBuffer, frameBuffers[ iteration % 2 ], frameBuffers[ ( iteration + 1 ) % 2 ] );
+        updateDistanceField.call( this, this.programs[ 'update_sdf' ], this.volumeFrameBuffer, this.frameBuffers[ iteration % 2 ], this.frameBuffers[ ( iteration + 1 ) % 2 ] );
         iteration++;
     }
     console.log( 'iteration ' + iteration );
-    render();
+    render.call( this );
+    this.busy = false;
 }
 
 function render() {
-    if( $.isEmptyObject( programs ) ) return;
+    if( $.isEmptyObject( this.programs ) ) return;
 
     //render backface
-    renderBackface( programs[ 'backfaces' ], backfaceFrameBuffer );
+    renderBackface.call( this, this.programs[ 'backfaces' ], this.backfaceFrameBuffer );
     //raytrace volume
-    renderRaytrace( programs[ 'raytrace' ], volumeFrameBuffer.texture, frameBuffers[ iteration % 2 ].texture, backfaceFrameBuffer.texture );
+    renderRaytrace.call( this, this.programs[ 'raytrace' ], this.volumeFrameBuffer, this.frameBuffers[ iteration % 2 ], this.backfaceFrameBuffer );
 
     //render a texture to fullscreen (for debug purposes)
-    //renderTextureToViewport(programs[ 'debug_texture' ], tiledVolume );
+    //renderTextureToViewport.call( this, this.programs[ 'debug_texture' ], this.frameBuffers[ 0 ].texture );
+    //renderTextureToViewport.call( this, this.programs[ 'debug_texture' ], this.backfaceFrameBuffer.texture );
 
     /*
-     //debug: write rendercanvas to download folder
-     var image = renderCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream");  // here is the most important part because if you dont replace you will get a DOM 18 exception.
+     //debug: write gl2Canvas to download folder
+     let image = gl2Canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");  // here is the most important part because if you dont replace you will get a DOM 18 exception.
      window.location.href = image;
 
      */
@@ -708,7 +753,8 @@ function render() {
 
 //transfer volume from tiled 2D format into 3D texture
 function initializeVolume ( program, volumeFrameBuffer, tiledTexture ) {
-    gl.viewport( 0, 0, width, height );
+    let gl = this.context;
+
     gl.useProgram( program );
 
     gl.uniform2f( program.tiles, slices.x, slices.y );
@@ -717,55 +763,70 @@ function initializeVolume ( program, volumeFrameBuffer, tiledTexture ) {
     gl.bindTexture( gl.TEXTURE_2D, tiledTexture );
     gl.uniform1i( program.tiledTexture, 0 );
 
-    renderTo3DTexture( program, volumeFrameBuffer, depth );
+    renderTo3DTexture.call( this, program, volumeFrameBuffer, depth );
 }
 
 //initialize distance field from seed
 function initializeDistanceField( program, frameBuffer, seedOrigin, seedRadius ) {
-    gl.viewport( 0, 0, width, height );
+    let gl = this.context;
+
     gl.useProgram( program );
+
+    //todo: this shouldn't be here
+    gl.uniform2f( program.tiles, tiles.x, tiles.y );
 
     gl.uniform1f( program.numLayers, depth );
     gl.uniform3f( program.seedOrigin, seedOrigin[ 0 ], seedOrigin[ 1 ], seedOrigin[ 2 ] );
     gl.uniform1f( program.seedRadius, seedRadius );
 
-    renderTo3DTexture( program, frameBuffer, depth );
+    renderTo3DTexture.call( this, program, frameBuffer, depth );
 }
 
 //update distance field by looking up values from one texture and updating it into other
 function updateDistanceField( program, volumeFrameBuffer, sourceFrameBuffer, targetFrameBuffer ) {
-    gl.viewport( 0, 0, width, height );
+    let gl = this.context;
+
     gl.useProgram( program );
 
+    //todo: this shouldn't be here
+    gl.uniform2f( program.tiles, tiles.x, tiles.y );
+
     gl.activeTexture( gl.TEXTURE0 );
-    gl.bindTexture( gl.TEXTURE_3D, volumeFrameBuffer.texture );
+    gl.bindTexture( volumeFrameBuffer.type, volumeFrameBuffer.texture );
     gl.uniform1i( program.volumeTexture, 0 );
 
     gl.activeTexture( gl.TEXTURE1 );
-    gl.bindTexture( gl.TEXTURE_3D, sourceFrameBuffer.texture ); //fbo texture to read from
+    gl.bindTexture( sourceFrameBuffer.type, sourceFrameBuffer.texture ); //fbo texture to read from
     gl.uniform1i( program.distanceFieldTexture, 1 );
 
-    renderTo3DTexture( program, targetFrameBuffer, depth );
+    renderTo3DTexture.call( this, program, targetFrameBuffer, depth );
 }
 
 //render texture into screen / for debugging
 function renderTextureToViewport( program, texture ) {
-    gl.viewport( 0, 0, renderCanvas.width, renderCanvas.height );
+    let gl = this.context;
 
+    gl.viewport( 0, 0, this.width, this.height );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
     gl.useProgram( program );
+
+    //todo: this shouldn't be here
+    gl.uniform2f( program.tiles, tiles.x, tiles.y );
 
     gl.activeTexture( gl.TEXTURE0 );
     //gl.bindTexture( gl.TEXTURE_2D, texture );
     gl.bindTexture( gl.TEXTURE_2D, texture );
     gl.uniform1i( program.tex, 0 );
 
-    renderQuad( program );
+    renderQuad.call( this, program );
 
     gl.bindTexture( gl.TEXTURE_2D, null );
 }
 
 //render backface of cube
 function renderBackface( program, frameBuffer ) {
+    let gl = this.context;
+
     gl.enable( gl.CULL_FACE );
     gl.enable( gl.DEPTH_TEST );
 
@@ -773,14 +834,18 @@ function renderBackface( program, frameBuffer ) {
 
     gl.bindFramebuffer( gl.FRAMEBUFFER, frameBuffer.buffer ); //render to framebuffer, not screen
 
-    gl.viewport( 0, 0, renderCanvas.width, renderCanvas.height );
+    gl.viewport( 0, 0, this.width, this.height );
 
     gl.useProgram( program );
 
+    //todo: this shouldn't be here
+    gl.uniform2f( program.tiles, tiles.x, tiles.y );
+    //todo: this shouldn't be here
+    gl.uniform2f( program.tiles, tiles.x, tiles.y );
     gl.uniformMatrix4fv( program.projectionMatrix, false, camera.projectionMatrix );
     gl.uniformMatrix4fv( program.modelViewMatrix, false, camera.modelViewMatrix );
 
-    renderCube( program );
+    renderCube.call( this, program );
 
     gl.bindFramebuffer( gl.FRAMEBUFFER, null );
 
@@ -789,28 +854,33 @@ function renderBackface( program, frameBuffer ) {
 }
 
 //do raytracing of cube
-function renderRaytrace( program, volumeTexture, distanceFieldTexture, backfaceTexture ) {
-    gl.viewport( 0, 0, renderCanvas.width, renderCanvas.height );
+function renderRaytrace( program, volumeFrameBuffer, distanceFieldFrameBuffer, backfaceFrameBuffer ) {
+    let gl = this.context;
+
+    gl.viewport( 0, 0, this.width, this.height );
 
     gl.useProgram( program );
 
+    //todo: this shouldn't be here
+    gl.uniform2f( program.tiles, tiles.x, tiles.y );
+
     gl.activeTexture( gl.TEXTURE0 );
-    gl.bindTexture( gl.TEXTURE_2D, backfaceTexture );
+    gl.bindTexture( backfaceFrameBuffer.type, backfaceFrameBuffer.texture );
     gl.uniform1i( program.backfaceTexture, 0 );
 
     gl.activeTexture( gl.TEXTURE1 );
-    gl.bindTexture( gl.TEXTURE_3D, volumeTexture );
+    gl.bindTexture( volumeFrameBuffer.type, volumeFrameBuffer.texture );
     gl.uniform1i( program.volumeTexture, 1 );
 
     gl.activeTexture( gl.TEXTURE2 );
-    gl.bindTexture( gl.TEXTURE_3D, distanceFieldTexture );
+    gl.bindTexture( distanceFieldFrameBuffer.type, distanceFieldFrameBuffer.texture );
     gl.uniform1i( program.distanceFieldTexture, 2 );
 
     gl.uniformMatrix4fv( program.projectionMatrix, false, camera.projectionMatrix );
     gl.uniformMatrix4fv( program.modelViewMatrix, false, camera.modelViewMatrix );
     gl.uniformMatrix4fv( program.modelMatrix, false, camera.modelMatrix );
 
-    renderCube( program );
+    renderCube.call( this, program );
 }
 
 /*
@@ -818,8 +888,79 @@ function updateRaytraceUniforms( program ) {
     gl.useProgram( program );
     //gl.uniform1f( program.iGlobalTime, ( Date.now() - start ) / 1000.0 );
     gl.uniform1f( program.seedRadius, seedRadius );
-    gl.uniform2f( program.resolution, renderCanvas.width, renderCanvas.height );
+    gl.uniform2f( program.resolution, gl2Canvas.width, gl2Canvas.height );
     gl.uniform2f( program.tiles, slices.x, slices.y );
     gl.uniform3f( program.volumeDimensions, width, height, slices.x * slices.y );
     gl.uniform3f( program.seedOrigin, seedOrigin[ 0 ], seedOrigin[ 1 ], seedOrigin[ 2 ] );
 }*/
+
+
+
+//Render a 3D box using current program
+function renderCube( program ) {
+    let gl = this.context;
+
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+    gl.enable( gl.DEPTH_TEST );
+
+    gl.bindBuffer( gl.ARRAY_BUFFER, this.position3DBuffer );
+    gl.vertexAttribPointer( program.position, 3, gl.FLOAT, false, 0, 0 );
+
+    gl.bindBuffer( gl.ARRAY_BUFFER, this.texCoord3DBuffer );
+    gl.vertexAttribPointer( program.texCoord, 3, gl.FLOAT, false, 0, 0 );
+
+    gl.drawArrays( gl.TRIANGLES, 0, 36 );
+
+    gl.disable( gl.DEPTH_TEST );
+
+    gl.bindBuffer( gl.ARRAY_BUFFER, null );
+}
+
+//Render a 2D quad using current program
+function renderQuad( program ) {
+    let gl = this.context;
+
+    //gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+    gl.bindBuffer( gl.ARRAY_BUFFER, this.position2DBuffer );
+    gl.vertexAttribPointer( program.position, 2, gl.FLOAT, false, 0, 0 );
+
+    gl.bindBuffer( gl.ARRAY_BUFFER, this.texCoord2DBuffer );
+    gl.vertexAttribPointer( program.texCoord, 2, gl.FLOAT, false, 0, 0 );
+
+    gl.drawArrays( gl.TRIANGLES, 0, 6 );
+    gl.bindBuffer( gl.ARRAY_BUFFER, null );
+}
+
+//Render a 2D quad to all layers of 3D texture using current program
+function renderTo3DTexture( program, framebuffer, depth ) {
+    let gl = this.context;
+
+    gl.bindFramebuffer( gl.FRAMEBUFFER, framebuffer.buffer );
+    gl.clearColor( 0.2, 0.2, 0.5, 1.0);
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+    let tile_width = framebuffer.width / tiles.x;
+    let tile_height = framebuffer.height / tiles.y;
+
+    for( let layer = 0; layer < depth; layer++ ) {
+        gl.uniform1f( program.layer, layer );
+
+        if( gl.type === 'webgl2') {
+            gl.viewport( 0, 0, width, height );
+            //set texture layer for webgl 2.0
+            gl.framebufferTextureLayer( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, framebuffer.texture, 0, layer );
+        } else {
+            //fallback solution for webgl 1.0
+            let offset_x = tile_width * ( layer % tiles.x );
+            let offset_y = tile_height * Math.floor( layer / tiles.x );
+
+            //gl.scissor( offset_x, offset_y, tile_width, tile_height );
+            gl.viewport( offset_x, offset_y, tile_width, tile_height );
+        }
+
+        renderQuad.call( this, program );
+    }
+
+    gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+}
