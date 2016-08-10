@@ -12,9 +12,9 @@ out vec4 color;
 // Passed in from the vertex shader.
 in vec2 textureCoordinate;
 uniform float layer;
-//uniform vec2 tiles;
-//const float layer = 64.;
-const vec2 tiles = vec2( 16., 16. );
+uniform vec2 tiles;
+
+//const vec2 tiles = vec2( 16., 16. );
 
 
 vec4 sampleAs3DTexture( sampler2D volume, vec2 texCoord ) {

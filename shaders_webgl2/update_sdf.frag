@@ -18,8 +18,8 @@ uniform float targetIntensity;
 
 //todo: make these uniform
 const float eps = 1e-9;
-const float epsilon = 0.25;
-const float alpha = 0.95;
+const float epsilon = 0.2;
+const float alpha = 1.;
 
 vec4 sampleWithOffset( sampler3D volume, vec3 texCoord, vec3 offset ) {
     //todo theck if offset coord goes outside of volume - currently returning black for sampling outside of volume
@@ -187,8 +187,8 @@ void main( void ) {
                                  sqrt( min_Dyp * min_Dyp + min_mDym * min_mDym ),
                                  sqrt( min_Dzp * min_Dzp + min_mDzm * min_mDzm ) );
 
-    //float targetValue = targetIntensity;//
-    float targetValue = texture( volumeTexture, seedOrigin ).r;
+    float targetValue = targetIntensity / 255.;//
+    //float targetValue = texture( volumeTexture, seedOrigin ).r;
 
     //todo: figure out which component (rgba)
     float sourceValue = texture( volumeTexture, currentPosition ).r;
@@ -209,10 +209,14 @@ void main( void ) {
     //update values in distance field
     float normalizedDistance = ( clampDistance + 1. ) / 2.;
 
-    vec3 gradient1 = vec3( u3, u1, u4mz );
-    vec3 gradient2 = vec3( u5, u7, u4pz );
+    //vec3 gradient1 = vec3( u3, u1, u4mz );
+    //vec3 gradient2 = vec3( u5, u7, u4pz );
     //calculate normal vector for lighting
-    vec3 N  = normalize( gradient1 - gradient2 );
+    //vec3 N  = normalize( gradient1 - gradient2 );
+    vec3 N = normalize( vec3( 1., -1., -1. ) * getNormalizedSample( distanceFieldTexture, currentPosition, vec3( 1., -1., -1. ) ) +
+                         vec3(-1., -1.,  1. ) * getNormalizedSample( distanceFieldTexture, currentPosition, vec3(-1., -1.,  1. ) ) +
+                         vec3(-1.,  1., -1. ) * getNormalizedSample( distanceFieldTexture, currentPosition, vec3(-1.,  1., -1. ) ) +
+                         vec3( 1.,  1.,  1. ) * getNormalizedSample( distanceFieldTexture, currentPosition, vec3( 1.,  1.,  1. ) ) );
 
     //color = vec4( normalizedDistance, ( abs( clampDistance ) < 0.05 ) ? 1. : 0., ( abs( clampDistance ) < 0.05 ) ? 1. : 0., normalizedDistance );
     color.r = normalizedDistance;

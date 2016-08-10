@@ -19,7 +19,10 @@ var volume_select = f_volume.add( default_values, 'volume', { bonsai: 'res/bonsa
 
 function onVolumeChanged( value ) {
     volumePath = value;
-    init();
+
+    for( let index = 0; index < canvases.length; index++ ) {
+        init( canvases[ index ] );
+    }
 };
 
 volume_select.onFinishChange( onVolumeChanged );
@@ -51,7 +54,9 @@ seed_radius.onChange( function( value ) {
 
 function onSeedChanged( value ) {
     console.log( 'values changed' );
-    renderOnce();
+    for( let index = 0; index < canvases.length; index++ ) {
+        renderOnce.call( canvases[ index ] );
+    }
 };
 
 seed_x.onFinishChange( onSeedChanged );
@@ -118,12 +123,10 @@ function onMouseUpEvent( event ) {
     leftMouseDown = false;
     rightMouseDown = false;
 
-    // on mouseup, update all other canvases
+    // on mouseup, update all (other) canvases
     for( var index = 0; index < canvases.length; index++ ) {
         var canvas = canvases[ index ];
-        //if( canvas !== event.target ){
-            render.call( canvas );
-        //}
+        render.call( canvas );
     }
 }
 
@@ -158,10 +161,18 @@ function onMouseMoveEvent( event ) {
 
 function onKeyPressEvent( event ) {
     updating = true;
-    nextIteration.call( event.target );
+    //nextIteration.call( event.target );
 }
 
 function onKeyReleaseEvent( event ) {
     updating = false;
+
+    // on keypress, update all (other) canvases
+    for( var index = 0; index < canvases.length; index++ ) {
+        var canvas = canvases[ index ];
+        update.call( canvas );
+    }
+
+    nextIteration();
 }
 
