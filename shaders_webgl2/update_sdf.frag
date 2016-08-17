@@ -18,12 +18,12 @@ uniform float targetIntensity;
 
 //todo: make these uniform
 const float eps = 1e-9;
-const float epsilon = 0.2;
+const float sensitivity = 0.2;
 const float alpha = 1.;
 
 vec4 sampleWithOffset( sampler3D volume, vec3 texCoord, vec3 offset ) {
     //todo theck if offset coord goes outside of volume - currently returning black for sampling outside of volume
-    vec3 offsetCoord = texCoord + offset / volumeDimensions;
+    vec3 offsetCoord = texCoord + offset/* / volumeDimensions*/;
 
     return texture( volume, offsetCoord );
 }
@@ -41,37 +41,40 @@ void main( void ) {
     vec4 encodedDistance = texture( distanceFieldTexture, currentPosition );
     float currentDistance = encodedDistance.r * 2. - 1.; //de-normalize
 
-
+    float oX = 1. / volumeDimensions.x;
+    float oY = 1. / volumeDimensions.y;
+    float oZ = 1. / volumeDimensions.z;
     /* calculate all the values
     | u6 | u7 | u8 |
     | u3 | u4 | u5 |
     | u0 | u1 | u2 |
     */
+
+
     //evaluate neighboring values from texture
     //todo: incorporate neighboring values in sample function to avoid repeat calculation
-    float u1 = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0., -1.,  0. ) );
-    float u3 = getNormalizedSample( distanceFieldTexture, currentPosition, vec3( -1.,  0.,  0. ) );
-    float u4 = currentDistance; //currentDistance; // equals:
-    //float u4 = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  0.,  0. ) ); //currentDistance; // equals:
-    float u5 = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  1.,  0.,  0. ) );
-    float u7 = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  1.,  0. ) );
-    float u4pz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  0.,  1. ) );
-    float u4mz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  0., -1. ) );
+    float u1   = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0., -oY,  0. ) );
+    float u3   = getNormalizedSample( distanceFieldTexture, currentPosition, vec3( -oX,  0.,  0. ) );
+    float u4   = currentDistance; //currentDistance; // equals: //float u4 = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  0.,  0. ) );
+    float u5   = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  oX,  0.,  0. ) );
+    float u7   = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  oY,  0. ) );
+    float u4pz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  0.,  oZ ) );
+    float u4mz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  0., -oZ ) );
 
-    float u0 = getNormalizedSample( distanceFieldTexture, currentPosition, vec3( -1., -1.,  0. ) );
-    float u2 = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  1., -1.,  0. ) );
-    float u6 = getNormalizedSample( distanceFieldTexture, currentPosition, vec3( -1.,  1.,  0. ) );
-    float u8 = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  1.,  1.,  0. ) );
+    float u0   = getNormalizedSample( distanceFieldTexture, currentPosition, vec3( -oX, -oY,  0. ) );
+    float u2   = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  oX, -oY,  0. ) );
+    float u6   = getNormalizedSample( distanceFieldTexture, currentPosition, vec3( -oX,  oY,  0. ) );
+    float u8   = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  oX,  oY,  0. ) );
 
-    float u1pz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0., -1.,  1. ) );
-    float u3pz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3( -1.,  0.,  1. ) );
-    float u5pz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  1.,  0.,  1. ) );
-    float u7pz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  1.,  1. ) );
+    float u1pz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0., -oY,  oZ ) );
+    float u3pz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3( -oX,  0.,  oZ ) );
+    float u5pz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  oX,  0.,  oZ ) );
+    float u7pz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  oY,  oZ ) );
 
-    float u1mz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0., -1., -1. ) );
-    float u3mz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3( -1.,  0., -1. ) );
-    float u5mz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  1.,  0., -1. ) );
-    float u7mz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  1., -1. ) );
+    float u1mz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0., -oY, -oZ ) );
+    float u3mz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3( -oX,  0., -oZ ) );
+    float u5mz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  oX,  0., -oZ ) );
+    float u7mz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  oY, -oZ ) );
 
     //calculate derivatives of level set by calculating central differences
     float Dx   = ( u5   - u3 ) / 2.;
@@ -194,7 +197,7 @@ void main( void ) {
     float sourceValue = texture( volumeTexture, currentPosition ).r;
 
     //speed function pulling distance function towards areas with target intensity
-    float D = epsilon - abs( sourceValue - targetValue );
+    float D = sensitivity - abs( sourceValue - targetValue );
 
     //speed function is composed from speed function D and curvature function H, controlled by alpha value
     //TODO look at curvature H which is probably broken
@@ -209,17 +212,9 @@ void main( void ) {
     //update values in distance field
     float normalizedDistance = ( clampDistance + 1. ) / 2.;
 
-    //vec3 gradient1 = vec3( u3, u1, u4mz );
-    //vec3 gradient2 = vec3( u5, u7, u4pz );
-    //calculate normal vector for lighting
-    //vec3 N  = normalize( gradient1 - gradient2 );
-    vec3 N = normalize( vec3( 1., -1., -1. ) * getNormalizedSample( distanceFieldTexture, currentPosition, vec3( 1., -1., -1. ) ) +
-                         vec3(-1., -1.,  1. ) * getNormalizedSample( distanceFieldTexture, currentPosition, vec3(-1., -1.,  1. ) ) +
-                         vec3(-1.,  1., -1. ) * getNormalizedSample( distanceFieldTexture, currentPosition, vec3(-1.,  1., -1. ) ) +
-                         vec3( 1.,  1.,  1. ) * getNormalizedSample( distanceFieldTexture, currentPosition, vec3( 1.,  1.,  1. ) ) );
+    //calculate normal vector for lighting TODO: weird behaviour
+    vec3 N  = normalize( vec3( Dx, Dy, Dz ) );
 
-    //color = vec4( normalizedDistance, ( abs( clampDistance ) < 0.05 ) ? 1. : 0., ( abs( clampDistance ) < 0.05 ) ? 1. : 0., normalizedDistance );
     color.r = normalizedDistance;
     color.gba = N;
-    //color.a = currentPosition.z;
 }

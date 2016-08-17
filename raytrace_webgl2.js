@@ -1,14 +1,16 @@
 'use strict';
 
-let slices = { x: 16, y: 16 };
+let slices = { x: 8, y: 16 };
 let tiles = slices;
 let width = 128,
     height = width,
     depth = 128;//slices.x * slices.y;
 
 //let seedOrigin = [ 0.58, 0.11, 0.3 ];
-let seedOrigin = { x: 0.4, y: 0.83, z: 0.22 };
-let seedRadius = 0.13;
+//let seedOrigin = { x: 0.4, y: 0.83, z: 0.22 };//foot
+//let seedOrigin = { x: 0.5, y: 0.5, z: 0.5 };
+let seedOrigin = { x: 0.7, y: 0.7, z: 0.7 };
+let seedRadius = 0.15;
 let targetIntensity = -1.;
 
 let updating = false;
@@ -17,14 +19,14 @@ let volumePath;
 //volumePath = 'res/test/testball128x128x256.png';
 //volumePath = 'res/test/testball128x128x128.png';
 //volumePath = 'res/test/multiballs128x128x128.png';
-//volumePath = 'res/test/smallercubeg128x128x128.png';
+volumePath = 'res/test/smallercubeg128x128x128.png';
 //volumePath = 'res/test/smallercubeg128x128x256.png';
 //volumePath = 'res/test/smallercube256x256x256.png';
 
 //volumePath = 'res/bonsai128x128x256.png';
 //volumePath = 'res/heart128x128x256.png';
 //volumePath = 'res/bonsai256x256x256.png';
-volumePath = 'res/foot256x256x256.png';
+//volumePath = 'res/foot256x256x256.png';
 //volumePath = 'res/male128x128x256.png';
 //volumePath = 'res/teapot256x256x256.png';
 
@@ -173,7 +175,7 @@ let setupShaders = function ( vertexShaderPath, fragmentShaderPath, uniforms ) {
                 gl.compileShader( shader );
                 if ( !gl.getShaderParameter( shader, gl.COMPILE_STATUS ) ) {
                     //alert( 'could not compile ' + shaderObject.type + ' shader \'' + shaderObject.path + '\'' );
-                    console.log( gl.getShaderInfoLog( shader ) );
+                    console.error( gl.getShaderInfoLog( shader ) );
                     success = false;
                     return false;
                 } else {
@@ -194,7 +196,8 @@ let setupShaders = function ( vertexShaderPath, fragmentShaderPath, uniforms ) {
             program.name = fragmentShaderPath.slice( 0, -5 ).slice( fragmentShaderPath.indexOf( '/' ) + 1 );
 
             if ( !gl.getProgramParameter( program, gl.LINK_STATUS ) ) {
-                //alert( 'could not initialise shaders for ' + program.name + ' program' );
+                console.error( gl.getProgramInfoLog( program ) );
+                alert( 'could not initialise shaders for ' + program.name + ' program' );
             }
 
             //Todo init attrib & uniforms?
@@ -263,7 +266,7 @@ function convertShader( shaderSource, shaderType ) {
         let firstCurlyBrace = shaderSource.search( /{/ );
         let firstSemicolonBeforeThat = shaderSource.lastIndexOf( ';', firstCurlyBrace );
 
-        let polyfill3Dtextures = `
+        let polyfill3DtexturesTrilinear = `
 uniform vec2 tiles;
 
 vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
@@ -273,6 +276,7 @@ vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
     
     //z coordinate determines which 2D tile we sample from
     //z slice number runs from 0 to 255.
+    //sample two slices to do trilinear sampling
     float slice1_z = floor( texCoord.z * max_slice );
     float slice2_z = clamp( slice1_z + 1., 0., max_slice );
     
@@ -296,8 +300,34 @@ vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
     //interpolate between the two intermediate colors of each slice
     return mix( color1, color2, zDifference );
 }`;
+
+        let polyfill3Dtextures = `
+uniform vec2 tiles;
+
+vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
+    float volumeDepth = tiles.x * tiles.y;
+    float max_slice = volumeDepth;
+    
+    vec2 slice;
+
+    float slice_z = floor( texCoord.z * max_slice );
+    
+    float dx = mod( slice_z, tiles.x );
+    float dy = floor( slice_z / tiles.x );
+
+    slice.x = ( texCoord.x + dx ) / tiles.x;
+    slice.y = ( texCoord.y + dy ) / tiles.y;
+
+    return texture2D( volume, slice );
+}`;
         //insert polyfill function as first function in shader
-        shaderSource = shaderSource.slice( 0, firstSemicolonBeforeThat + 1 ).concat( polyfill3Dtextures ).concat( shaderSource.slice( firstSemicolonBeforeThat + 2 ) );
+        if( shaderSource.search( 'trilinear' ) != -1 ) {
+            shaderSource = shaderSource.slice( 0, firstSemicolonBeforeThat + 1 ).concat( polyfill3DtexturesTrilinear ).concat( shaderSource.slice( firstSemicolonBeforeThat + 2 ) );
+        } else {
+            shaderSource = shaderSource.slice( 0, firstSemicolonBeforeThat + 1 ).concat( polyfill3Dtextures ).concat( shaderSource.slice( firstSemicolonBeforeThat + 2 ) );
+        }
+        //DEBUG
+        //console.log( shaderSource );
     }
 
     regex = /\btexture\(/g;
@@ -562,22 +592,25 @@ function getSeedValue( img ) {
     px *= img.width;
     py *= img.height;
 
+    px = Math.round( px );
+    py = Math.round( py );
+
     if( px > img.width || py > img.height || px < 0 || py < 0 ) {
         console.log('fu');
     }
 
     var imageData = context.getImageData( px, py, 1, 1 );
-    var pixel = imageData.data;
+    var voxel = imageData.data;
     //return texture( volume, slice );
 
-    var rgba = 'rgba(' + pixel[ 0 ] + ',' + pixel[ 1 ] + ',' + pixel[ 2 ] + ',' + pixel[ 3 ] + ')';
+    var rgba = 'rgba(' + voxel[ 0 ] + ',' + voxel[ 1 ] + ',' + voxel[ 2 ] + ',' + voxel[ 3 ] + ')';
     //$('#log')[0].style.background = rgba;
     $('#log').css( 'background-color', rgba );
     $('#log').html( rgba );
 
     console.log(rgba);
-    targetIntensity = pixel[ 0 ];
-    return pixel;
+    targetIntensity = voxel[ 0 ];
+    return voxel;
 }
 
 function init( canvas ) {
@@ -657,6 +690,7 @@ function init( canvas ) {
             [   'distanceFieldTexture',
                 'tiles',
                 'backfaceTexture',
+                'volumeDimensions',
                 'volumeTexture',
                 'projectionMatrix',
                 'modelViewMatrix' ]
@@ -904,6 +938,7 @@ function renderRaytrace( program, volumeFrameBuffer, distanceFieldFrameBuffer, b
 
     //todo: this shouldn't be here
     gl.uniform2f( program.tiles, tiles.x, tiles.y );
+    gl.uniform3f( program.volumeDimensions, width, height, depth );
 
     gl.activeTexture( gl.TEXTURE0 );
     gl.bindTexture( backfaceFrameBuffer.type, backfaceFrameBuffer.texture );

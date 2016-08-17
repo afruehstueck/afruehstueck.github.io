@@ -14,14 +14,11 @@ out vec4 color;
 uniform sampler2D backfaceTexture;
 uniform sampler3D volumeTexture;
 uniform sampler3D distanceFieldTexture;
+uniform vec3 volumeDimensions;
 
 //todo: make this uniform
 const int MAX_STEPS = 500;
 const float alphaCorrection = 0.2;
-
-float textureSDF( sampler3D volume, vec3 texCoord ) {
-    return texture( volume, texCoord ).r * 2.0 - 1.0;
-}
 
 vec3 doMaterial( vec3 position, vec3 normal ) {
   return vec3( 0.2, 0.768, 1.0 ) * 0.7;
@@ -42,18 +39,27 @@ vec3 doLighting( vec3 position, vec3 normal, vec3 material ) {
     return ambient + material * diffuse * cosTheta;//* ( distance * distance );
 }
 
-vec3 calcNormal( vec3 pos ) {
-  const float eps = 0.001;
+float textureWithOffset( sampler3D volume, vec3 texCoord, vec3 offset ) {
+    vec3 offsetCoord = texCoord + offset / volumeDimensions;
+    return texture( distanceFieldTexture, offsetCoord ).r * 2.0 - 1.0;
+}
 
-  const vec3 v1 = vec3(  1.0, -1.0, -1.0 );
-  const vec3 v2 = vec3( -1.0, -1.0,  1.0 );
-  const vec3 v3 = vec3( -1.0,  1.0, -1.0 );
-  const vec3 v4 = vec3(  1.0,  1.0,  1.0 );
+vec3 calcNormal( sampler3D volume, vec3 pos ) {
+  const vec3 offset1 = vec3(  1., -1., -1. );
+  const vec3 offset2 = vec3( -1., -1.,  1. );
+  const vec3 offset3 = vec3( -1.,  1., -1. );
+  const vec3 offset4 = vec3(  1.,  1.,  1. );
 
-  return normalize( v1 * textureSDF( distanceFieldTexture, pos + v1 * eps ) +
-                    v2 * textureSDF( distanceFieldTexture, pos + v2 * eps ) +
-                    v3 * textureSDF( distanceFieldTexture, pos + v3 * eps ) +
-                    v4 * textureSDF( distanceFieldTexture, pos + v4 * eps ) );
+  return normalize( offset1 * textureWithOffset( distanceFieldTexture, pos, offset1 ) +
+                    offset2 * textureWithOffset( distanceFieldTexture, pos, offset2 ) +
+                    offset3 * textureWithOffset( distanceFieldTexture, pos, offset3 ) +
+                    offset4 * textureWithOffset( distanceFieldTexture, pos, offset4 ) );
+}
+
+//returns -1.0 if x < 0, and 1.0 if x >= 0
+float signGreaterEqualZero( float x )
+{
+    return step( 0., x ) * 2. - 1.;
 }
 
 vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
@@ -73,17 +79,16 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
 
     float sdfSample = 1.;
     float prev = 1.;
+    bool foundSurface = false;
 
     for ( int i = 0; i < MAX_STEPS; ++i ) {
         prev = sdfSample;
 
+        //do trilinear sampling (leave in this comment for trilinear polyfill)
         sdfSample = texture( distanceFieldTexture, position ).r * 2.0 - 1.0;
         if( sign( sdfSample ) != sign( prev ) ) {
             //found isosurface, stop raycasting
-            vec3 normal = texture( distanceFieldTexture, position ).bga;//
-            //vec3 normal = calcNormal( position );
-            accumulatedColor.xyz += normal * .5 + .5;
-            //accumulatedColor.xyz += vec3( .5, 0., 0. );
+            foundSurface = true;
             break;
         }
 
@@ -106,6 +111,11 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
             //ray is outside of box
             break;
         }
+    }
+
+    if( foundSurface ) {
+         vec3 normal = texture( distanceFieldTexture, position ).gba;//calcNormal( distanceFieldTexture, position );
+         accumulatedColor.xyz += normal * .5 + .5;
     }
     return vec4( accumulatedColor, accumulatedAlpha );
 }
