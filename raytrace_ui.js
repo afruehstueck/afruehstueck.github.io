@@ -183,12 +183,14 @@ function onKeyPressEvent( event ) {
 function onKeyReleaseEvent( event ) {
     updating = false;
 
-    // on keypress, update all (other) canvases
-    for( var index = 0; index < canvases.length; index++ ) {
-        var canvas = canvases[ index ];
-        update.call( canvas );
-    }
+    for( var iter = 0; iter < 10; iter++ ) {
+        // on keypress, update all (other) canvases
+        for( var index = 0; index < canvases.length; index++ ) {
+            var canvas = canvases[ index ];
+            update.call( canvas );
+        }
 
-    nextIteration();
+        nextIteration();
+    }
 }
 
