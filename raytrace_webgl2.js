@@ -10,10 +10,10 @@ let width = 128,
 let seedOrigin = { x: 0.46, y: 0.41, z: 0.52 };//bonsai
 //let seedOrigin = { x: 0.4, y: 0.6, z: 0.22 };//foot
 //let seedOrigin = { x: 0.64, y: 0.64, z: 0.64 };
-let seedRadius = 0.1;
-let targetIntensity = 100;//-1.;
-let alpha = 1.;
-let sensitivity = 0.15;
+let seedRadius = 0.44;
+let targetIntensity = 255;//-1.;
+let alpha = 0.9;
+let sensitivity = 0.42;
 
 let updating = false;
 
