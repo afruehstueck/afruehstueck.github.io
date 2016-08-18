@@ -3,11 +3,14 @@ stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild( stats.dom );
 
 var Controls = function() {
-    this.x = 0.5;
-    this.y = 0.55;
-    this.z = 0.45;
-    this.radius = 0.15;
-    this.volume = 'res/bonsai128x128x256.png';
+    this.x = seedOrigin.x;
+    this.y = seedOrigin.y;
+    this.z = seedOrigin.z;
+    this.radius = seedRadius;
+    this.volume = volumePath;
+    this.alpha = alpha;
+    this.sensitivity = sensitivity;
+    this.targetIntensity = targetIntensity;
 };
 
 var gui = new dat.GUI();
@@ -28,41 +31,54 @@ function onVolumeChanged( value ) {
 volume_select.onFinishChange( onVolumeChanged );
 
 var f_sdf = gui.addFolder( 'Distance Function' );
+var alpha_control = f_sdf.add( default_values, 'alpha', 0, 1 );
+var intensity_control = f_sdf.add( default_values, 'targetIntensity', 0, 255 );
+var sensitivity_control = f_sdf.add( default_values, 'sensitivity', 0, 1 );
 
 var f_seed = gui.addFolder( 'Seed' );
-var seed_x = f_seed.add( default_values, 'x', 0, 1 );
-var seed_y = f_seed.add( default_values, 'y', 0, 1 );
-var seed_z = f_seed.add( default_values, 'z', 0, 1 );
-var seed_radius = f_seed.add( default_values, 'radius', 0, 1 );
+var seed_x_control = f_seed.add( default_values, 'x', 0, 1 );
+var seed_y_control = f_seed.add( default_values, 'y', 0, 1 );
+var seed_z_control = f_seed.add( default_values, 'z', 0, 1 );
+var seed_radius_control = f_seed.add( default_values, 'radius', 0, 1 );
 
-seed_x.onChange( function( value ) {
-    iteration = 0;
-    seedOrigin[ 0 ] = value;
+seed_x_control.onChange( function( value ) {
+    seedOrigin.x = value;
 });
-seed_y.onChange( function( value ) {
-    iteration = 0;
-    seedOrigin[ 1 ] = value;
+seed_y_control.onChange( function( value ) {
+    seedOrigin.y = value;
 });
-seed_z.onChange( function( value ) {
-    iteration = 0;
-    seedOrigin[ 2 ] = value;
+seed_z_control.onChange( function( value ) {
+    seedOrigin.z = value;
 });
-seed_radius.onChange( function( value ) {
-    iteration = 0;
+seed_radius_control.onChange( function( value ) {
     seedRadius = value;
+});
+alpha_control.onChange( function( value ) {
+    alpha = value;
+});
+intensity_control.onChange( function( value ) {
+    targetIntensity = value;
+});
+sensitivity_control.onChange( function( value ) {
+    sensitivity = value;
 });
 
 function onSeedChanged( value ) {
+    //iteration = 0;
+    //targetIntensity = -1.;
     console.log( 'values changed' );
     for( let index = 0; index < canvases.length; index++ ) {
         renderOnce.call( canvases[ index ] );
     }
 };
 
-seed_x.onFinishChange( onSeedChanged );
-seed_y.onFinishChange( onSeedChanged );
-seed_z.onFinishChange( onSeedChanged );
-seed_radius.onFinishChange( onSeedChanged );
+seed_x_control.onFinishChange( onSeedChanged );
+seed_y_control.onFinishChange( onSeedChanged );
+seed_z_control.onFinishChange( onSeedChanged );
+seed_radius_control.onFinishChange( onSeedChanged );
+alpha_control.onFinishChange( onSeedChanged );
+intensity_control.onFinishChange( onSeedChanged );
+sensitivity_control.onFinishChange( onSeedChanged );
 
 
 

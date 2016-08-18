@@ -18,18 +18,12 @@ uniform float targetIntensity;
 
 //todo: make these uniform
 const float eps = 1e-9;
-const float sensitivity = 0.2;
-const float alpha = 1.;
+uniform float sensitivity;
+uniform float alpha;
 
-vec4 sampleWithOffset( sampler3D volume, vec3 texCoord, vec3 offset ) {
-    //todo theck if offset coord goes outside of volume - currently returning black for sampling outside of volume
-    vec3 offsetCoord = texCoord + offset/* / volumeDimensions*/;
-
-    return texture( volume, offsetCoord );
-}
-
-float getNormalizedSample( sampler3D volume, vec3 texCoord, vec3 offset ) {
-    return sampleWithOffset( volume, texCoord, offset ).r * 2.0 - 1.0;
+float getDistance( vec3 texCoord ) {
+    //return texture( distanceFieldTexture, texCoord ).r * 2. - 1.;
+    return texture( distanceFieldTexture, texCoord ).r;
 }
 
 void main( void ) {
@@ -38,8 +32,9 @@ void main( void ) {
     float currentLayer = layer / numLayers + 0.5 / numLayers;
     vec3 currentPosition = vec3( textureCoordinate.x, textureCoordinate.y, currentLayer );
 
-    vec4 encodedDistance = texture( distanceFieldTexture, currentPosition );
-    float currentDistance = encodedDistance.r * 2. - 1.; //de-normalize
+    //vec4 encodedDistance = texture( distanceFieldTexture, currentPosition );
+    //float currentDistance = encodedDistance.r * 2. - 1.; //de-normalize
+    float currentDistance = getDistance( currentPosition );
 
     float oX = 1. / volumeDimensions.x;
     float oY = 1. / volumeDimensions.y;
@@ -50,31 +45,30 @@ void main( void ) {
     | u0 | u1 | u2 |
     */
 
-
     //evaluate neighboring values from texture
     //todo: incorporate neighboring values in sample function to avoid repeat calculation
-    float u1   = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0., -oY,  0. ) );
-    float u3   = getNormalizedSample( distanceFieldTexture, currentPosition, vec3( -oX,  0.,  0. ) );
-    float u4   = currentDistance; //currentDistance; // equals: //float u4 = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  0.,  0. ) );
-    float u5   = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  oX,  0.,  0. ) );
-    float u7   = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  oY,  0. ) );
-    float u4pz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  0.,  oZ ) );
-    float u4mz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  0., -oZ ) );
+    float u1   = getDistance( currentPosition + vec3(  0., -oY,  0. ) );
+    float u3   = getDistance( currentPosition + vec3( -oX,  0.,  0. ) );
+    float u4   = currentDistance; //currentDistance; // equals: //float u4 = getDistance( currentPosition + vec3(  0.,  0.,  0. ) );
+    float u5   = getDistance( currentPosition + vec3(  oX,  0.,  0. ) );
+    float u7   = getDistance( currentPosition + vec3(  0.,  oY,  0. ) );
+    float u4pz = getDistance( currentPosition + vec3(  0.,  0.,  oZ ) );
+    float u4mz = getDistance( currentPosition + vec3(  0.,  0., -oZ ) );
 
-    float u0   = getNormalizedSample( distanceFieldTexture, currentPosition, vec3( -oX, -oY,  0. ) );
-    float u2   = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  oX, -oY,  0. ) );
-    float u6   = getNormalizedSample( distanceFieldTexture, currentPosition, vec3( -oX,  oY,  0. ) );
-    float u8   = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  oX,  oY,  0. ) );
+    float u0   = getDistance( currentPosition + vec3( -oX, -oY,  0. ) );
+    float u2   = getDistance( currentPosition + vec3(  oX, -oY,  0. ) );
+    float u6   = getDistance( currentPosition + vec3( -oX,  oY,  0. ) );
+    float u8   = getDistance( currentPosition + vec3(  oX,  oY,  0. ) );
 
-    float u1pz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0., -oY,  oZ ) );
-    float u3pz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3( -oX,  0.,  oZ ) );
-    float u5pz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  oX,  0.,  oZ ) );
-    float u7pz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  oY,  oZ ) );
+    float u1pz = getDistance( currentPosition + vec3(  0., -oY,  oZ ) );
+    float u3pz = getDistance( currentPosition + vec3( -oX,  0.,  oZ ) );
+    float u5pz = getDistance( currentPosition + vec3(  oX,  0.,  oZ ) );
+    float u7pz = getDistance( currentPosition + vec3(  0.,  oY,  oZ ) );
 
-    float u1mz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0., -oY, -oZ ) );
-    float u3mz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3( -oX,  0., -oZ ) );
-    float u5mz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  oX,  0., -oZ ) );
-    float u7mz = getNormalizedSample( distanceFieldTexture, currentPosition, vec3(  0.,  oY, -oZ ) );
+    float u1mz = getDistance( currentPosition + vec3(  0., -oY, -oZ ) );
+    float u3mz = getDistance( currentPosition + vec3( -oX,  0., -oZ ) );
+    float u5mz = getDistance( currentPosition + vec3(  oX,  0., -oZ ) );
+    float u7mz = getDistance( currentPosition + vec3(  0.,  oY, -oZ ) );
 
     //calculate derivatives of level set by calculating central differences
     float Dx   = ( u5   - u3 ) / 2.;
@@ -160,14 +154,15 @@ void main( void ) {
     //calculate mean curvature
     float H = ( nxp - nxm + nyp - nym + nzp - nzm ) / 2.;
 
-    if( abs( u1 ) > 1. - eps ||
+    //TODO: re-figure this out
+    /*if( abs( u1 ) > 1. - eps ||
         abs( u3 ) > 1. - eps ||
         abs( u4 ) > 1. - eps ||
         abs( u5 ) > 1. - eps ||
         abs( u7 ) > 1. - eps ) {
             // region with (potentially) clamped values
         H = 0.;
-    }
+    }*/
 
     float max_Dxp  = max(  Dxp, 0. );
     float max_mDxm = max( -Dxm, 0. );
@@ -203,18 +198,21 @@ void main( void ) {
     //TODO look at curvature H which is probably broken
     float speedFunction = alpha * D + ( 1. - alpha ) * H;
     //choose gradient magnitude according to speed function
-    float gradientMagnitude = ( speedFunction > 0. ) ? length( grad_phi_max ) : length( grad_phi_min );
+    vec3 gradient = ( speedFunction > 0. ) ? grad_phi_max : grad_phi_min;
+    float gradientMagnitude = length( gradient );
     float updateDistance = gradientMagnitude * speedFunction;
 
     float distance = currentDistance + updateDistance;
-    float clampDistance = clamp( distance, -1., 1. );
+    //float clampDistance = clamp( distance, -1., 1. );
 
     //update values in distance field
-    float normalizedDistance = ( clampDistance + 1. ) / 2.;
+    //float normalizedDistance = ( clampDistance + 1. ) / 2.;
 
     //calculate normal vector for lighting TODO: weird behaviour
     vec3 N  = normalize( vec3( Dx, Dy, Dz ) );
+    //vec3 N  = normalize( vec3( nxp - nxm, nyp - nym, nzp - nzm ) );
+    //vec3 N  = normalize( gradient );
 
-    color.r = normalizedDistance;
+    color.r = distance;
     color.gba = N;
 }

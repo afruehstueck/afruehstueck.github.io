@@ -41,7 +41,7 @@ vec3 doLighting( vec3 position, vec3 normal, vec3 material ) {
 
 float textureWithOffset( sampler3D volume, vec3 texCoord, vec3 offset ) {
     vec3 offsetCoord = texCoord + offset / volumeDimensions;
-    return texture( distanceFieldTexture, offsetCoord ).r * 2.0 - 1.0;
+    return texture( distanceFieldTexture, offsetCoord ).r;// * 2.0 - 1.0;
 }
 
 vec3 calcNormal( sampler3D volume, vec3 pos ) {
@@ -68,6 +68,7 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
     float accumulatedLength = 0.0;
 
     float rayLength = length( ray );
+    if( rayLength == 0. ) return vec4( 0. );
 
     vec3 deltaDirection = normalize ( ray ) / float( steps );
     float deltaLength = length ( deltaDirection );
@@ -77,16 +78,18 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
     float sampleValue = sampleColor.x;
     float sampleAlpha = 0.;
 
-    float sdfSample = 1.;
-    float prev = 1.;
+    float sdfSample = texture( distanceFieldTexture, position ).r;// * 2.0 - 1.0;
+    float prev = 0.;
     bool foundSurface = false;
 
     for ( int i = 0; i < MAX_STEPS; ++i ) {
         prev = sdfSample;
 
         //do trilinear sampling (leave in this comment for trilinear polyfill)
-        sdfSample = texture( distanceFieldTexture, position ).r * 2.0 - 1.0;
-        if( sign( sdfSample ) != sign( prev ) ) {
+        sdfSample = texture( distanceFieldTexture, position ).r;// * 2.0 - 1.0;
+
+        if( sdfSample > 0. ) accumulatedColor.b += 1.;
+        if( sdfSample >= 0. /*sign( sdfSample ) != sign( prev )*/ ) {
             //found isosurface, stop raycasting
             foundSurface = true;
             break;
@@ -121,7 +124,7 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
 }
 
 void main() {
-    int steps = 75;
+    int steps = 150;
 
     vec2 tex = vec2( ( ( projectedCoordinate.x / projectedCoordinate.w ) + 1.0 ) / 2.0,
                        ( ( projectedCoordinate.y / projectedCoordinate.w ) + 1.0 ) / 2.0 );

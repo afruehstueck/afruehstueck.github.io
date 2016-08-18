@@ -9,29 +9,33 @@ out vec4 color;
 
 uniform float layer;
 
+uniform vec3 volumeDimensions;
 uniform vec3 seedOrigin;
 uniform float seedRadius;
 uniform float numLayers;
-/*
-vec3 tiledTextureCoordToVolumeCoord( vec2 textureCoordinate ) {
-    //scale textureCoordinate from [ 0, 1 ] to [ 0, tiles{x,y} ]
-    float tx = textureCoordinate.x * tiles.x;
-    float ty = textureCoordinate.y * tiles.y;
 
-    float dx = floor( tx );
-    float dy = floor( ty );
 
-    vec3 coord;
+float sdSphere( vec3 pos, vec3 origin, float radius ) {
+    float distanceToOrigin = distance( origin, pos );
+    return radius - distanceToOrigin;
+}
 
-    coord.x = fract( tx );
-    coord.y = fract( ty );
+float sdTorus( vec3 pos, vec2 t ) {
+  vec2 q = vec2( length( pos.xz ) - t.x, pos.y );
+  return length( q ) - t.y;
+}
 
-    //z-arrangement is inverted to adhere to file format. maybe change this!
-    coord.z = ( dy * tiles.x + dx ) / ( tiles.x * tiles.y );
-    //coord.z = ( ( tiles.y - dy ) * tiles.x + dx ) / ( tiles.x * tiles.y );
+vec3 calcNormal( vec3 pos, vec3 origin, float radius ) {
+  const vec3 offset1 = vec3(  1., -1., -1. );
+  const vec3 offset2 = vec3( -1., -1.,  1. );
+  const vec3 offset3 = vec3( -1.,  1., -1. );
+  const vec3 offset4 = vec3(  1.,  1.,  1. );
 
-    return coord;
-}*/
+  return normalize( offset1 * sdSphere( pos + offset1, origin, radius ) +
+                    offset2 * sdSphere( pos + offset2, origin, radius ) +
+                    offset3 * sdSphere( pos + offset3, origin, radius ) +
+                    offset4 * sdSphere( pos + offset4, origin, radius ) );
+}
 
 void main( void ) {
 
@@ -40,24 +44,21 @@ void main( void ) {
     float currentLayer = layer / numLayers + 0.5 / numLayers;
     vec3 currentPosition = vec3( textureCoordinate.x, textureCoordinate.y, currentLayer );
 
-    float distanceToOrigin = distance( seedOrigin, currentPosition );
-    //WATCH OUT, different from other example
-    //distance in distance function is *positive* outside of seed and *negative* inside of seed (required this way by glsl-raytrace
-    // todo normalize distance value by dividing through fbo resolution
-    float distance = distanceToOrigin - seedRadius;
+    vec3 voxelPosition = currentPosition * volumeDimensions;
+    vec3 voxelSeedOrigin = seedOrigin * volumeDimensions;
+
+    float distance = sdSphere( voxelPosition, voxelSeedOrigin, seedRadius );
 
     //distance = distance / ( seedRadius * 2. );
 
-    float clampDistance = clamp( distance, -1., 1. );
+    //float clampDistance = clamp( distance, -1., 1. );
     //normalize distance value to [0, 1] range
-    float normalizedDistance = ( clampDistance + 1. ) / 2.;
+    //float normalizedDistance = ( clampDistance + 1. ) / 2.;
 
-    color.r = normalizedDistance;
-    color.g = normalizedDistance;
-    color.b = normalizedDistance;
+    color.r = distance;
+    color.gba = calcNormal( voxelPosition, voxelSeedOrigin, seedRadius );
 
     //DEBUG: draws a nice circle around the seed region with unused green and blue values
     //gl_FragColor.rgb = vec3( normalizedDistance, ( abs( clampDistance ) < 0.01 ) ? 1. : 0., ( abs( clampDistance ) < 0.01 ) ? 1. : 0. );
 
-    color.a = 1.;
 }

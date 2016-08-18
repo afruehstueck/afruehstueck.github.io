@@ -1,17 +1,19 @@
 'use strict';
 
-let slices = { x: 8, y: 16 };
+let slices = { x: 16, y: 16 };
 let tiles = slices;
 let width = 128,
     height = width,
     depth = 128;//slices.x * slices.y;
 
 //let seedOrigin = [ 0.58, 0.11, 0.3 ];
-//let seedOrigin = { x: 0.4, y: 0.83, z: 0.22 };//foot
-//let seedOrigin = { x: 0.5, y: 0.5, z: 0.5 };
-let seedOrigin = { x: 0.7, y: 0.7, z: 0.7 };
-let seedRadius = 0.15;
-let targetIntensity = -1.;
+let seedOrigin = { x: 0.46, y: 0.41, z: 0.52 };//bonsai
+//let seedOrigin = { x: 0.4, y: 0.6, z: 0.22 };//foot
+//let seedOrigin = { x: 0.64, y: 0.64, z: 0.64 };
+let seedRadius = 0.1;
+let targetIntensity = 100;//-1.;
+let alpha = 1.;
+let sensitivity = 0.15;
 
 let updating = false;
 
@@ -19,11 +21,11 @@ let volumePath;
 //volumePath = 'res/test/testball128x128x256.png';
 //volumePath = 'res/test/testball128x128x128.png';
 //volumePath = 'res/test/multiballs128x128x128.png';
-volumePath = 'res/test/smallercubeg128x128x128.png';
+//volumePath = 'res/test/smallercubeg128x128x128.png';
 //volumePath = 'res/test/smallercubeg128x128x256.png';
 //volumePath = 'res/test/smallercube256x256x256.png';
 
-//volumePath = 'res/bonsai128x128x256.png';
+volumePath = 'res/bonsai128x128x256.png';
 //volumePath = 'res/heart128x128x256.png';
 //volumePath = 'res/bonsai256x256x256.png';
 //volumePath = 'res/foot256x256x256.png';
@@ -110,7 +112,7 @@ function createTextureFromSize( dimensions ) {
     /*
      //TODO: make flip_y optional
      gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );*/
-    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, dimensions[ 0 ], dimensions[ 1 ], 0, gl.RGBA, gl.FLOAT/*UNSIGNED_BYTE*/, null );
+    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, dimensions[ 0 ], dimensions[ 1 ], 0, gl.RGBA, gl.FLOAT/*UNSIGNED_BYTE*/, null ); //creates 32bit float texture
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
@@ -270,6 +272,8 @@ function convertShader( shaderSource, shaderType ) {
 uniform vec2 tiles;
 
 vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
+    texCoord = clamp( texCoord, 0., 1. );
+
     float volumeDepth = tiles.x * tiles.y;
     float max_slice = volumeDepth - 1.;
     vec2 slice1, slice2;
@@ -305,6 +309,8 @@ vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
 uniform vec2 tiles;
 
 vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
+    texCoord = clamp( texCoord, 0., 1. );
+    
     float volumeDepth = tiles.x * tiles.y;
     float max_slice = volumeDepth;
     
@@ -560,7 +566,7 @@ for( let index = 0; index < canvases.length; index++ ) {
         }
     }
 
-    if( gl ){
+    if( gl ) {
         canvas.context = gl;
         gl.type = glType;
 
@@ -573,8 +579,10 @@ for( let index = 0; index < canvases.length; index++ ) {
     }
 }
 
-function getSeedValue( img ) {
+function getSeedValue() {
     var canvas = document.createElement( 'canvas' );
+
+    var img = this.sourceImage;
 
     canvas.width = img.width;
     canvas.height = img.height;
@@ -608,8 +616,9 @@ function getSeedValue( img ) {
     $('#log').css( 'background-color', rgba );
     $('#log').html( rgba );
 
-    console.log(rgba);
+    console.log( rgba );
     targetIntensity = voxel[ 0 ];
+
     return voxel;
 }
 
@@ -624,11 +633,6 @@ function init( canvas ) {
 
     let sourceImage = new Image();
     sourceImage.onload = function () {
-
-        if( targetIntensity == -1. ) {
-            getSeedValue( sourceImage );
-        }
-
         //load tiled volume from PNG to texture
         canvas.tiledVolume = createTextureFromImage.call( canvas, sourceImage );
         //create 3D FBO for 3D volume texture
@@ -636,8 +640,9 @@ function init( canvas ) {
 
         //create two fbos to alternately draw to them during iterations
         canvas.frameBuffers = [ createFBO.call( canvas, [ width, height, depth ] ),
-            createFBO.call( canvas, [ width, height, depth ] ) ];
+                                createFBO.call( canvas, [ width, height, depth ] ) ];
 
+        canvas.sourceImage = sourceImage;
         volume_async_load.resolve();
     };
     sourceImage.src = volumePath;
@@ -665,6 +670,7 @@ function init( canvas ) {
             [   'numLayers',
                 'tiles',
                 'layer',
+                'volumeDimensions',
                 'seedOrigin',
                 'seedRadius' ]
         ],
@@ -675,6 +681,8 @@ function init( canvas ) {
                 'volumeDimensions',
                 'seedOrigin',
                 'targetIntensity',
+                'alpha',
+                'sensitivity',
                 'distanceFieldTexture',
                 'volumeTexture' ]
         ],
@@ -749,6 +757,8 @@ function updateDistanceFieldUniforms( program ) {
     gl.uniform1f( program.numLayers, depth );
     gl.uniform3f( program.seedOrigin, seedOrigin.x, seedOrigin.y, seedOrigin.z );
     gl.uniform1f( program.targetIntensity, targetIntensity );
+    gl.uniform1f( program.alpha, alpha );
+    gl.uniform1f( program.sensitivity, sensitivity );
     gl.uniform3f( program.volumeDimensions, width, height, depth );
 }
 
@@ -756,6 +766,13 @@ function renderOnce() {
     if( $.isEmptyObject( this.programs ) ) return;
 
     console.log( 'initializing...' );
+    iteration = 0;
+
+    if( targetIntensity == -1. ) {
+        getSeedValue.call( this );
+    }
+
+    updateDistanceFieldUniforms.call( this, this.programs[ 'update_sdf' ] );
     //transfer the volume from the two tiled texture into the volume 3D texture
     initializeVolume.call( this, this.programs[ 'initialize_volume' ], this.volumeFrameBuffer, this.tiledVolume );
 
@@ -813,7 +830,7 @@ function render() {
     renderRaytrace.call( this, this.programs[ 'raytrace' ], this.volumeFrameBuffer, this.frameBuffers[ iteration % 2 ], this.backfaceFrameBuffer );
 
     //render a texture to fullscreen (for debug purposes)
-    //renderTextureToViewport.call( this, this.programs[ 'debug_texture' ], this.frameBuffers[ 0 ].texture );
+    //renderTextureToViewport.call( this, this.programs[ 'debug_texture' ], this.frameBuffers[ iteration % 2 ].texture );
     //renderTextureToViewport.call( this, this.programs[ 'debug_texture' ], this.backfaceFrameBuffer.texture );
 
     /*
@@ -852,7 +869,8 @@ function initializeDistanceField( program, frameBuffer, seedOrigin, seedRadius )
 
     gl.uniform1f( program.numLayers, depth );
     gl.uniform3f( program.seedOrigin, seedOrigin.x, seedOrigin.y, seedOrigin.z );
-    gl.uniform1f( program.seedRadius, seedRadius );
+    gl.uniform3f( program.volumeDimensions, width, height, depth );
+    gl.uniform1f( program.seedRadius, seedRadius * width );
 
     renderTo3DTexture.call( this, program, frameBuffer, depth );
 }
