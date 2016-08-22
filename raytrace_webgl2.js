@@ -2,9 +2,15 @@
 
 let slices = { x: 16, y: 16 };
 let tiles = slices;
-let width = 128,
+/*let width = 128,
     height = width,
-    depth = 128;//slices.x * slices.y;
+    depth = 128;//slices.x * slices.y;*/
+let volumeDimensions = { x: 128, y: 128, z: 128 };
+let datasetDimensions = { x: 1, y: 1, z: 1 };
+
+let downsample = { x: 1, y: 1, z: 2 };
+let iteration = 0;
+let MAX_ITERATION = 500;
 
 //let seedOrigin = [ 0.58, 0.11, 0.3 ];
 let seedOrigin = { x: 0.46, y: 0.41, z: 0.52 };//bonsai
@@ -15,7 +21,7 @@ let targetIntensity = 255;//-1.;
 let alpha = 0.9;
 let sensitivity = 0.42;
 
-let updating = false;
+let iteratePerClick = 1;
 
 let volumePath;
 //volumePath = 'res/test/testball128x128x256.png';
@@ -199,7 +205,7 @@ let setupShaders = function ( vertexShaderPath, fragmentShaderPath, uniforms ) {
 
             if ( !gl.getProgramParameter( program, gl.LINK_STATUS ) ) {
                 console.error( gl.getProgramInfoLog( program ) );
-                alert( 'could not initialise shaders for ' + program.name + ' program' );
+                //alert( 'could not initialise shaders for ' + program.name + ' program' );
             }
 
             //Todo init attrib & uniforms?
@@ -412,7 +418,7 @@ function createFBO( dimensions ) {
         case 3:
             if( gl.type === 'webgl2' ) {
                 fboTexture = create3DTexture.call( this, dimensions );
-                for( let layer = 0; layer < depth; layer++ ) {
+                for( let layer = 0; layer < volumeDimensions.z; layer++ ) {
                     gl.framebufferTextureLayer( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, fboTexture, 0, layer );
                 }
                 break;
@@ -550,6 +556,7 @@ let canvases = document.querySelectorAll( '.renderCanvas' );
 
 for( let index = 0; index < canvases.length; index++ ) {
     let canvas = canvases[ index ];
+    canvas.active = true;
 
     // OpenGL context
     let glType = $( canvas ).data( 'gltype' );
@@ -629,6 +636,16 @@ function init( canvas ) {
 
     resizeCanvas( canvas );
 
+    //extract numbers from volume path to parse the volume dimensions from the file name
+    let parsedDimensions = volumePath.match(/^\d+|\d+\b|\d+(?=\w)/g).map(function (v) {return +v;});
+    datasetDimensions.x = parsedDimensions[ 0 ];
+    datasetDimensions.y = parsedDimensions[ 1 ];
+    datasetDimensions.z = parsedDimensions[ 2 ];
+
+    volumeDimensions.x = datasetDimensions.x / downsample.x;
+    volumeDimensions.y = datasetDimensions.y / downsample.y;
+    volumeDimensions.z = datasetDimensions.z / downsample.z;
+
     let volume_async_load = jQuery.Deferred();
 
     let sourceImage = new Image();
@@ -636,11 +653,11 @@ function init( canvas ) {
         //load tiled volume from PNG to texture
         canvas.tiledVolume = createTextureFromImage.call( canvas, sourceImage );
         //create 3D FBO for 3D volume texture
-        canvas.volumeFrameBuffer = createFBO.call( canvas, [ width, height, depth ] );
+        canvas.volumeFrameBuffer = createFBO.call( canvas, [ volumeDimensions.x, volumeDimensions.y, volumeDimensions.z ] );
 
         //create two fbos to alternately draw to them during iterations
-        canvas.frameBuffers = [ createFBO.call( canvas, [ width, height, depth ] ),
-                                createFBO.call( canvas, [ width, height, depth ] ) ];
+        canvas.frameBuffers = [ createFBO.call( canvas, [ volumeDimensions.x, volumeDimensions.y, volumeDimensions.z ] ),
+                                createFBO.call( canvas, [ volumeDimensions.x, volumeDimensions.y, volumeDimensions.z ] ) ];
 
         canvas.sourceImage = sourceImage;
         volume_async_load.resolve();
@@ -650,7 +667,6 @@ function init( canvas ) {
     create2DBuffers.call( canvas );
     create3DBuffers.call( canvas );
 
-
     let quad_vert = 'shaders_webgl2/quad.vert';
     let box_vert  = 'shaders_webgl2/projected_box.vert';
 
@@ -659,51 +675,126 @@ function init( canvas ) {
     //TODO: parse uniforms from shader? create shader and add uniforms to shader string?
     //parsing uniforms from shader code shouldn't be too hard ... actually
 
+    /*
+    *
+     let slices = { x: 16, y: 16 };
+     let tiles = slices;
+     let width = 128,
+     height = width,
+     depth = 128;//slices.x * slices.y;
+
+     let iteration = 0;
+     let MAX_ITERATION = 500;
+
+     //let seedOrigin = [ 0.58, 0.11, 0.3 ];
+     let seedOrigin = { x: 0.46, y: 0.41, z: 0.52 };//bonsai
+     //let seedOrigin = { x: 0.4, y: 0.6, z: 0.22 };//foot
+     //let seedOrigin = { x: 0.64, y: 0.64, z: 0.64 };
+     let seedRadius = 0.44;
+     let targetIntensity = 255;//-1.;
+     let alpha = 0.9;
+     let sensitivity = 0.42;
+
+     let iteratePerClick = 1;
+
+     let volumePath;
+     */
+
     //list of shaders
     //format: [ vertexShaderPath, fragmentShaderPath, Array_of_uniforms, renderFunction
     let shaderPairs = [
         [ quad_vert, 'shaders_webgl2/initialize_volume.frag',
-            [   'tiles',
-                'layer' ]
+            [   { name: 'tiles',                type: 'vec2',       variable: 'slices' },
+                { name: 'downsample',           type: 'vec3',       variable: 'downsample' },
+                { name: 'datasetDimensions',    type: 'vec3',       variable: 'datasetDimensions' },
+                { name: 'volumeDimensions',     type: 'vec3',       variable: 'volumeDimensions' },
+                { name: 'layer',                type: 'float',      variable: 'layer' } ]
         ],
         [ quad_vert, 'shaders_webgl2/initialize_sdf.frag',
-            [   'numLayers',
-                'tiles',
-                'layer',
-                'volumeDimensions',
-                'seedOrigin',
-                'seedRadius' ]
+            [   { name: 'numLayers',            type: 'float',      variable: 'numLayers' },
+                { name: 'tiles',                type: 'vec2',       variable: 'tiles' },
+                { name: 'layer',                type: 'float',      variable: 'layer' },
+                { name: 'volumeDimensions',     type: 'vec3',       variable: 'volumeDimensions' },
+                { name: 'seedOrigin',           type: 'vec3',       variable: 'seedOrigin' },
+                { name: 'seedRadius',           type: 'float',      variable: 'seedRadius' } ]
         ],
         [ quad_vert, 'shaders_webgl2/update_sdf.frag',
-            [   'numLayers',
-                'layer',
-                'tiles',
-                'volumeDimensions',
-                'seedOrigin',
-                'targetIntensity',
-                'alpha',
-                'sensitivity',
-                'distanceFieldTexture',
-                'volumeTexture' ]
+            [   { name: 'numLayers',            type: 'float',      variable: 'numLayers' },
+                { name: 'layer',                type: 'float',      variable: 'layer' },
+                { name: 'tiles',                type: 'vec2',       variable: 'tiles' },
+                { name: 'volumeDimensions',     type: 'vec3',       variable: 'volumeDimensions' },
+                { name: 'seedOrigin',           type: 'vec3',       variable: 'seedOrigin' },
+                { name: 'targetIntensity',      type: 'float',      variable: 'targetIntensity' },
+                { name: 'alpha',                type: 'float',      variable: 'alpha' },
+                { name: 'sensitivity',          type: 'float',      variable: 'sensitivity' },
+                { name: 'distanceFieldTexture', type: 'sampler3D',  variable: 'distanceFieldTexture' },
+                { name: 'volumeTexture',        type: 'sampler3D',  variable: 'volumeTexture' } ]
         ],
         [ quad_vert, 'shaders_webgl2/debug_texture.frag',
-            [   'tex',
-                'tiles' ]
+            [   { name: 'tex',                  type: 'sampler3D',  variable: 'texture' },
+                { name: 'tiles',                type: 'vec2',       variable: 'tiles' } ]
         ],
         [ box_vert,  'shaders_webgl2/backfaces.frag',
-            [   'projectionMatrix',
-                'modelViewMatrix' ]
+            [   { name: 'projectionMatrix',     type: 'matrix4v',   variable: 'camera.projectionMatrix' },
+                { name: 'modelViewMatrix',      type: 'matrix4v',   variable: 'camera.modelViewMatrix' } ]
         ],
         [ box_vert,  'shaders_webgl2/raytrace.frag',
-            [   'distanceFieldTexture',
-                'tiles',
-                'backfaceTexture',
-                'volumeDimensions',
-                'volumeTexture',
-                'projectionMatrix',
-                'modelViewMatrix' ]
+            [   { name: 'distanceFieldTexture', type: 'sampler3D',  variable: 'distanceFieldTexture' },
+                { name: 'tiles',                type: 'vec2',       variable: 'tiles' },
+                { name: 'backfaceTexture',      type: 'sampler2D',  variable: 'backfaceTexture' },
+                { name: 'volumeDimensions',     type: 'vec3',       variable: 'volumeDimensions' },
+                { name: 'volumeTexture',        type: 'sampler3D',  variable: 'volumeTexture' },
+                { name: 'projectionMatrix',     type: 'matrix4v',   variable: 'camera.projectionMatrix' },
+                { name: 'modelViewMatrix',      type: 'matrix4v',   variable: 'camera.modelViewMatrix' } ]
         ]
     ];
+
+    /*
+     let shaderPairs = [
+     [ quad_vert, 'shaders_webgl2/initialize_volume.frag',
+     [   'tiles',
+     'downsample',
+     'layer' ]
+     ],
+     [ quad_vert, 'shaders_webgl2/initialize_sdf.frag',
+     [   'numLayers',
+     'tiles',
+     'layer',
+     'volumeDimensions',
+     'seedOrigin',
+     'seedRadius' ]
+     ],
+     [ quad_vert, 'shaders_webgl2/update_sdf.frag',
+     [   'numLayers',
+     'layer',
+     'tiles',
+     'volumeDimensions',
+     'seedOrigin',
+     'targetIntensity',
+     'alpha',
+     'sensitivity',
+     'distanceFieldTexture',
+     'volumeTexture' ]
+     ],
+     [ quad_vert, 'shaders_webgl2/debug_texture.frag',
+     [   'tex',
+     'tiles' ]
+     ],
+     [ box_vert,  'shaders_webgl2/backfaces.frag',
+     [   'projectionMatrix',
+     'modelViewMatrix' ]
+     ],
+     [ box_vert,  'shaders_webgl2/raytrace.frag',
+     [   'distanceFieldTexture',
+     'tiles',
+     'backfaceTexture',
+     'volumeDimensions',
+     'volumeTexture',
+     'projectionMatrix',
+     'modelViewMatrix' ]
+     ]
+     ];
+     */
 
     let deferreds = $.map( shaderPairs, function( current ) {
         return setupShaders.call( canvas, current[ 0 ], current[ 1 ], current[ 2 ] );
@@ -716,7 +807,7 @@ function init( canvas ) {
             program[ attrib ] = gl.getAttribLocation( program, attrib );
         });
         $.map( uniforms, function( uniform ) {
-            program[ uniform ] = gl.getUniformLocation( program, uniform );
+            program[ uniform.name ] = gl.getUniformLocation( program, uniform.name );
         });
     };
 
@@ -754,13 +845,15 @@ function updateDistanceFieldUniforms( program ) {
 
     gl.useProgram( program );
     //gl.uniform2f( program.tiles, slices.x, slices.y );
-    gl.uniform1f( program.numLayers, depth );
+    gl.uniform1f( program.numLayers, volumeDimensions.z );
     gl.uniform3f( program.seedOrigin, seedOrigin.x, seedOrigin.y, seedOrigin.z );
     gl.uniform1f( program.targetIntensity, targetIntensity );
     gl.uniform1f( program.alpha, alpha );
     gl.uniform1f( program.sensitivity, sensitivity );
-    gl.uniform3f( program.volumeDimensions, width, height, depth );
+    gl.uniform3f( program.volumeDimensions, volumeDimensions.x, volumeDimensions.y, volumeDimensions.z );
 }
+
+function updateUniforms( program ) {}
 
 function renderOnce() {
     if( $.isEmptyObject( this.programs ) ) return;
@@ -773,6 +866,7 @@ function renderOnce() {
     }
 
     updateDistanceFieldUniforms.call( this, this.programs[ 'update_sdf' ] );
+
     //transfer the volume from the two tiled texture into the volume 3D texture
     initializeVolume.call( this, this.programs[ 'initialize_volume' ], this.volumeFrameBuffer, this.tiledVolume );
 
@@ -781,10 +875,6 @@ function renderOnce() {
 
     update.call( this );
 }
-
-let backfacing = true;
-let iteration = 0;
-let MAX_ITERATION = 500;
 
 /*function animate() {
     stats.begin();
@@ -798,15 +888,6 @@ let MAX_ITERATION = 500;
 
 
 function nextIteration() {
-
-  /*  let delta = ( Date.now() - lastCalledTime ) / 1000;
-
-    if( delta < 0.01 ) return;
-
-    lastCalledTime = Date.now();
-
-    this.busy = true;*/
-
     if( iteration < MAX_ITERATION ) {
         iteration++;
         $( '#log' ).html( 'iteration ' + iteration );
@@ -814,11 +895,12 @@ function nextIteration() {
     }
 }
 
-function update() {
+function update( skipRendering = false ) {
     if( $.isEmptyObject( this.programs ) ) return;
+    if( !this.active ) return;
 
     updateDistanceField.call( this, this.programs[ 'update_sdf' ], this.volumeFrameBuffer, this.frameBuffers[ iteration % 2 ], this.frameBuffers[ ( iteration + 1 ) % 2 ] );
-    render.call( this );
+    if( !skipRendering ) render.call( this );
 }
 
 function render() {
@@ -850,12 +932,15 @@ function initializeVolume ( program, volumeFrameBuffer, tiledTexture ) {
     gl.useProgram( program );
 
     gl.uniform2f( program.tiles, slices.x, slices.y );
+    gl.uniform3f( program.downsample, downsample.x, downsample.y, downsample.z );
+    gl.uniform3f( program.volumeDimensions, volumeDimensions.x, volumeDimensions.y, volumeDimensions.z );
+    gl.uniform3f( program.datasetDimensions, datasetDimensions.x, datasetDimensions.y, datasetDimensions.z );
 
     gl.activeTexture( gl.TEXTURE0 );
     gl.bindTexture( gl.TEXTURE_2D, tiledTexture );
     gl.uniform1i( program.tiledTexture, 0 );
 
-    renderTo3DTexture.call( this, program, volumeFrameBuffer, depth );
+    renderTo3DTexture.call( this, program, volumeFrameBuffer, volumeDimensions.z );
 }
 
 //initialize distance field from seed
@@ -867,12 +952,12 @@ function initializeDistanceField( program, frameBuffer, seedOrigin, seedRadius )
     //todo: this shouldn't be here
     gl.uniform2f( program.tiles, tiles.x, tiles.y );
 
-    gl.uniform1f( program.numLayers, depth );
+    gl.uniform1f( program.numLayers, volumeDimensions.z );
     gl.uniform3f( program.seedOrigin, seedOrigin.x, seedOrigin.y, seedOrigin.z );
-    gl.uniform3f( program.volumeDimensions, width, height, depth );
-    gl.uniform1f( program.seedRadius, seedRadius * width );
+    gl.uniform3f( program.volumeDimensions, volumeDimensions.x, volumeDimensions.y, volumeDimensions.z );
+    gl.uniform1f( program.seedRadius, seedRadius * volumeDimensions.x );
 
-    renderTo3DTexture.call( this, program, frameBuffer, depth );
+    renderTo3DTexture.call( this, program, frameBuffer, volumeDimensions.z );
 }
 
 //update distance field by looking up values from one texture and updating it into other
@@ -892,7 +977,7 @@ function updateDistanceField( program, volumeFrameBuffer, sourceFrameBuffer, tar
     gl.bindTexture( sourceFrameBuffer.type, sourceFrameBuffer.texture ); //fbo texture to read from
     gl.uniform1i( program.distanceFieldTexture, 1 );
 
-    renderTo3DTexture.call( this, program, targetFrameBuffer, depth );
+    renderTo3DTexture.call( this, program, targetFrameBuffer, volumeDimensions.z );
 }
 
 //render texture into screen / for debugging
@@ -956,7 +1041,7 @@ function renderRaytrace( program, volumeFrameBuffer, distanceFieldFrameBuffer, b
 
     //todo: this shouldn't be here
     gl.uniform2f( program.tiles, tiles.x, tiles.y );
-    gl.uniform3f( program.volumeDimensions, width, height, depth );
+    gl.uniform3f( program.volumeDimensions, volumeDimensions.x, volumeDimensions.y, volumeDimensions.z );
 
     gl.activeTexture( gl.TEXTURE0 );
     gl.bindTexture( backfaceFrameBuffer.type, backfaceFrameBuffer.texture );
@@ -1040,7 +1125,7 @@ function renderTo3DTexture( program, framebuffer, depth ) {
         gl.uniform1f( program.layer, layer );
 
         if( gl.type === 'webgl2') {
-            gl.viewport( 0, 0, width, height );
+            gl.viewport( 0, 0, volumeDimensions.x, volumeDimensions.y );
             //set texture layer for webgl 2.0
             gl.framebufferTextureLayer( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, framebuffer.texture, 0, layer );
         } else {

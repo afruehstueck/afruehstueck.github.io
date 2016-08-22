@@ -1,6 +1,12 @@
-let stats = new Stats();
-stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
-document.body.appendChild( stats.dom );
+//let stats = new Stats();
+//stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+//document.body.appendChild( stats.dom );
+
+
+////////////////////////////////////////////////////////////////////////////////
+// UI CONTROLS
+////////////////////////////////////////////////////////////////////////////////
+
 
 var Controls = function() {
     this.x = seedOrigin.x;
@@ -11,29 +17,103 @@ var Controls = function() {
     this.alpha = alpha;
     this.sensitivity = sensitivity;
     this.targetIntensity = targetIntensity;
+    this.webgl1 = canvases[ 0 ].active;
+    this.webgl2 = canvases[ 1 ].active;
+    this.iteratePerClick = iteratePerClick;
+    this.downsample_x = downsample.x;
+    this.downsample_y = downsample.y;
+    this.downsample_z = downsample.z;
 };
 
 var gui = new dat.GUI();
 var default_values = new Controls();
 
-
-var f_volume = gui.addFolder( 'Volume' );
-var volume_select = f_volume.add( default_values, 'volume', { bonsai: 'res/bonsai128x128x256.png', head: 'res/head128x128x256.png', heart: 'res/heart128x128x256.png', torso: 'res/torso128x128x256.png' } );
-
+// different volume selected from dropdown
 function onVolumeChanged( value ) {
     volumePath = value;
 
+    initVolume();
+}
+
+function initVolume( value ) {
     for( let index = 0; index < canvases.length; index++ ) {
         init( canvases[ index ] );
     }
-};
+}
+
+// distance function parameters updated
+function onDistanceFunctionChanged( value ) {
+    console.log( 'distance function values updated' );
+    for( let index = 0; index < canvases.length; index++ ) {
+        var canvas = canvases[ index ];
+        updateDistanceFieldUniforms.call( canvas, canvas.programs[ 'update_sdf' ] );
+    }
+}
+
+// seed position and/or radius values updated
+function onSeedChanged( value ) {
+    console.log( 'seed values changed' );
+    for( let index = 0; index < canvases.length; index++ ) {
+        renderOnce.call( canvases[ index ] );
+    }
+}
+
+var f_volume = gui.addFolder( 'Volume' );
+var volume_select = f_volume.add( default_values, 'volume', { bonsai: 'res/bonsai128x128x256.png', head: 'res/head128x128x256.png', heart: 'res/heart128x128x256.png', torso: 'res/torso128x128x256.png' } );
+var volume_downsample_x = f_volume.add( default_values, 'downsample_x', { 1: 1, 2: 2, 4: 4, 8: 8 } );
+var volume_downsample_y = f_volume.add( default_values, 'downsample_y', 1, 4 ).step( 1. );
+var volume_downsample_z = f_volume.add( default_values, 'downsample_z', 1, 4 ).step( 1. );
+
+volume_downsample_x.onChange( function( value ) {
+    downsample.x = value;
+});
+
+volume_downsample_y.onChange( function( value ) {
+    downsample.y = value;
+});
+
+volume_downsample_z.onChange( function( value ) {
+    downsample.z = value;
+});
 
 volume_select.onFinishChange( onVolumeChanged );
+volume_downsample_x.onFinishChange( initVolume );
+volume_downsample_y.onFinishChange( initVolume );
+volume_downsample_z.onFinishChange( initVolume );
+
+var f_settings = gui.addFolder( 'Settings' );
+var webgl1_toggle = f_settings.add( default_values, 'webgl1' );
+var webgl2_toggle = f_settings.add( default_values, 'webgl2' );
+var iterations_control = f_settings.add( default_values, 'iteratePerClick', 1., 15.).step( 1. );
+
+webgl1_toggle.onChange( function( value ) {
+    canvases[ 0 ].active = value;
+});
+webgl2_toggle.onChange( function( value ) {
+    canvases[ 1 ].active = value;
+});
+iterations_control.onChange( function( value ) {
+    iteratePerClick = value;
+});
 
 var f_sdf = gui.addFolder( 'Distance Function' );
 var alpha_control = f_sdf.add( default_values, 'alpha', 0, 1 );
 var intensity_control = f_sdf.add( default_values, 'targetIntensity', 0, 255 );
 var sensitivity_control = f_sdf.add( default_values, 'sensitivity', 0, 1 );
+
+alpha_control.onChange( function( value ) {
+    alpha = value;
+});
+intensity_control.onChange( function( value ) {
+    targetIntensity = value;
+});
+sensitivity_control.onChange( function( value ) {
+    sensitivity = value;
+});
+
+alpha_control.onFinishChange( onDistanceFunctionChanged );
+intensity_control.onFinishChange( onDistanceFunctionChanged );
+sensitivity_control.onFinishChange( onDistanceFunctionChanged );
 
 var f_seed = gui.addFolder( 'Seed' );
 var seed_x_control = f_seed.add( default_values, 'x', 0, 1 );
@@ -53,32 +133,12 @@ seed_z_control.onChange( function( value ) {
 seed_radius_control.onChange( function( value ) {
     seedRadius = value;
 });
-alpha_control.onChange( function( value ) {
-    alpha = value;
-});
-intensity_control.onChange( function( value ) {
-    targetIntensity = value;
-});
-sensitivity_control.onChange( function( value ) {
-    sensitivity = value;
-});
-
-function onSeedChanged( value ) {
-    //iteration = 0;
-    //targetIntensity = -1.;
-    console.log( 'values changed' );
-    for( let index = 0; index < canvases.length; index++ ) {
-        renderOnce.call( canvases[ index ] );
-    }
-};
 
 seed_x_control.onFinishChange( onSeedChanged );
 seed_y_control.onFinishChange( onSeedChanged );
 seed_z_control.onFinishChange( onSeedChanged );
 seed_radius_control.onFinishChange( onSeedChanged );
-alpha_control.onFinishChange( onSeedChanged );
-intensity_control.onFinishChange( onSeedChanged );
-sensitivity_control.onFinishChange( onSeedChanged );
+
 
 
 
@@ -183,11 +243,11 @@ function onKeyPressEvent( event ) {
 function onKeyReleaseEvent( event ) {
     updating = false;
 
-    for( var iter = 0; iter < 10; iter++ ) {
+    for( var iter = 0; iter < iteratePerClick; iter++ ) {
         // on keypress, update all (other) canvases
         for( var index = 0; index < canvases.length; index++ ) {
             var canvas = canvases[ index ];
-            update.call( canvas );
+            update.call( canvas, iter < ( iteratePerClick - 1 ) );
         }
 
         nextIteration();
