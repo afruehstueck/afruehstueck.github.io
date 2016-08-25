@@ -8,36 +8,24 @@ let tiles = slices;
 let volumeDimensions = { x: 128, y: 128, z: 128 };
 let datasetDimensions = { x: 1, y: 1, z: 1 };
 
-let downsample = { x: 1, y: 1, z: 2 };
 let iteration = 0;
-let MAX_ITERATION = 500;
+let MAX_ITERATION = 50000;
 
 //let seedOrigin = [ 0.58, 0.11, 0.3 ];
-let seedOrigin = { x: 0.46, y: 0.41, z: 0.52 };//bonsai
+let seedOrigin = { x: 0.5, y: 0.54, z: 0.52 };//torso
+//let seedOrigin = { x: 0.46, y: 0.41, z: 0.52 };//bonsai
 //let seedOrigin = { x: 0.4, y: 0.6, z: 0.22 };//foot
 //let seedOrigin = { x: 0.64, y: 0.64, z: 0.64 };
-let seedRadius = 0.44;
+let seedRadius = 0.05;
 let targetIntensity = 255;//-1.;
 let alpha = 0.9;
-let sensitivity = 0.42;
+let sensitivity = 0.5;
 
 let iteratePerClick = 1;
 
 let volumePath;
 //volumePath = 'res/test/testball128x128x256.png';
-//volumePath = 'res/test/testball128x128x128.png';
-//volumePath = 'res/test/multiballs128x128x128.png';
-//volumePath = 'res/test/smallercubeg128x128x128.png';
-//volumePath = 'res/test/smallercubeg128x128x256.png';
-//volumePath = 'res/test/smallercube256x256x256.png';
-
-volumePath = 'res/bonsai128x128x256.png';
-//volumePath = 'res/heart128x128x256.png';
-//volumePath = 'res/bonsai256x256x256.png';
-//volumePath = 'res/foot256x256x256.png';
-//volumePath = 'res/male128x128x256.png';
-//volumePath = 'res/teapot256x256x256.png';
-
+volumePath = 'res/torso128x128x256.png';
 
 function resizeCanvases() {
     for( let index = 0; index < canvases.length; index++ ) {
@@ -58,6 +46,12 @@ function resizeCanvas( canvas ) {
     canvas.style.width = canvas_width + 'px';
     canvas.style.height = canvas_height + 'px';
     //canvas.style.position = canvas.style.position || 'absolute';
+
+    let gl = canvas.context;
+    if( canvas.backfaceFrameBuffer !== undefined ) {
+        gl.deleteFramebuffer( canvas.backfaceFrameBuffer.buffer );
+        gl.deleteTexture( canvas.backfaceFrameBuffer.texture );
+    }
 
     canvas.backfaceFrameBuffer = createFBO.call( canvas, [ canvas_width, canvas_height ] );
 
@@ -115,10 +109,12 @@ function createTextureFromSize( dimensions ) {
 
     gl.activeTexture( gl.TEXTURE0 );
     gl.bindTexture( gl.TEXTURE_2D, texture );
-    /*
-     //TODO: make flip_y optional
-     gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );*/
-    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, dimensions[ 0 ], dimensions[ 1 ], 0, gl.RGBA, gl.FLOAT/*UNSIGNED_BYTE*/, null ); //creates 32bit float texture
+
+    //TODO: make flip_y optional
+    gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
+    //gl.texImage2D(target, level, internalformat, width, height, border, format, type, ArrayBufferView? pixels);
+    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, dimensions[ 0 ], dimensions[ 1 ], 0, gl.RGBA, gl.FLOAT, null ); //creates 32bit float texture
+    //gl.texImage2D( gl.TEXTURE_2D, 0, ( gl.type == 'webgl' ) ? gl.RGBA : gl.RGBA32F, dimensions[ 0 ], dimensions[ 1 ], 0, ( gl.type == 'webgl' ) ? gl.RGBA : gl.RGBA32F, gl.FLOAT, null ); //creates 32bit float texture
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
@@ -203,7 +199,7 @@ let setupShaders = function ( vertexShaderPath, fragmentShaderPath, uniforms ) {
             //name program by fragment shader name minus extension minus folder
             program.name = fragmentShaderPath.slice( 0, -5 ).slice( fragmentShaderPath.indexOf( '/' ) + 1 );
 
-            if ( !gl.getProgramParameter( program, gl.LINK_STATUS ) ) {
+            if ( !gl.getProgramParameter( program, gl.LINK_STATUS ) ||  gl.isContextLost() ) {
                 console.error( gl.getProgramInfoLog( program ) );
                 //alert( 'could not initialise shaders for ' + program.name + ' program' );
             }
@@ -562,6 +558,7 @@ for( let index = 0; index < canvases.length; index++ ) {
     let glType = $( canvas ).data( 'gltype' );
 
     let gl = canvas.getContext( glType, { antialias: false, preserveDrawingBuffer: true } );
+    //let gl = WebGLDebugUtils.makeDebugContext( canvas.getContext( glType, { antialias: false, preserveDrawingBuffer: true } ) );
 
     let isGL = !!gl;
     if( !isGL ) {
@@ -577,9 +574,27 @@ for( let index = 0; index < canvases.length; index++ ) {
         canvas.context = gl;
         gl.type = glType;
 
-        // load extensions for float textures
-        gl.getExtension( 'OES_texture_float' );
-        gl.getExtension( 'OES_texture_float_linear' );
+        if( glType === 'webgl' ) {
+            // load extensions for float textures
+            let float_ext = gl.getExtension( 'OES_texture_float' );
+            if ( !float_ext ) {
+                console.error( 'no floating point texture support on your system!' );
+            }
+
+            let color_ext = gl.getExtension( 'WEBGL_color_buffer_float' );
+            if ( !color_ext ) {
+                console.error( 'no OES floating point color buffer support on your system!' );
+            }
+        } else {
+            let color_ext = gl.getExtension( 'EXT_color_buffer_float' );
+            if ( !color_ext ) {
+                console.error( 'no WEBGL floating point color buffer support on your system!' );
+            }
+        }
+        let linear_ext = gl.getExtension( 'OES_texture_float_linear' );
+        if ( !linear_ext ) {
+            console.error( 'no floating point linear filtering support on your system!' );
+        }
 
         init( canvas );
         //gl.renderCanvas = canvas;
@@ -587,6 +602,10 @@ for( let index = 0; index < canvases.length; index++ ) {
 }
 
 function getSeedValue() {
+
+}
+
+/*function getSeedValue() {
     var canvas = document.createElement( 'canvas' );
 
     var img = this.sourceImage;
@@ -627,13 +646,33 @@ function getSeedValue() {
     targetIntensity = voxel[ 0 ];
 
     return voxel;
+}*/
+
+function freeResources( canvas ) {
+    let gl = canvas.context;
+    if( gl == undefined ) {
+        console.err( 'freeResources: gl undefined' );
+        return;
+    }
+
+    if( canvas.tiledVolume !== undefined ) {
+        gl.deleteTexture( canvas.tiledVolume );
+    }
+
+    if( canvas.volumeFrameBuffer !== undefined ) {
+        gl.deleteFramebuffer( canvas.volumeFrameBuffer.buffer );
+        gl.deleteTexture( canvas.volumeFrameBuffer.texture );
+    }
+
+    if( canvas.frameBuffers !== undefined ) {
+        canvas.frameBuffers.forEach( frameBuffer => gl.deleteFramebuffer( frameBuffer.buffer ) );
+    }
 }
 
 function init( canvas ) {
-    canvas.busy = false;
-
     let gl = canvas.context;
 
+    freeResources( canvas );
     resizeCanvas( canvas );
 
     //extract numbers from volume path to parse the volume dimensions from the file name
@@ -642,9 +681,12 @@ function init( canvas ) {
     datasetDimensions.y = parsedDimensions[ 1 ];
     datasetDimensions.z = parsedDimensions[ 2 ];
 
-    volumeDimensions.x = datasetDimensions.x / downsample.x;
-    volumeDimensions.y = datasetDimensions.y / downsample.y;
-    volumeDimensions.z = datasetDimensions.z / downsample.z;
+    if( volumeDimensions.x > datasetDimensions.x ) volumeDimensions.x = datasetDimensions.x;
+    if( volumeDimensions.y > datasetDimensions.y ) volumeDimensions.y = datasetDimensions.y;
+    if( volumeDimensions.z > datasetDimensions.z ) volumeDimensions.z = datasetDimensions.z;
+    //volumeDimensions.x = datasetDimensions.x / downsample.x;
+    //volumeDimensions.y = datasetDimensions.y / downsample.y;
+    //volumeDimensions.z = datasetDimensions.z / downsample.z;
 
     let volume_async_load = jQuery.Deferred();
 
@@ -660,6 +702,7 @@ function init( canvas ) {
                                 createFBO.call( canvas, [ volumeDimensions.x, volumeDimensions.y, volumeDimensions.z ] ) ];
 
         canvas.sourceImage = sourceImage;
+
         volume_async_load.resolve();
     };
     sourceImage.src = volumePath;
@@ -705,7 +748,6 @@ function init( canvas ) {
     let shaderPairs = [
         [ quad_vert, 'shaders_webgl2/initialize_volume.frag',
             [   { name: 'tiles',                type: 'vec2',       variable: 'slices' },
-                { name: 'downsample',           type: 'vec3',       variable: 'downsample' },
                 { name: 'datasetDimensions',    type: 'vec3',       variable: 'datasetDimensions' },
                 { name: 'volumeDimensions',     type: 'vec3',       variable: 'volumeDimensions' },
                 { name: 'layer',                type: 'float',      variable: 'layer' } ]
@@ -932,7 +974,6 @@ function initializeVolume ( program, volumeFrameBuffer, tiledTexture ) {
     gl.useProgram( program );
 
     gl.uniform2f( program.tiles, slices.x, slices.y );
-    gl.uniform3f( program.downsample, downsample.x, downsample.y, downsample.z );
     gl.uniform3f( program.volumeDimensions, volumeDimensions.x, volumeDimensions.y, volumeDimensions.z );
     gl.uniform3f( program.datasetDimensions, datasetDimensions.x, datasetDimensions.y, datasetDimensions.z );
 
