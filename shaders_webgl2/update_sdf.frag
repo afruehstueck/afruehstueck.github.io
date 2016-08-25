@@ -22,20 +22,17 @@ uniform float sensitivity;
 uniform float alpha;
 
 float getDistance( vec3 texCoord ) {
-    //return texture( distanceFieldTexture, texCoord ).r * 2. - 1.;
+    clamp( texCoord, 0., 1. );
     return texture( distanceFieldTexture, texCoord ).r;
 }
 
 void main( void ) {
     //calculate volume position from texture coordinate
-
     float currentLayer = layer / numLayers + 0.5 / numLayers;
     vec3 currentPosition = vec3( textureCoordinate.x, textureCoordinate.y, currentLayer );
 
-    //vec4 encodedDistance = texture( distanceFieldTexture, currentPosition );
-    //float currentDistance = encodedDistance.r * 2. - 1.; //de-normalize
     float currentDistance = getDistance( currentPosition );
-
+    float relevantDistance = length( volumeDimensions / 8. );
     float oX = 1. / volumeDimensions.x;
     float oY = 1. / volumeDimensions.y;
     float oZ = 1. / volumeDimensions.z;
@@ -49,11 +46,22 @@ void main( void ) {
     //todo: incorporate neighboring values in sample function to avoid repeat calculation
     float u1   = getDistance( currentPosition + vec3(  0., -oY,  0. ) );
     float u3   = getDistance( currentPosition + vec3( -oX,  0.,  0. ) );
-    float u4   = currentDistance; //currentDistance; // equals: //float u4 = getDistance( currentPosition + vec3(  0.,  0.,  0. ) );
+    float u4   = currentDistance; // equals: //float u4 = getDistance( currentPosition + vec3(  0.,  0.,  0. ) );
     float u5   = getDistance( currentPosition + vec3(  oX,  0.,  0. ) );
     float u7   = getDistance( currentPosition + vec3(  0.,  oY,  0. ) );
     float u4pz = getDistance( currentPosition + vec3(  0.,  0.,  oZ ) );
     float u4mz = getDistance( currentPosition + vec3(  0.,  0., -oZ ) );
+
+    /*if( abs( u4 ) > relevantDistance &&
+        abs( u1 ) > relevantDistance &&
+        abs( u3 ) > relevantDistance &&
+        abs( u5 ) > relevantDistance &&
+        abs( u7 ) > relevantDistance &&
+        abs( u4pz ) > relevantDistance &&
+        abs( u4mz ) > relevantDistance ) {
+        color = vec4( currentDistance );
+        return;
+    }*/
 
     float u0   = getDistance( currentPosition + vec3( -oX, -oY,  0. ) );
     float u2   = getDistance( currentPosition + vec3(  oX, -oY,  0. ) );
@@ -129,9 +137,10 @@ void main( void ) {
     float nyp_denom = sqrt( Dyp * Dyp + nyp_dif1 * nyp_dif1 + nyp_dif2 * nyp_dif2 );
     float nzp_denom = sqrt( Dzp * Dzp + nzp_dif1 * nzp_dif1 + nzp_dif2 * nzp_dif2 );
 
-    float nxp = Dxp / ( ( nxp_denom > 0. ) ? nxp_denom : 1. );
-    float nyp = Dyp / ( ( nyp_denom > 0. ) ? nyp_denom : 1. );
-    float nzp = Dzp / ( ( nzp_denom > 0. ) ? nzp_denom : 1. );
+    vec3 np;
+    np.x = Dxp / ( ( nxp_denom > 0. ) ? nxp_denom : 1. );
+    np.y = Dyp / ( ( nyp_denom > 0. ) ? nyp_denom : 1. );
+    np.z = Dzp / ( ( nzp_denom > 0. ) ? nzp_denom : 1. );
 
 
     float nxm_dif1 = ( Dymx + Dy ) / 2.;
@@ -147,12 +156,16 @@ void main( void ) {
     float nym_denom = sqrt( Dym * Dym + nym_dif1 * nym_dif1 + nym_dif2 * nym_dif2 );
     float nzm_denom = sqrt( Dzm * Dzm + nzm_dif1 * nzm_dif1 + nzm_dif2 * nzm_dif2 );
 
-    float nxm = Dxm / ( ( nxm_denom > 0. ) ? nxm_denom : 1. );
-    float nym = Dym / ( ( nym_denom > 0. ) ? nym_denom : 1. );
-    float nzm = Dzm / ( ( nzm_denom > 0. ) ? nzm_denom : 1. );
+    vec3 nm;
+    nm.x = Dxm / ( ( nxm_denom > 0. ) ? nxm_denom : 1. );
+    nm.y = Dym / ( ( nym_denom > 0. ) ? nym_denom : 1. );
+    nm.z = Dzm / ( ( nzm_denom > 0. ) ? nzm_denom : 1. );
 
+    vec3 n_diff = normalize( np ) - normalize( nm );
     //calculate mean curvature
-    float H = ( nxp - nxm + nyp - nym + nzp - nzm ) / 2.;
+
+    float H = ( np.x - nm.x + np.y - nm.y + np.z - nm.z ) / 2.;
+    //float H = ( n_diff.x + n_diff.y + n_diff.z ) / 2.;
 
     //TODO: re-figure this out
     /*if( abs( u1 ) > 1. - eps ||
@@ -210,9 +223,7 @@ void main( void ) {
 
     //calculate normal vector for lighting TODO: weird behaviour
     vec3 N  = normalize( vec3( Dx, Dy, Dz ) );
-    //vec3 N  = normalize( vec3( nxp - nxm, nyp - nym, nzp - nzm ) );
-    //vec3 N  = normalize( gradient );
 
     color.r = distance;
-    color.gba = N;
+    color.gba = N;//vec3( H, 0., 0. );
 }

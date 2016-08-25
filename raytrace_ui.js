@@ -20,9 +20,9 @@ var Controls = function() {
     this.webgl1 = canvases[ 0 ].active;
     this.webgl2 = canvases[ 1 ].active;
     this.iteratePerClick = iteratePerClick;
-    this.downsample_x = downsample.x;
-    this.downsample_y = downsample.y;
-    this.downsample_z = downsample.z;
+    this.dimension_x = volumeDimensions.x;
+    this.dimension_y = volumeDimensions.y;
+    this.dimension_z = volumeDimensions.z;
 };
 
 var gui = new dat.GUI();
@@ -59,21 +59,34 @@ function onSeedChanged( value ) {
 }
 
 var f_volume = gui.addFolder( 'Volume' );
+
 var volume_select = f_volume.add( default_values, 'volume', { bonsai: 'res/bonsai128x128x256.png', head: 'res/head128x128x256.png', heart: 'res/heart128x128x256.png', torso: 'res/torso128x128x256.png' } );
-var volume_downsample_x = f_volume.add( default_values, 'downsample_x', { 1: 1, 2: 2, 4: 4, 8: 8 } );
-var volume_downsample_y = f_volume.add( default_values, 'downsample_y', 1, 4 ).step( 1. );
-var volume_downsample_z = f_volume.add( default_values, 'downsample_z', 1, 4 ).step( 1. );
+var volume_downsample_x = f_volume.add( default_values, 'dimension_x', 
+                                        {   [ datasetDimensions.x + ' (original)' ]: datasetDimensions.x, 
+                                            [ datasetDimensions.x / 2 ]: datasetDimensions.x / 2, 
+                                            [ datasetDimensions.x / 4 ]: datasetDimensions.x / 4, 
+                                            [ datasetDimensions.x / 8 ]: datasetDimensions.x / 8 } ).listen();
+var volume_downsample_y = f_volume.add( default_values, 'dimension_y', 
+                                        {   [ datasetDimensions.y + ' (original)' ]: datasetDimensions.y, 
+                                            [ datasetDimensions.y / 2 ]: datasetDimensions.y / 2, 
+                                            [ datasetDimensions.y / 4 ]: datasetDimensions.y / 4, 
+                                            [datasetDimensions.y / 8 ]: datasetDimensions.y / 8 } ).listen();
+var volume_downsample_z = f_volume.add( default_values, 'dimension_z', 
+                                        {   [ datasetDimensions.z + ' (original)' ]: datasetDimensions.z, 
+                                            [ datasetDimensions.z / 2 ]: datasetDimensions.z / 2, 
+                                            [ datasetDimensions.z / 4 ]: datasetDimensions.z / 4, 
+                                            [ datasetDimensions.z / 8 ]: datasetDimensions.z / 8 } ).listen();
 
 volume_downsample_x.onChange( function( value ) {
-    downsample.x = value;
+    volumeDimensions.x = value;
 });
 
 volume_downsample_y.onChange( function( value ) {
-    downsample.y = value;
+    volumeDimensions.y = value;
 });
 
 volume_downsample_z.onChange( function( value ) {
-    downsample.z = value;
+    volumeDimensions.z = value;
 });
 
 volume_select.onFinishChange( onVolumeChanged );
@@ -81,10 +94,10 @@ volume_downsample_x.onFinishChange( initVolume );
 volume_downsample_y.onFinishChange( initVolume );
 volume_downsample_z.onFinishChange( initVolume );
 
-var f_settings = gui.addFolder( 'Settings' );
-var webgl1_toggle = f_settings.add( default_values, 'webgl1' );
-var webgl2_toggle = f_settings.add( default_values, 'webgl2' );
-var iterations_control = f_settings.add( default_values, 'iteratePerClick', 1., 15.).step( 1. );
+var f_update = gui.addFolder( 'Update' );
+var webgl1_toggle = f_update.add( default_values, 'webgl1' );
+var webgl2_toggle = f_update.add( default_values, 'webgl2' );
+var iterations_control = f_update.add( default_values, 'iteratePerClick', 1., 15.).step( 1. );
 
 webgl1_toggle.onChange( function( value ) {
     canvases[ 0 ].active = value;
