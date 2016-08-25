@@ -578,22 +578,22 @@ for( let index = 0; index < canvases.length; index++ ) {
             // load extensions for float textures
             let float_ext = gl.getExtension( 'OES_texture_float' );
             if ( !float_ext ) {
-                console.error( 'no floating point texture support on your system!' );
+                console.error( 'no floating point texture support on your system' );
             }
 
-            let color_ext = gl.getExtension( 'WEBGL_color_buffer_float' );
+            /*let color_ext = gl.getExtension( 'WEBGL_color_buffer_float' );
             if ( !color_ext ) {
                 console.error( 'no OES floating point color buffer support on your system!' );
-            }
+            }*/
         } else {
             let color_ext = gl.getExtension( 'EXT_color_buffer_float' );
             if ( !color_ext ) {
-                console.error( 'no WEBGL floating point color buffer support on your system!' );
+                console.error( 'no WEBGL floating point color buffer support on your system' );
             }
         }
         let linear_ext = gl.getExtension( 'OES_texture_float_linear' );
         if ( !linear_ext ) {
-            console.error( 'no floating point linear filtering support on your system!' );
+            console.error( 'no floating point linear filtering support on your system' );
         }
 
         init( canvas );
