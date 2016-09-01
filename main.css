@@ -9,6 +9,7 @@ body {
 #log {
     background-color: lightgrey;
     border-radius: 5px;
+    left: 300px;
     padding-top: 0.4em;
     padding-left: 1.4em;
     padding-right: 1.4em;
@@ -76,4 +77,26 @@ a:link {
     position: absolute;
     top: 0px;
     left: 0px;
+}
+
+#tfContainer {
+    position: absolute;
+    top: 0;
+    text-align: center;
+    color: #5C5C5C;
+    padding: 10px;
+}
+
+#tfContainer img {
+    border: 0;
+    margin: 3px;
+    float: right;
+    clear: right;
+    width: 300px;
+    height: 30px;
+}
+
+.overlayImg {
+    position: relative;
+    top: -35px;
 }

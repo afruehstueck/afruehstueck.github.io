@@ -11,6 +11,8 @@ in vec4 projectedCoordinate;
 
 out vec4 color;
 
+uniform sampler2D transferColor;
+uniform sampler2D transferAlpha;
 uniform sampler2D backfaceTexture;
 uniform sampler3D volumeTexture;
 uniform sampler3D distanceFieldTexture;
@@ -21,7 +23,7 @@ uniform int channel;
 
 //todo: make this uniform
 const int MAX_STEPS = 500;
-const float alphaCorrection = 0.15;
+const float alphaCorrection = 0.3;
 
 vec4 mask[ 4 ] = vec4[ 4 ] (
     vec4( 1., 0., 0., 0. ),
@@ -110,20 +112,22 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
             //todo: determine which value is sampled. currently .x because some data do not have alpha
             sampleValue = dot( sampleColor, mask[ channel ] );// < 0.6 ? sampleColor.x : 0.0;
 
-
-            //clamp( sampleValue, 0., 1. );
             float min = dataRange.x;
             float max = dataRange.y;
+            //normalize sampleValue to [0, 1] range
             sampleValue = ( sampleValue - min ) / ( max - min );
-            //sampleValue /= 255.;
+
             sampleAlpha = sampleValue * alphaCorrection;
 
-            accumulatedColor += ( 1. - accumulatedAlpha ) * vec3( sampleValue ) * sampleAlpha;
+            vec3 color = texture( transferColor, vec2( sampleValue, 0.9 ) ).rgb;
+            float alpha = texture( transferAlpha, vec2( sampleValue, 0.9 ) ).r * alphaCorrection;
+
+            accumulatedColor += ( 1. - accumulatedAlpha ) * color * alpha;
 
             /*if( sampleValue > .01 && sampleValue < .5 ) accumulatedColor.r += 1.;
             if( sampleValue >= .5 && sampleValue < .8 ) accumulatedColor.g += 1.;
             if( sampleValue >= .8 ) accumulatedColor.b += 1.;*/
-            accumulatedAlpha += sampleAlpha;
+            accumulatedAlpha += alpha;
         }
 
         position += deltaDirection;

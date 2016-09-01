@@ -67,6 +67,8 @@ let sensitivity = 0.5;
 
 let iteratePerClick = 1;
 
+let updateTF = true;
+
 function resizeCanvases() {
     for( let canvas of canvases ) {
         resizeCanvas( canvas );
@@ -122,7 +124,7 @@ function initCamera() {
 /////////////////////////////////
 
 //todo consider non-power of two support
-function createTextureFromImage( image ) {
+function createTextureFromImage( image, flip_y = true ) {
     let gl = this.context;
 
     let texture = gl.createTexture();
@@ -130,7 +132,7 @@ function createTextureFromImage( image ) {
     gl.activeTexture( gl.TEXTURE0 );
     gl.bindTexture( gl.TEXTURE_2D, texture );
     //TODO: make flip_y optional
-    gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
+    gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, flip_y );
     gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image );
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
@@ -740,7 +742,7 @@ function getSeedValue() {
 
 	gl.bindFramebuffer( gl.FRAMEBUFFER, null );
 	targetIntensity = Math.round( accumulatedValue /= ( w * h * w  ) );
-	default_values.targetIntensity = targetIntensity;
+	controls.targetIntensity = targetIntensity;
 
 }
 
@@ -925,6 +927,8 @@ function init( canvas ) {
         ],
         [ box_vert,  'shaders_webgl2/raytrace.frag',
             [   { name: 'distanceFieldTexture', type: 'sampler3D',  variable: 'distanceFieldTexture' },
+            	{ name: 'transferColor', 		type: 'sampler2D',  variable: 'transferColor' },
+        		{ name: 'transferAlpha', 		type: 'sampler2D',  variable: 'transferAlpha' },
                 { name: 'tiles',                type: 'vec2',       variable: 'tiles' },
                 { name: 'channel',              type: 'int',       	variable: 'channel' },
 				{ name: 'dataRange',          	type: 'vec2',	    variable: 'dataRange' },
@@ -981,6 +985,12 @@ function init( canvas ) {
     } );
 }
 
+function updateTransferFunctionTextures( canvas ) {
+	canvas.transferColor = createTextureFromImage.call( canvas, document.getElementById( 'transferColor' ), false );
+	canvas.transferAlpha = createTextureFromImage.call( canvas, document.getElementById( 'transferAlpha' ), false );
+	console.log( 'updated transfer function texture' );
+}
+
 function updateDistanceFieldUniforms( program ) {
     let gl = this.context;
 
@@ -994,7 +1004,9 @@ function updateDistanceFieldUniforms( program ) {
     gl.uniform3f( program.volumeDimensions, volumeDimensions.x, volumeDimensions.y, volumeDimensions.z );
 }
 
-function updateUniforms( program ) {}
+function updateUniforms( program ) {
+
+}
 
 function renderOnce() {
     if( $.isEmptyObject( this.programs ) ) return;
@@ -1002,16 +1014,14 @@ function renderOnce() {
     console.log( 'initializing...' );
     iteration = 0;
 
-
-
     //transfer the volume from the two tiled texture into the volume 3D texture
 	if( !this.volumeFrameBuffer.hasData ) {
 		initializeVolume.call( this, this.programs[ 'initialize_volume' ], this.volumeFrameBuffer, this.tiledVolume );
 	}
 
-	//if( targetIntensity == -1. ) {
 	getSeedValue.call( this );
-	//}
+
+	updateTransferFunction();
 
 	updateDistanceFieldUniforms.call( this, this.programs[ 'update_sdf' ] );
 
@@ -1051,10 +1061,14 @@ function update( skipRendering = false ) {
 function render() {
     if( $.isEmptyObject( this.programs ) ) return;
 
+	if( updateTF ) {
+		updateTransferFunctionTextures( this );
+		updateTF = false;
+	}
     //render backface
     renderBackface.call( this, this.programs[ 'backfaces' ], this.backfaceFrameBuffer );
     //raytrace volume
-    renderRaytrace.call( this, this.programs[ 'raytrace' ], this.volumeFrameBuffer, this.frameBuffers[ iteration % 2 ], this.backfaceFrameBuffer );
+    renderRaytrace.call( this, this.programs[ 'raytrace' ], this.volumeFrameBuffer, this.frameBuffers[ iteration % 2 ], this.backfaceFrameBuffer, this.transferColor, this.transferAlpha );
 
     //render a texture to fullscreen (for debug purposes)
     //renderTextureToViewport.call( this, this.programs[ 'debug_texture' ], this.frameBuffers[ iteration % 2 ].texture );
@@ -1177,7 +1191,7 @@ function renderBackface( program, frameBuffer ) {
 }
 
 //do raytracing of cube
-function renderRaytrace( program, volumeFrameBuffer, distanceFieldFrameBuffer, backfaceFrameBuffer ) {
+function renderRaytrace( program, volumeFrameBuffer, distanceFieldFrameBuffer, backfaceFrameBuffer, textureColor = null, textureAlpha = null ) {
     let gl = this.context;
 
     gl.viewport( 0, 0, this.width, this.height );
@@ -1202,6 +1216,16 @@ function renderRaytrace( program, volumeFrameBuffer, distanceFieldFrameBuffer, b
     gl.bindTexture( distanceFieldFrameBuffer.type, distanceFieldFrameBuffer.texture );
     gl.uniform1i( program.distanceFieldTexture, 2 );
 
+	if( textureColor ) {
+		gl.activeTexture( gl.TEXTURE3 );
+		gl.bindTexture( gl.TEXTURE_2D, textureColor );
+		gl.uniform1i( program.transferColor, 3 );
+	}
+	if( textureAlpha ) {
+		gl.activeTexture( gl.TEXTURE4 );
+		gl.bindTexture( gl.TEXTURE_2D, textureAlpha );
+		gl.uniform1i( program.transferAlpha, 4 );
+	}
     gl.uniformMatrix4fv( program.projectionMatrix, false, camera.projectionMatrix );
     gl.uniformMatrix4fv( program.modelViewMatrix, false, camera.modelViewMatrix );
     gl.uniformMatrix4fv( program.modelMatrix, false, camera.modelMatrix );

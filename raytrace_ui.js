@@ -23,10 +23,19 @@ var Controls = function() {
     this.dimension_y = volumeDimensions.y;
     this.dimension_z = volumeDimensions.z;
     this.channel = channel;
+	this.color1 = "#00FA58";
+	this.alpha1 = 1.0;
+	this.stepPos1 = 0.1;
+	this.color2 = "#CC6600";
+	this.alpha2 = 0.5;
+	this.stepPos2 = 0.7;
+	this.color3 = "#F2F200";
+	this.stepPos3 = 1.0;
+	this.alpha3 = 0.9;
 };
 
 var gui = new dat.GUI();
-var default_values = new Controls();
+var controls = new Controls();
 
 // different volume selected from dropdown
 function onVolumeChanged( value ) {
@@ -43,20 +52,20 @@ function initVolume( value ) {
     f_volume.remove( volume_downsample_x );
     f_volume.remove( volume_downsample_y );
     f_volume.remove( volume_downsample_z );
-	default_values.dimension_x = volumeDimensions.x;
-	default_values.dimension_y = volumeDimensions.y;
-	default_values.dimension_z = volumeDimensions.z;
-	volume_downsample_x = f_volume.add( default_values, 'dimension_x',
+	controls.dimension_x = volumeDimensions.x;
+	controls.dimension_y = volumeDimensions.y;
+	controls.dimension_z = volumeDimensions.z;
+	volume_downsample_x = f_volume.add( controls, 'dimension_x',
 									{   [ datasetDimensions.x + ' (original)' ]: datasetDimensions.x,
 										[ datasetDimensions.x / 2 ]: datasetDimensions.x / 2,
 										[ datasetDimensions.x / 4 ]: datasetDimensions.x / 4,
 										[ datasetDimensions.x / 8 ]: datasetDimensions.x / 8 } ).listen();
-	volume_downsample_y = f_volume.add( default_values, 'dimension_y',
+	volume_downsample_y = f_volume.add( controls, 'dimension_y',
 									{   [ datasetDimensions.y + ' (original)' ]: datasetDimensions.y,
 										[ datasetDimensions.y / 2 ]: datasetDimensions.y / 2,
 										[ datasetDimensions.y / 4 ]: datasetDimensions.y / 4,
 										[datasetDimensions.y / 8 ]: datasetDimensions.y / 8 } ).listen();
-	volume_downsample_z = f_volume.add( default_values, 'dimension_z',
+	volume_downsample_z = f_volume.add( controls, 'dimension_z',
 									{   [ datasetDimensions.z + ' (original)' ]: datasetDimensions.z,
 										[ datasetDimensions.z / 2 ]: datasetDimensions.z / 2,
 										[ datasetDimensions.z / 4 ]: datasetDimensions.z / 4,
@@ -79,23 +88,30 @@ function onSeedChanged( value ) {
     }
 }
 
+// seed position and/or radius values updated
+function refresh( value ) {
+    for( let canvas of canvases ) {
+        render.call( canvas );
+    }
+}
+
 var f_volume = gui.addFolder( 'Volume' );
 
-var volume_select = f_volume.add( default_values, 'volume', volumes );
+var volume_select = f_volume.add( controls, 'volume', volumes );
 
-var volume_channel = f_volume.add( default_values, 'channel', { R: 0, G: 1, B: 2, A: 3 } );
+var volume_channel = f_volume.add( controls, 'channel', { R: 0, G: 1, B: 2, A: 3 } );
 
-var volume_downsample_x = f_volume.add( default_values, 'dimension_x',
+var volume_downsample_x = f_volume.add( controls, 'dimension_x',
                                         {   [ datasetDimensions.x + ' (original)' ]: datasetDimensions.x,
                                             [ datasetDimensions.x / 2 ]: datasetDimensions.x / 2,
                                             [ datasetDimensions.x / 4 ]: datasetDimensions.x / 4,
                                             [ datasetDimensions.x / 8 ]: datasetDimensions.x / 8 } ).listen();
-var volume_downsample_y = f_volume.add( default_values, 'dimension_y',
+var volume_downsample_y = f_volume.add( controls, 'dimension_y',
                                         {   [ datasetDimensions.y + ' (original)' ]: datasetDimensions.y,
                                             [ datasetDimensions.y / 2 ]: datasetDimensions.y / 2,
                                             [ datasetDimensions.y / 4 ]: datasetDimensions.y / 4,
                                             [datasetDimensions.y / 8 ]: datasetDimensions.y / 8 } ).listen();
-var volume_downsample_z = f_volume.add( default_values, 'dimension_z',
+var volume_downsample_z = f_volume.add( controls, 'dimension_z',
                                         {   [ datasetDimensions.z + ' (original)' ]: datasetDimensions.z,
                                             [ datasetDimensions.z / 2 ]: datasetDimensions.z / 2,
                                             [ datasetDimensions.z / 4 ]: datasetDimensions.z / 4,
@@ -125,13 +141,13 @@ volume_channel.onFinishChange( initVolume );
 
 var f_update = gui.addFolder( 'Update' );
 if( canvases.length > 1 ) {
-	var webgl1_toggle = f_update.add( default_values, 'webgl1' );
+	var webgl1_toggle = f_update.add( controls, 'webgl1' );
 	webgl1_toggle.onChange( function( value ) {
 		canvases[ 0 ].active = value;
 	});
 }
-var webgl2_toggle = f_update.add( default_values, 'webgl2' );
-var iterations_control = f_update.add( default_values, 'iteratePerClick', 1., 15.).step( 1. );
+var webgl2_toggle = f_update.add( controls, 'webgl2' );
+var iterations_control = f_update.add( controls, 'iteratePerClick', 1., 15.).step( 1. );
 
 webgl2_toggle.onChange( function( value ) {
     canvases[ canvases.length - 1 ].active = value;
@@ -141,9 +157,9 @@ iterations_control.onChange( function( value ) {
 });
 
 var f_sdf = gui.addFolder( 'Distance Function' );
-var alpha_control = f_sdf.add( default_values, 'alpha', 0, 1 );
-var intensity_control = f_sdf.add( default_values, 'targetIntensity', 0, 255 ).listen();
-var sensitivity_control = f_sdf.add( default_values, 'sensitivity', 0, 1 );
+var alpha_control = f_sdf.add( controls, 'alpha', 0, 1 );
+var intensity_control = f_sdf.add( controls, 'targetIntensity', 0, 255 ).listen();
+var sensitivity_control = f_sdf.add( controls, 'sensitivity', 0, 1 );
 
 alpha_control.onChange( function( value ) {
     alpha = value;
@@ -160,10 +176,10 @@ intensity_control.onFinishChange( onDistanceFunctionChanged );
 sensitivity_control.onFinishChange( onDistanceFunctionChanged );
 
 var f_seed = gui.addFolder( 'Seed' );
-var seed_x_control = f_seed.add( default_values, 'x', 0, 1 );
-var seed_y_control = f_seed.add( default_values, 'y', 0, 1 );
-var seed_z_control = f_seed.add( default_values, 'z', 0, 1 );
-var seed_radius_control = f_seed.add( default_values, 'radius', 0, 1 );
+var seed_x_control = f_seed.add( controls, 'x', 0, 1 );
+var seed_y_control = f_seed.add( controls, 'y', 0, 1 );
+var seed_z_control = f_seed.add( controls, 'z', 0, 1 );
+var seed_radius_control = f_seed.add( controls, 'radius', 0, 1 );
 
 seed_x_control.onChange( function( value ) {
     seedOrigin.x = value;
@@ -183,8 +199,40 @@ seed_y_control.onFinishChange( onSeedChanged );
 seed_z_control.onFinishChange( onSeedChanged );
 seed_radius_control.onFinishChange( onSeedChanged );
 
+var f_transfer_function = gui.addFolder( 'Transfer Function' );
 
+var color_control1 = f_transfer_function.addColor( controls, 'color1' );
+var alpha_control1 = f_transfer_function.add( controls, 'alpha1', 0.0, 1.0 );
+var tf_pos_control1 = f_transfer_function.add( controls, 'stepPos1', 0.0, 1.0 );
 
+color_control1.onChange( updateTransferFunction );
+alpha_control1.onChange( updateTransferFunction );
+tf_pos_control1.onChange( updateTransferFunction );
+
+var color_control2 = f_transfer_function.addColor( controls, 'color2' );
+var alpha_control2 = f_transfer_function.add( controls, 'alpha2', 0.0, 1.0 );
+var tf_pos_control2 = f_transfer_function.add( controls, 'stepPos2', 0.0, 1.0 );
+
+color_control2.onChange( updateTransferFunction );
+alpha_control2.onChange( updateTransferFunction );
+tf_pos_control2.onChange( updateTransferFunction );
+
+var color_control3 = f_transfer_function.addColor( controls, 'color3' );
+var alpha_control3 = f_transfer_function.add( controls, 'alpha3', 0.0, 1.0 );
+var tf_pos_control3 = f_transfer_function.add( controls, 'stepPos3', 0.0, 1.0 );
+color_control3.onChange( updateTransferFunction );
+alpha_control3.onChange( updateTransferFunction );
+tf_pos_control3.onChange( updateTransferFunction );
+
+color_control1.onFinishChange( refresh );
+color_control2.onFinishChange( refresh );
+color_control3.onFinishChange( refresh );
+alpha_control1.onFinishChange( refresh );
+alpha_control2.onFinishChange( refresh );
+alpha_control3.onFinishChange( refresh );
+tf_pos_control1.onFinishChange( refresh );
+tf_pos_control2.onFinishChange( refresh );
+tf_pos_control3.onFinishChange( refresh );
 
 ////////////////////////////////////////////////////////////////////////////////
 // MOUSE EVENTS

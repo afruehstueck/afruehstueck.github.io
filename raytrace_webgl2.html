@@ -17,10 +17,17 @@
     <canvas class="renderCanvas webgl" tabindex="1" data-gltype="webgl"></canvas>
     <canvas class="renderCanvas webgl2" tabindex="2" data-gltype="webgl2"></canvas>
 </div>
+<div id="tfContainer">
+    <div>Transfer function</div>
+    <img id="transferColor"/>
+    <img id="transferBackground"/>
+    <img id="transferAlpha" class="overlayImg"/>
+</div>
 <div id="log" class="overlay"></div>
 <script src="camera.js"></script>
 <script src="nrrdLoader.js"></script>
 <script src="raytrace_webgl2.js"></script>
+<script src="transfer_function.js"></script>
 <script src="raytrace_ui.js"></script>
 </body>
 </html>
