@@ -1271,7 +1271,8 @@ function renderCube( program ) {
 function renderQuad( program ) {
     let gl = this.context;
 
-    //gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
     gl.bindBuffer( gl.ARRAY_BUFFER, this.position2DBuffer );
     gl.vertexAttribPointer( program.position, 2, gl.FLOAT, false, 0, 0 );
 

@@ -107,6 +107,8 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
         }
 
         if( accumulatedAlpha < 1. ) {
+            //if( position.x > 1. || position.y > 1. || position.z > 1. ) break;
+            //if( position.x < 0. || position.y < 0. || position.z < 0. ) break;
             sampleColor = texture( volumeTexture, position );
 
             //todo: determine which value is sampled. currently .x because some data do not have alpha
@@ -120,13 +122,10 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
             sampleAlpha = sampleValue * alphaCorrection;
 
             vec3 color = texture( transferColor, vec2( sampleValue, 0.9 ) ).rgb;
-            float alpha = texture( transferAlpha, vec2( sampleValue, 0.9 ) ).r * alphaCorrection;
+            float alpha = texture( transferAlpha, vec2( sampleValue, 0.9 ) ).a * alphaCorrection;
 
             accumulatedColor += ( 1. - accumulatedAlpha ) * color * alpha;
 
-            /*if( sampleValue > .01 && sampleValue < .5 ) accumulatedColor.r += 1.;
-            if( sampleValue >= .5 && sampleValue < .8 ) accumulatedColor.g += 1.;
-            if( sampleValue >= .8 ) accumulatedColor.b += 1.;*/
             accumulatedAlpha += alpha;
         }
 
@@ -141,8 +140,10 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
 
     if( foundSurface ) {
          vec3 normal = texture( distanceFieldTexture, position ).gba;//calcNormal( distanceFieldTexture, position );
-         accumulatedColor.xyz += normal * .5 + .5;
+         accumulatedColor += normal * .5 + .5;
     }
+    clamp( accumulatedColor, 0., 1. );
+    clamp( accumulatedAlpha, 0., 1. );
     return vec4( accumulatedColor, accumulatedAlpha );
 }
 
@@ -159,5 +160,7 @@ void main() {
 
     vec4 accumulatedColor = rayAccumulate( rayStart, ray, steps );
 
-    color = vec4( accumulatedColor.xyz, 1.0 );
+    vec4 backgroundColor = vec4( 0., 0., 0., 1. );
+
+    color = backgroundColor + accumulatedColor;//vec4( accumulatedColor.xyz, 1.0 );//
 }

@@ -23,13 +23,13 @@ var Controls = function() {
     this.dimension_y = volumeDimensions.y;
     this.dimension_z = volumeDimensions.z;
     this.channel = channel;
-	this.color1 = "#00FA58";
-	this.alpha1 = 1.0;
+	this.color1 = "#000000";
+	this.alpha1 = 0.0;
 	this.stepPos1 = 0.1;
-	this.color2 = "#CC6600";
+	this.color2 = "#7f7f7f";
 	this.alpha2 = 0.5;
 	this.stepPos2 = 0.7;
-	this.color3 = "#F2F200";
+	this.color3 = "#ffffff";
 	this.stepPos3 = 1.0;
 	this.alpha3 = 0.9;
 };
