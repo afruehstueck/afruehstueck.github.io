@@ -15,10 +15,20 @@ uniform sampler2D backfaceTexture;
 uniform sampler3D volumeTexture;
 uniform sampler3D distanceFieldTexture;
 uniform vec3 volumeDimensions;
+uniform vec2 dataRange;
+
+uniform int channel;
 
 //todo: make this uniform
 const int MAX_STEPS = 500;
-const float alphaCorrection = 0.2;
+const float alphaCorrection = 0.15;
+
+vec4 mask[ 4 ] = vec4[ 4 ] (
+    vec4( 1., 0., 0., 0. ),
+    vec4( 0., 1., 0., 0. ),
+    vec4( 0., 0., 1., 0. ),
+    vec4( 0., 0., 0., 1. )
+);
 
 vec3 doMaterial( vec3 position, vec3 normal ) {
   return vec3( 0.2, 0.768, 1.0 ) * 0.7;
@@ -78,7 +88,7 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
     float sampleValue = sampleColor.x;
     float sampleAlpha = 0.;
 
-    float sdfSample = texture( distanceFieldTexture, position ).r;// * 2.0 - 1.0;
+    float sdfSample = texture( distanceFieldTexture, position ).r;
     float prev = 0.;
     bool foundSurface = false;
 
@@ -86,9 +96,8 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
         prev = sdfSample;
 
         //do trilinear sampling (leave in this comment for trilinear polyfill)
-        sdfSample = texture( distanceFieldTexture, position ).r;// * 2.0 - 1.0;
+        float sdfSample = texture( distanceFieldTexture, position ).r;
 
-        if( sdfSample > 0. ) accumulatedColor.b += 1.;
         if( sdfSample >= 0. /*sign( sdfSample ) != sign( prev )*/ ) {
             //found isosurface, stop raycasting
             foundSurface = true;
@@ -99,11 +108,21 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
             sampleColor = texture( volumeTexture, position );
 
             //todo: determine which value is sampled. currently .x because some data do not have alpha
-            sampleValue = sampleColor.x;// < 0.6 ? sampleColor.x : 0.0;
+            sampleValue = dot( sampleColor, mask[ channel ] );// < 0.6 ? sampleColor.x : 0.0;
 
+
+            //clamp( sampleValue, 0., 1. );
+            float min = dataRange.x;
+            float max = dataRange.y;
+            sampleValue = ( sampleValue - min ) / ( max - min );
+            //sampleValue /= 255.;
             sampleAlpha = sampleValue * alphaCorrection;
 
             accumulatedColor += ( 1. - accumulatedAlpha ) * vec3( sampleValue ) * sampleAlpha;
+
+            /*if( sampleValue > .01 && sampleValue < .5 ) accumulatedColor.r += 1.;
+            if( sampleValue >= .5 && sampleValue < .8 ) accumulatedColor.g += 1.;
+            if( sampleValue >= .8 ) accumulatedColor.b += 1.;*/
             accumulatedAlpha += sampleAlpha;
         }
 

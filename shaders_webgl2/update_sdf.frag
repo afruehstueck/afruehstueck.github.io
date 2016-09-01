@@ -15,6 +15,7 @@ uniform vec3  seedOrigin;
 uniform sampler3D distanceFieldTexture;
 uniform sampler3D volumeTexture;
 uniform float targetIntensity;
+uniform vec2 dataRange;
 
 //todo: make these uniform
 const float eps = 1e-9;
@@ -32,7 +33,6 @@ void main( void ) {
     vec3 currentPosition = vec3( textureCoordinate.x, textureCoordinate.y, currentLayer );
 
     float currentDistance = getDistance( currentPosition );
-    float relevantDistance = length( volumeDimensions / 8. );
     float oX = 1. / volumeDimensions.x;
     float oY = 1. / volumeDimensions.y;
     float oZ = 1. / volumeDimensions.z;
@@ -52,13 +52,15 @@ void main( void ) {
     float u4pz = getDistance( currentPosition + vec3(  0.,  0.,  oZ ) );
     float u4mz = getDistance( currentPosition + vec3(  0.,  0., -oZ ) );
 
-    /*if( abs( u4 ) > relevantDistance &&
-        abs( u1 ) > relevantDistance &&
-        abs( u3 ) > relevantDistance &&
-        abs( u5 ) > relevantDistance &&
-        abs( u7 ) > relevantDistance &&
-        abs( u4pz ) > relevantDistance &&
-        abs( u4mz ) > relevantDistance ) {
+    /*
+    float narrowBand = length( volumeDimensions / 8. );
+    if( abs( u4 ) > narrowBand &&
+        abs( u1 ) > narrowBand &&
+        abs( u3 ) > narrowBand &&
+        abs( u5 ) > narrowBand &&
+        abs( u7 ) > narrowBand &&
+        abs( u4pz ) > narrowBand &&
+        abs( u4mz ) > narrowBand ) {
         color = vec4( currentDistance );
         return;
     }*/
@@ -202,7 +204,11 @@ void main( void ) {
     //float targetValue = texture( volumeTexture, seedOrigin ).r;
 
     //todo: figure out which component (rgba)
-    float sourceValue = texture( volumeTexture, currentPosition ).r;
+    float sourceValue = texture( volumeTexture, currentPosition ).y;
+
+    float min = dataRange.x;
+    float max = dataRange.y;
+    sourceValue = ( sourceValue - min ) / ( max - min );
 
     //speed function pulling distance function towards areas with target intensity
     float D = sensitivity - abs( sourceValue - targetValue );
