@@ -1058,6 +1058,15 @@ function update( skipRendering = false ) {
     if( !skipRendering ) render.call( this );
 }
 
+function animate() {
+	requestAnimationFrame( animate );
+
+	for( let canvas of canvases ) {
+		render.call( canvas );
+	}
+	//stats.update();
+}
+
 function render() {
     if( $.isEmptyObject( this.programs ) ) return;
 
