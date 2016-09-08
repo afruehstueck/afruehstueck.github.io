@@ -1,7 +1,8 @@
 function updateTransferFunction() {
+	let img = document.getElementById( 'transferColor' );
 	let tfCanvas = document.createElement( 'canvas' );
-	tfCanvas.height = 30;
-	tfCanvas.width = 300;
+	tfCanvas.height = img.height;
+	tfCanvas.width = img.width;
 
 	let ctx = tfCanvas.getContext( '2d' );
 
@@ -11,9 +12,8 @@ function updateTransferFunction() {
 	gradient.addColorStop( controls.stepPos3, controls.color3 );
 
 	ctx.fillStyle = gradient;
-	ctx.fillRect(0, 0, tfCanvas.width - 1, tfCanvas.height - 1 );
+	ctx.fillRect(0, 0, tfCanvas.width, tfCanvas.height );
 
-	let img = document.getElementById( 'transferColor' );
 	img.src = tfCanvas.toDataURL();
 
 	//clear canvas
@@ -41,18 +41,18 @@ function updateTransferFunction() {
 	function drawCheckeredBackground( canvas, rows, columns ) {
 		let ctx = canvas.getContext( '2d' );
 
-		ctx.fillStyle = '#333333';
+		ctx.fillStyle = '#222222';
 		ctx.fillRect( 0, 0, canvas.width, canvas.height );
 
 		let w = canvas.width;
 		let h = canvas.height;
 
-		rows = rows || 6;    // default number of rows
-		columns = columns || 60;// default number of columns
+		rows = h / 5;
+		columns = w / 5;
 
-		w /= columns;         // width of a block
-		h /= rows;            // height of a block
-		ctx.fillStyle = '#1a1a1a';
+		w /= columns; // width of a block
+		h /= rows;    // height of a block
+		ctx.fillStyle = '#050505';
 
 		for (let i = 0; i < rows; ++i) {
 			for ( let j = 0, col = columns / 2; j < col; ++j ) {

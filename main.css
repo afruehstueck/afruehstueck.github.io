@@ -85,18 +85,19 @@ a:link {
     text-align: center;
     color: #5C5C5C;
     padding: 10px;
+    font-size: 10px;
 }
 
 #tfContainer img {
     border: 0;
-    margin: 3px;
+    margin: 2px;
     float: right;
     clear: right;
     width: 300px;
-    height: 30px;
+    height: 20px;
 }
 
 .overlayImg {
     position: relative;
-    top: -35px;
+    top: -24px;
 }
