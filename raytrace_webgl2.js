@@ -65,6 +65,13 @@ let channel = 0;
 let alpha = 0.9;
 let sensitivity = 0.5;
 
+let mask = [
+	1., 0., 0., 0.,
+	0., 1., 0., 0.,
+	0., 0., 1., 0.,
+	0., 0., 0., 1.
+];
+
 let iteratePerClick = 1;
 
 let updateTF = true;
@@ -165,10 +172,10 @@ function createTextureFromSize( dimensions, data = null ) {
     return texture;
 }
 
-function convert8bitArray( data ) { // incoming data is a UInt8Array
+function expandArray( data ) { // incoming data only has 1 value per voxel
 	var i, l = data.length;
 	var outputData = new Float32Array( l * 4 );
-//	let min = Number.MAX_VALUE, max = Number.MIN_VALUE;
+	/*let min = Number.MAX_VALUE, max = Number.MIN_VALUE;*/
 	for ( i = 0; i < l; i++ ) {
 		var value = data[ i ];
 		outputData[ 4 * i ] = value;
@@ -176,14 +183,14 @@ function convert8bitArray( data ) { // incoming data is a UInt8Array
 		outputData[ 4 * i + 2 ] = value;
 		outputData[ 4 * i + 3 ] = value;
 
-/* //for debugging
-		if ( value < min ) {
+ //for debugging
+		/*if ( value < min ) {
 			min = value;
 		}
 		if ( value > max ) {
 			max = value;
-		}
-*/
+		}*/
+
 	}
 	return outputData;
 }
@@ -223,11 +230,14 @@ function create3DTexture( dimensions, data = null ) {
     gl.bindTexture( gl.TEXTURE_3D, texture );
 
 
-	if ( data instanceof Uint8Array || data instanceof Uint8Array ) {
-		data = convert8bitArray( data );
+	/*if ( data instanceof Uint8Array || data instanceof Uint8Array ) {
 	}
 	if ( data instanceof Int16Array ) {
 		data = convert16bitArray( data );
+	}
+	 */
+	if( data && data.length == ( volumeDimensions.x * volumeDimensions.y * volumeDimensions.z ) ) {
+		data = expandArray( data );
 	}
 
 	let type = gl.FLOAT;
@@ -241,17 +251,17 @@ function create3DTexture( dimensions, data = null ) {
 	}
 
 	gl.texImage3D(
-        gl.TEXTURE_3D,   // target
-        0,               // level
-        gl.RGBA,         // internalformat
-        dimensions[ 0 ], // width
-        dimensions[ 1 ], // height
-        dimensions[ 2 ], // depth
-        0,               // border
-        gl.RGBA,         // format
+		gl.TEXTURE_3D,   // target
+		0,               // level
+		gl.RGBA,         // internalformat
+		dimensions[ 0 ], // width
+		dimensions[ 1 ], // height
+		dimensions[ 2 ], // depth
+		0,               // border
+		gl.RGBA,         // format
 		type,	         // type //gl.UNSIGNED_BYTE
-        data             // pixel
-    );
+		data             // pixel
+	);
 
     gl.texParameteri( gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
     gl.texParameteri( gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
@@ -860,6 +870,7 @@ function init( canvas ) {
 				volume_async_load.reject();
 			}
 			let volume = NRRDLoader.parse( nrrd );
+
 			datasetDimensions.x = volume.dimensions[ 0 ];
 			datasetDimensions.y = volume.dimensions[ 1 ];
 			datasetDimensions.z = volume.dimensions[ 2 ];
@@ -912,6 +923,8 @@ function init( canvas ) {
                 { name: 'seedOrigin',           type: 'vec3',       variable: 'seedOrigin' },
                 { name: 'targetIntensity',      type: 'float',      variable: 'targetIntensity' },
                 { name: 'alpha',                type: 'float',      variable: 'alpha' },
+				{ name: 'channel',              type: 'int',       	variable: 'channel' },
+				{ name: 'mask',              	type: 'vec4v',      variable: 'mask' },
                 { name: 'sensitivity',          type: 'float',      variable: 'sensitivity' },
                 { name: 'dataRange',          	type: 'vec2',	    variable: 'dataRange' },
                 { name: 'distanceFieldTexture', type: 'sampler3D',  variable: 'distanceFieldTexture' },
@@ -931,6 +944,7 @@ function init( canvas ) {
         		{ name: 'transferAlpha', 		type: 'sampler2D',  variable: 'transferAlpha' },
                 { name: 'tiles',                type: 'vec2',       variable: 'tiles' },
                 { name: 'channel',              type: 'int',       	variable: 'channel' },
+                { name: 'mask',              	type: 'vec4v',      variable: 'mask' },
 				{ name: 'dataRange',          	type: 'vec2',	    variable: 'dataRange' },
 				{ name: 'backfaceTexture',      type: 'sampler2D',  variable: 'backfaceTexture' },
                 { name: 'volumeDimensions',     type: 'vec3',       variable: 'volumeDimensions' },
@@ -1134,6 +1148,8 @@ function updateDistanceField( program, volumeFrameBuffer, sourceFrameBuffer, tar
     gl.useProgram( program );
 
     //todo: this shouldn't be here
+	gl.uniform1i( program.channel, channel );
+	gl.uniform4fv( program.mask, mask );
     gl.uniform2f( program.tiles, tiles.x, tiles.y );
 	gl.uniform2f( program.dataRange, dataRange.min, dataRange.max );
 
@@ -1209,6 +1225,7 @@ function renderRaytrace( program, volumeFrameBuffer, distanceFieldFrameBuffer, b
 
     //todo: this shouldn't be here
     gl.uniform1i( program.channel, channel );
+    gl.uniform4fv( program.mask, mask );
     gl.uniform2f( program.tiles, tiles.x, tiles.y );
     gl.uniform2f( program.dataRange, dataRange.min, dataRange.max );
     gl.uniform3f( program.volumeDimensions, volumeDimensions.x, volumeDimensions.y, volumeDimensions.z );

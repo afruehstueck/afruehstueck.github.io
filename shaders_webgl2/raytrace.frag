@@ -20,17 +20,11 @@ uniform vec3 volumeDimensions;
 uniform vec2 dataRange;
 
 uniform int channel;
+uniform vec4 mask[ 4 ];
 
 //todo: make this uniform
 const int MAX_STEPS = 500;
 const float alphaCorrection = 0.3;
-
-vec4 mask[ 4 ] = vec4[ 4 ] (
-    vec4( 1., 0., 0., 0. ),
-    vec4( 0., 1., 0., 0. ),
-    vec4( 0., 0., 1., 0. ),
-    vec4( 0., 0., 0., 1. )
-);
 
 vec3 doMaterial( vec3 position, vec3 normal ) {
   return vec3( 0.2, 0.768, 1.0 ) * 0.7;
@@ -111,8 +105,7 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
             //if( position.x < 0. || position.y < 0. || position.z < 0. ) break;
             sampleColor = texture( volumeTexture, position );
 
-            //todo: determine which value is sampled. currently .x because some data do not have alpha
-            sampleValue = dot( sampleColor, mask[ channel ] );// < 0.6 ? sampleColor.x : 0.0;
+            sampleValue = dot( sampleColor, mask[ channel ] );
 
             float min = dataRange.x;
             float max = dataRange.y;

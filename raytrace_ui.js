@@ -27,11 +27,11 @@ var Controls = function() {
 	this.alpha1 = 0.0;
 	this.stepPos1 = 0.1;
 	this.color2 = "#7f7f7f";
-	this.alpha2 = 0.5;
+	this.alpha2 = 0.2;
 	this.stepPos2 = 0.7;
 	this.color3 = "#ffffff";
 	this.stepPos3 = 1.0;
-	this.alpha3 = 0.9;
+	this.alpha3 = 0.2;
 };
 
 var gui = new dat.GUI();
@@ -202,7 +202,7 @@ seed_radius_control.onFinishChange( onSeedChanged );
 var f_transfer_function = gui.addFolder( 'Transfer Function' );
 
 var color_control1 = f_transfer_function.addColor( controls, 'color1' );
-var alpha_control1 = f_transfer_function.add( controls, 'alpha1', 0.0, 1.0 );
+var alpha_control1 = f_transfer_function.add( controls, 'alpha1', 0.0, 0.3 );
 var tf_pos_control1 = f_transfer_function.add( controls, 'stepPos1', 0.0, 1.0 );
 
 color_control1.onChange( updateTransferFunction );
@@ -210,7 +210,7 @@ alpha_control1.onChange( updateTransferFunction );
 tf_pos_control1.onChange( updateTransferFunction );
 
 var color_control2 = f_transfer_function.addColor( controls, 'color2' );
-var alpha_control2 = f_transfer_function.add( controls, 'alpha2', 0.0, 1.0 );
+var alpha_control2 = f_transfer_function.add( controls, 'alpha2', 0.0, 0.3 );
 var tf_pos_control2 = f_transfer_function.add( controls, 'stepPos2', 0.0, 1.0 );
 
 color_control2.onChange( updateTransferFunction );
@@ -218,7 +218,7 @@ alpha_control2.onChange( updateTransferFunction );
 tf_pos_control2.onChange( updateTransferFunction );
 
 var color_control3 = f_transfer_function.addColor( controls, 'color3' );
-var alpha_control3 = f_transfer_function.add( controls, 'alpha3', 0.0, 1.0 );
+var alpha_control3 = f_transfer_function.add( controls, 'alpha3', 0.0, 0.3 );
 var tf_pos_control3 = f_transfer_function.add( controls, 'stepPos3', 0.0, 1.0 );
 color_control3.onChange( updateTransferFunction );
 alpha_control3.onChange( updateTransferFunction );

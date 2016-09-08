@@ -22,6 +22,10 @@ const float eps = 1e-9;
 uniform float sensitivity;
 uniform float alpha;
 
+
+uniform int channel;
+uniform vec4 mask[ 4 ];
+
 float getDistance( vec3 texCoord ) {
     clamp( texCoord, 0., 1. );
     return texture( distanceFieldTexture, texCoord ).r;
@@ -203,8 +207,8 @@ void main( void ) {
     float targetValue = targetIntensity / 255.;//
     //float targetValue = texture( volumeTexture, seedOrigin ).r;
 
-    //todo: figure out which component (rgba)
-    float sourceValue = texture( volumeTexture, currentPosition ).y;
+    vec4 sampleColor = texture( volumeTexture, currentPosition );
+    float sourceValue = dot( sampleColor, mask[ channel ] );
 
     float min = dataRange.x;
     float max = dataRange.y;

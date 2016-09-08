@@ -20,18 +20,14 @@ var NRRDLoader = {
 		var headerObject = {};
 
 		function scan( type, chunks ) {
-
 			if ( chunks === undefined || chunks === null ) {
-
 				chunks = 1;
-
 			}
 
 			var _chunkSize = 1;
 			var _array_type = Uint8Array;
 
 			switch ( type ) {
-
 				// 1 byte data types
 				case 'uchar':
 					break;
@@ -43,7 +39,7 @@ var NRRDLoader = {
 					_array_type = Uint16Array;
 					_chunkSize = 2;
 					break;
-				case 'sshort':
+				case 'short':
 					_array_type = Int16Array;
 					_chunkSize = 2;
 					break;
@@ -77,48 +73,37 @@ var NRRDLoader = {
 
 			// if required, flip the endianness of the bytes
 			if ( _nativeLittleEndian != _littleEndian ) {
-
 				// we need to flip here since the format doesn't match the native endianness
 				_bytes = flipEndianness( _bytes, _chunkSize );
-
 			}
 
 			if ( chunks == 1 ) {
-
 				// if only one chunk was requested, just return one value
 				return _bytes[ 0 ];
 
 			}
-
 			// return the byte array
 			return _bytes;
 
 		}
 
 		//Flips typed array endianness in-place. Based on https://github.com/kig/DataStream.js/blob/master/DataStream.js.
-
 		function flipEndianness( array, chunkSize ) {
 
 			var u8 = new Uint8Array( array.buffer, array.byteOffset, array.byteLength );
 			for ( var i = 0; i < array.byteLength; i += chunkSize ) {
 
 				for ( var j = i + chunkSize - 1, k = i; j > k; j--, k++ ) {
-
 					var tmp = u8[ k ];
 					u8[ k ] = u8[ j ];
 					u8[ j ] = tmp;
-
 				}
-
 			}
-
 			return array;
-
 		}
 
 		//parse the header
 		function parseHeader( header ) {
-
 			var data, field, fn, i, l, lines, m, _i, _len;
 			lines = header.split( /\r?\n/ );
 			for ( _i = 0, _len = lines.length; _i < _len; _i++ ) {
@@ -190,56 +175,70 @@ var NRRDLoader = {
 			var value;
 			//length of the result is the product of the sizes
 			var lengthOfTheResult = headerObject.sizes.reduce( function ( previous, current ) {
-
 				return previous * current;
-
 			}, 1 );
 
 			var base = 10;
 			if ( headerObject.encoding === 'hex' ) {
-
 				base = 16;
-
 			}
 
 			var result = new headerObject.__array( lengthOfTheResult );
 			var resultIndex = 0;
 			var parsingFunction = parseInt;
 			if ( headerObject.__array === Float32Array || headerObject.__array === Float64Array ) {
-
 				parsingFunction = parseFloat;
-
 			}
 			for ( var i = start; i < end; i++ ) {
 
 				value = data[ i ];
 				//if value is not a space
 				if ( ( value < 9 || value > 13 ) && value !== 32 ) {
-
 					number += String.fromCharCode( value );
-
 				}
 				else {
 
 					if ( number !== '' ) {
-
 						result[ resultIndex ] = parsingFunction( number, base );
 						resultIndex++;
-
 					}
 					number = '';
-
 				}
 
 			}
 			if ( number !== '' ) {
-
 				result[ resultIndex ] = parsingFunction( number, base );
 				resultIndex++;
-
 			}
 			return result;
 
+		}
+
+		//convert 4 bytes to float value
+		function BytesToFloat( bytes ) {
+			var buffer = new ArrayBuffer( 4 );
+			if( bytes.length == 4 ) {
+				( new Uint8Array( buffer ) )[ 0 ] = bytes[ 0 ];
+				( new Uint8Array( buffer ) )[ 1 ] = bytes[ 1 ];
+				( new Uint8Array( buffer ) )[ 2 ] = bytes[ 2 ];
+				( new Uint8Array( buffer ) )[ 3 ] = bytes[ 3 ];
+
+				return new Float32Array( buffer )[ 0 ];
+			} else if( bytes.length == 2 ) {
+				( new Int16Array( buffer ) )[ 0 ] = bytes[ 0 ];
+				( new Int16Array( buffer ) )[ 1 ] = bytes[ 1 ];
+
+				return new Float32Array( buffer )[ 0 ];
+			}
+		}
+
+		function ByteArrayToFloatArray( data, num = 4 ) {
+			var floatArray = new Float32Array( data.length / num );
+			for( let i = 0; i < floatArray.length; i++ ) {
+				let bytes = data.slice( num * i, num * i + num );
+				floatArray[ i ] = BytesToFloat( bytes, num );
+			}
+			return floatArray;
 		}
 
 		var _bytes = scan( 'uchar', data.byteLength );
@@ -248,11 +247,8 @@ var NRRDLoader = {
 		var _data_start = 0;
 		var i;
 		for ( i = 1; i < _length; i++ ) {
-
 			if ( _bytes[ i - 1 ] == 10 && _bytes[ i ] == 10 ) {
-
-				// we found two line breaks in a row
-				// now we know what the header is
+				// find two line breaks in a row to determine end of header
 				_header = this.parseChars( _bytes, 0, i - 2 );
 				// this is were the data starts
 				_data_start = i + 1;
@@ -264,55 +260,47 @@ var NRRDLoader = {
 		// parse the header
 		parseHeader( _header );
 
-		var _data = _bytes.subarray( _data_start ); // the data without header
+		//var _data = _bytes.subarray( _data_start ); // the data without header
+		_dataPointer = _data_start;
+		let _data_length = _length - _data_start;
+		let _rawData = [];
+
 		if ( headerObject.encoding === 'gzip' || headerObject.encoding === 'gz' ) {
 
 			// we need to decompress the datastream
 			// here we start the unzipping and get a typed Uint8Array back
-			var compressed = new Uint8Array( _data );
-			//var inflate = ;
-			_data = pako.inflate( _data );
+			_rawData = scan( 'uchar', _data_length ); // the data without header
+			var compressed = new Uint8Array( _rawData );
+			_rawData = pako.inflate( compressed );
 
-		}
-		else if ( headerObject.encoding === 'ascii' || headerObject.encoding === 'text' || headerObject.encoding === 'txt' || headerObject.encoding === 'hex' ) {
+			if( headerObject.type === 'float' ) {
+				_rawData = ByteArrayToFloatArray( _rawData );
+			} else if( headerObject.type === 'short' ) {
+				_rawData = ByteArrayToFloatArray( _rawData, 2 );
+			}
 
-			_data = parseDataAsText( _data );
+		} else if ( headerObject.encoding === 'ascii' || headerObject.encoding === 'text' || headerObject.encoding === 'txt' || headerObject.encoding === 'hex' ) {
 
+			//TODO: unchecked
+			_rawData = scan( 'uchar', _data_length ); // the data without header
+			_rawData = parseDataAsText( _rawData );
+
+		} else {
+			if( headerObject.type ) {
+				_rawData = scan( headerObject.type, _data_length ); // the data without header
+			} else {
+				console.err( 'no type found in NRRD header' );
+			}
 		}
 		// .. let's use the underlying array buffer
-		var bufferedData = _data.buffer;
+		var bufferedData = _rawData.buffer;
 
 		var volume = {};
 		volume.header = headerObject;
-		//
-		// parse the (unzipped) data to a datastream of the correct type
-		//
-		volume.data = new headerObject.__array( _data );
-		// get the min and max intensities
-		var range = {
-			min: Number.MAX_VALUE,
-			max: Number.MIN_VALUE
-		};
-
-		var idx = _data.length;
-		while ( idx-- ) {
-			let value = _data[ idx ];
-			if ( value < range.min ) {
-				range.min = value;
-			}
-			if ( value > range.max ) {
-				range.max = value;
-			}
-		}
-
-		dataRange = range;
-
-		// attach the scalar range to the volume
-		volume.windowLow = range.min;
-		volume.windowHigh = range.max;
 
 		// get the image dimensions
-		volume.dimensions = [ headerObject.sizes[ 0 ], headerObject.sizes[ 1 ], headerObject.sizes[ 2 ] ];
+		let maxDimension = headerObject.sizes.length - 1;
+		volume.dimensions = [ headerObject.sizes[ maxDimension - 2 ], headerObject.sizes[ maxDimension - 1 ], headerObject.sizes[ maxDimension ] ];
 		volume.xLength = volume.dimensions[ 0 ];
 		volume.yLength = volume.dimensions[ 1 ];
 		volume.zLength = volume.dimensions[ 2 ];
@@ -325,6 +313,49 @@ var NRRDLoader = {
 		var spacingZ = vec3.length( ( vec3.fromValues( headerObject.vectors[ 2 ][ 0 ], headerObject.vectors[ 2 ][ 1 ],
 			headerObject.vectors[ 2 ][ 2 ] ) ) );
 		volume.spacing = [ spacingX, spacingY, spacingZ ];
+
+		//
+		// parse the (unzipped) data to a datastream of the correct type
+		//
+		volume.data = _rawData;//new headerObject.__array( _rawData );
+		let valuesPerVoxel = volume.data.length / ( volume.dimensions[ 0 ] * volume.dimensions[ 1 ] * volume.dimensions[ 2 ] );
+		console.log( 'len: ' + volume.data.length + ' values per voxel: ' + valuesPerVoxel );
+		// get the min and max intensities
+		let range = {
+			min: Infinity,
+			max: -Infinity
+		};
+
+		let floatRange = {
+			min: Infinity,
+			max: -Infinity
+		};
+
+		for( let i = 0; i < volume.data.length; i++ ) {
+			if( volume.data[ i ] < floatRange.min ) floatRange.min = volume.data[ i ];
+			if( volume.data[ i ] > floatRange.max ) floatRange.max = volume.data[ i ];
+		}
+		console.log( 'data range: [' + floatRange.min + ', ' + floatRange.max + ']' );
+
+		floatRange.max = floatRange.max > 1 ? Math.pow( 2, Math.ceil( Math.log( floatRange.max ) / Math.log( 2 ) ) ) - 1 : floatRange.max;
+
+		var idx = volume.data.length;
+		while ( idx-- ) {
+			let value = ( ( volume.data[ idx ] + floatRange.min ) / ( floatRange.max - floatRange.min ) ) * 255;
+			if ( value < range.min ) {
+				range.min = value;
+			}
+			if ( value > range.max ) {
+				range.max = value;
+			}
+		}
+
+		dataRange = range;
+		console.log( 'normalized range: [' + range.min + ', ' + range.max + ']' );
+		range.max = 255;
+		// attach the scalar range to the volume
+		volume.windowLow = range.min;
+		volume.windowHigh = range.max;
 
 		// Create IJKtoRAS matrix
 		volume.matrix = mat4.create();
