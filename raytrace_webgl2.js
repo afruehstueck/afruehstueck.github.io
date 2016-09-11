@@ -309,7 +309,8 @@ let setupShaders = function ( vertexShaderPath, fragmentShaderPath, uniforms ) {
                 gl.compileShader( shader );
                 if ( !gl.getShaderParameter( shader, gl.COMPILE_STATUS ) ) {
                     //alert( 'could not compile ' + shaderObject.type + ' shader \'' + shaderObject.path + '\'' );
-                    console.error( gl.getShaderInfoLog( shader ) );
+                    console.error( shaderObject.path + ': ' + gl.getShaderInfoLog( shader ) );
+					console.log( shaderSource );
                     success = false;
                     return false;
                 } else {
@@ -444,7 +445,7 @@ vec4 sampleAs3DTexture( sampler2D volume, vec3 texCoord ) {
     texCoord = clamp( texCoord, 0., 1. );
     
     float volumeDepth = tiles.x * tiles.y;
-    float max_slice = volumeDepth;
+    float max_slice = volumeDepth - 1.;
     
     vec2 slice;
 
@@ -673,7 +674,7 @@ function create3DBuffers() {
 }
 
 initCamera();
-let canvases = document.querySelectorAll( '.renderCanvas.webgl2' );
+let canvases = document.querySelectorAll( '.renderCanvas.webgl2' ); //.webgl2
 
 for( let canvas of canvases ) {
     canvas.active = true;
@@ -756,49 +757,6 @@ function getSeedValue() {
 
 }
 
-/*function getSeedValue() {
-    var canvas = document.createElement( 'canvas' );
-
-    var img = this.sourceImage;
-
-    canvas.width = img.width;
-    canvas.height = img.height;
-
-    var context = canvas.getContext( '2d' );
-    context.drawImage( img, 0, 0 );
-
-    let numTiles = tiles.x * tiles.y;
-    let dx = ( seedOrigin.z * numTiles ) % tiles.x;
-    let dy = Math.floor( ( seedOrigin.z * numTiles ) / tiles.x );
-
-    let px = ( seedOrigin.x + dx ) / tiles.x;
-    let py = ( seedOrigin.y + dy ) / tiles.y;
-
-    px *= img.width;
-    py *= img.height;
-
-    px = Math.round( px );
-    py = Math.round( py );
-
-    if( px > img.width || py > img.height || px < 0 || py < 0 ) {
-        console.log('fu');
-    }
-
-    var imageData = context.getImageData( px, py, 1, 1 );
-    var voxel = imageData.data;
-    //return texture( volume, slice );
-
-    var rgba = 'rgba(' + voxel[ 0 ] + ',' + voxel[ 1 ] + ',' + voxel[ 2 ] + ',' + voxel[ 3 ] + ')';
-    //$('#log')[0].style.background = rgba;
-    $('#log').css( 'background-color', rgba );
-    $('#log').html( rgba );
-
-    console.log( rgba );
-    targetIntensity = voxel[ 0 ];
-
-    return voxel;
-}*/
-
 function freeResources( canvas ) {
     let gl = canvas.context;
     if( gl == undefined ) {
@@ -870,6 +828,8 @@ function init( canvas ) {
 				volume_async_load.reject();
 			}
 			let volume = NRRDLoader.parse( nrrd );
+			canvas.volume = volume;
+			canvas.data = volume.data;
 
 			datasetDimensions.x = volume.dimensions[ 0 ];
 			datasetDimensions.y = volume.dimensions[ 1 ];
@@ -996,6 +956,9 @@ function init( canvas ) {
         gl.enableVertexAttribArray( canvas.programs[ 'raytrace' ].texCoord );
         //updateRaytraceUniforms( programs[ 'raytrace' ] );
         renderOnce.call( canvas );
+
+		let tf_panel = new TF_panel( canvas );
+		tf_panel.drawHistogram();
     } );
 }
 
@@ -1136,7 +1099,7 @@ function initializeDistanceField( program, frameBuffer, seedOrigin, seedRadius )
     gl.uniform1f( program.numLayers, volumeDimensions.z );
     gl.uniform3f( program.seedOrigin, seedOrigin.x, seedOrigin.y, seedOrigin.z );
     gl.uniform3f( program.volumeDimensions, volumeDimensions.x, volumeDimensions.y, volumeDimensions.z );
-    gl.uniform1f( program.seedRadius, seedRadius * volumeDimensions.x );
+    gl.uniform1f( program.seedRadius, seedRadius );
 
     renderTo3DTexture.call( this, program, frameBuffer, volumeDimensions.z );
 }

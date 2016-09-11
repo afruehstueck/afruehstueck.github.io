@@ -354,8 +354,7 @@ var NRRDLoader = {
 		console.log( 'normalized range: [' + range.min + ', ' + range.max + ']' );
 		range.max = 255;
 		// attach the scalar range to the volume
-		volume.windowLow = range.min;
-		volume.windowHigh = range.max;
+		volume.range = range;
 
 		// Create IJKtoRAS matrix
 		volume.matrix = mat4.create();

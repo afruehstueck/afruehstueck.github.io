@@ -46,19 +46,14 @@ void main( void ) {
 
     vec3 voxelPosition = currentPosition * volumeDimensions;
     vec3 voxelSeedOrigin = seedOrigin * volumeDimensions;
-
-    float distance = sdSphere( voxelPosition, voxelSeedOrigin, seedRadius );
-
-    //distance = distance / ( seedRadius * 2. );
-
-    //float clampDistance = clamp( distance, -1., 1. );
-    //normalize distance value to [0, 1] range
-    //float normalizedDistance = ( clampDistance + 1. ) / 2.;
+    float voxelLength = length ( voxelPosition - voxelSeedOrigin );
+    float distance = sdSphere( currentPosition, seedOrigin, seedRadius );
+    distance *= voxelLength;
+    //float distance = sdSphere( voxelPosition, voxelSeedOrigin, seedRadius );
 
     color.r = distance;
     color.gba = calcNormal( voxelPosition, voxelSeedOrigin, seedRadius );
 
     //DEBUG: draws a nice circle around the seed region with unused green and blue values
     //gl_FragColor.rgb = vec3( normalizedDistance, ( abs( clampDistance ) < 0.01 ) ? 1. : 0., ( abs( clampDistance ) < 0.01 ) ? 1. : 0. );
-
 }
