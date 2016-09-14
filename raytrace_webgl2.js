@@ -76,6 +76,8 @@ let iteratePerClick = 1;
 
 let updateTF = true;
 
+let tf_panel;
+
 function resizeCanvases() {
     for( let canvas of canvases ) {
         resizeCanvas( canvas );
@@ -957,8 +959,8 @@ function init( canvas ) {
         //updateRaytraceUniforms( programs[ 'raytrace' ] );
         renderOnce.call( canvas );
 
-		let tf_panel = new TF_panel( canvas );
-		tf_panel.drawHistogram();
+		tf_panel = new TF_panel( canvas );
+		tf_panel.draw();
     } );
 }
 
