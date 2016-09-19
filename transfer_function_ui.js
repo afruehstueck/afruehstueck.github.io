@@ -448,7 +448,7 @@ class TF_widget {
 		controlPoint.handle = handle;
 		this.controlPoints.push( controlPoint );
 
-		$( handle ).colorPicker( {
+		/*$( handle ).colorPicker( {
 			color: controlPoint.color,
 			customBG: '#222',
 			margin: '4px 2px 0',
@@ -504,7 +504,7 @@ class TF_widget {
 					this.value = modes[ this.className.substr(3) ];
 				});
 			}
-		});
+		});*/
 	}
 
 	updateControlPoint( controlPoint, x = null, y = null ) {
@@ -614,51 +614,166 @@ class TF_widget {
 
 class CP_widget {
 	constructor( options = {} ) {
+
+		let slSize = options.slSize || 128;
+		let slCursorRadius = options.slCursorRadius || 2;
+		let hWidth = options.hWidth || Math.min( Math.max( slSize / 5, 10 ), 25 );
+		let hCursorHeight = options.hCursorHeight || 3;
+		let hPad = options.hPad || 4;
+
 		let panel = new Panel();
 
 		panel.dom.id = 'cp-panel';
 		panel.dom.classList.add( 'temporary', 'popup' );
 		this.panel = panel;
-		panel.width = options.width || 300;
-		panel.height = options.height || 150;
+		panel.dom.style.width = slSize + hWidth + hPad + 4 + 'px';
 
-		/*let canvas = document.createElement( 'canvas' );
-		this.canvas = canvas;
-		canvas.width = parent.width;
-		canvas.height = parent.height;
-		canvas.className = 'cp-widget-canvas overlay';
-		*/
-		//insert canvases below UI svg context
-
-		let SLPicker = document.createElement( 'div' );
-		SLPicker.width = 128;
-		SLPicker.height = 128;
-		SLPicker.style =   `float:left;
-							height: 128px;
-							width: 128px;
+		let SVPicker = document.createElement( 'div' );
+		SVPicker.className = 'field';
+		SVPicker.width = slSize;
+		SVPicker.height = slSize;
+		SVPicker.style =   `float:left;
+							height: ${ SVPicker.width }px;
+							width: ${ SVPicker.height }px;
 							background: linear-gradient( to right, #FFF, rgba( 255, 255, 255, 0 ) )`;
-		panel.dom.appendChild( SLPicker );
+		panel.dom.appendChild( SVPicker );
 
-		let SLPickerGradientOverlay = document.createElement( 'div' );
-		SLPickerGradientOverlay.width = 128;
-		SLPickerGradientOverlay.height = 128;
-		SLPickerGradientOverlay.style =
-						   `height: 100%;
+		let SVPickerGradientOverlay = document.createElement( 'div' );
+		SVPickerGradientOverlay.style =
+						   `margin: 0;
+						   	padding: 0;
+						   	float: left;
+						   	height: 100%;
 							width: 100%;
 							background: linear-gradient( rgba( 0, 0, 0, 0 ), #000 )`;
-		SLPicker.appendChild( SLPickerGradientOverlay );
-		
+		SVPicker.appendChild( SVPickerGradientOverlay );
+
+		let SVPickerCursor = document.createElement( 'div' );
+		SVPickerCursor.className = 'picker';
+		SVPickerCursor.width = slCursorRadius * 2;
+		SVPickerCursor.height = slCursorRadius * 2;
+		SVPickerCursor.style =
+						   `height: ${ SVPickerCursor.height }px;
+							width: ${ SVPickerCursor.width }px;				
+    						border-radius: 50%;
+    						position: relative;
+    						top: -${ slCursorRadius }px;
+    						left: -${ slCursorRadius }px`;
+		SVPicker.appendChild( SVPickerCursor );
+
 		let HPicker = document.createElement( 'div' );
-		HPicker.width = 20;
-		HPicker.height = 128;
+		HPicker.className = 'field';
+		HPicker.width = hWidth;
+		HPicker.height = SVPicker.height;
 		HPicker.style =    `float: right;
-							margin-left: 6px;
-							height: 128px;
-							width: 20px;
+							margin-left: ${ hPad }px;
+						   	padding: 0;
+							height: ${ HPicker.height }px;
+							width: ${ HPicker.width }px;
 							background: linear-gradient(red 0, #f0f 17%, #00f 33%, #0ff 50%, #0f0 67%, #ff0 83%, red 100%)`;
 
 		panel.dom.appendChild( HPicker );
 
-		SLPicker.style.backgroundColor = "#D93600";
+		let HPickerCursor = document.createElement( 'div' );
+		HPickerCursor.className = 'picker';
+		HPickerCursor.width = HPicker.width;
+		HPickerCursor.height = hCursorHeight;
+		HPickerCursor.style =
+						   `position:relative;
+						   	top: 0px;
+						   	left: 0px;
+						   	height: ${ HPickerCursor.height }px;
+							width: ${ HPickerCursor.width }px`;
+		HPicker.appendChild( HPickerCursor );
+
+		let pickSV = function( e ) {
+			//HPickerCursor.style.left = e.pageX;
+			//console.log( HPicker.getBoundingClientRect().top );
+			let xPos = e.clientX - Math.floor( SVPicker.getBoundingClientRect().left );
+			let yPos = e.clientY - Math.floor( SVPicker.getBoundingClientRect().top );
+
+			xPos = Math.max( Math.min( xPos, SVPicker.width ), 0 );
+			yPos = Math.max( Math.min( yPos, SVPicker.height ), 0 );
+
+			let elemX = xPos - slCursorRadius;
+			let elemY = yPos - slCursorRadius;
+
+			SVPickerCursor.style.left = elemX + 'px';
+			SVPickerCursor.style.top = elemY + 'px';
+			console.log( xPos+ ', ' + yPos );
+		};
+
+		SVPicker.addEventListener( 'mousedown', function( e ) {
+			pickSV( e );
+			document.addEventListener( 'mousemove', pickSV );
+		} );
+
+		document.addEventListener( 'mouseup', function() {
+			document.removeEventListener( 'mousemove', pickSV );
+		} );
+
+		let pickHue = function( e ) {
+			//HPickerCursor.style.left = e.pageX;
+			//console.log( HPicker.getBoundingClientRect().top );
+			console.log( HPicker.getBoundingClientRect().top );
+			let yPos = Math.round( e.clientY - HPicker.getBoundingClientRect().top );
+			yPos = Math.max( Math.min( yPos, HPicker.height - 1 ), 1 );
+
+			let elemPos = yPos - ( HPickerCursor.height / 2 );
+
+			HPickerCursor.style.top = elemPos + 'px';
+			console.log( yPos );
+		};
+
+		HPicker.addEventListener( 'mousedown', function( e ) {
+			pickHue( e );
+			document.addEventListener( 'mousemove', pickHue );
+		} );
+
+		document.addEventListener( 'mouseup', function() {
+			document.removeEventListener( 'mousemove', pickHue );
+		} );
+
+		let inputContainer = document.createElement( 'div' );
+		inputContainer.height = 20;
+		inputContainer.style =
+						   `float: left;
+						    height: ${ inputContainer.height }px;`;
+		panel.dom.appendChild( inputContainer );
+
+		let inputWidth = Math.max( Math.floor( ( SVPicker.width / 3 ) - 5 ), 22 );
+
+		let inputStyle =   `margin-top: 4px;
+						    height: 12px;
+						    width: ${ inputWidth }px;`;
+
+		let inputs = [ 'R', 'G', 'B' ];
+		let range = [ 0, 255 ];
+
+		for( let num = 0; num < inputs.length; num++ ) {
+			let input = document.createElement( 'input' );
+			input.type = 'number';
+			input.min = range[ 0 ];
+			input.max = range[ 1 ];
+			input.step = 1;
+			input.value = 255;
+			input.title = inputs[ num ];
+			input.name = inputs[ num ];
+			input.style = inputStyle;
+			if( num < inputs.length - 1 ) input.style.marginRight = '3px';
+			inputContainer.appendChild( input );
+			inputs[ num ] = input;
+		}
+/*
+
+		let button = document.createElement( 'input' );
+		button.type = 'button';
+		button.text = 'RGB';
+		button.name = 'RGB';
+		button.style = inputStyle;
+		inputContainer.appendChild( button );
+*/
+
+		SVPicker.style.backgroundColor = "#D93600";
 	}
 }
