@@ -24,7 +24,7 @@ let volumes = {
 	torso:	'res/tiled/torso128x128x256.png'
 };
 
-let volumePath = volumes.case1_tp1;
+let volumePath = volumes.case4_tp1;
 
 let volumeDimensions = {
 	x: 256,
@@ -961,6 +961,8 @@ function init( canvas ) {
 
 		tf_panel = new TF_panel( canvas );
 		tf_panel.draw();
+
+		let cp_panel = new CP_widget( canvas );
     } );
 }
 

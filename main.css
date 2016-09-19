@@ -20,10 +20,68 @@ body {
 
 .overlay {
     position: absolute !important;
-    top: 0px;
-    left: 0px;
+    top: 0;
+    left: 0;
     /*margin-left: 8em;
     margin-top: 1em;*/
+}
+
+.temporary {
+    position: absolute !important;
+    top: 200px;
+    left: 0;
+    /*margin-left: 8em;
+    margin-top: 1em;*/
+}
+
+.popup {
+    /*visibility: hidden;*/
+    display: inline-block;
+    background-color: #333;
+    border: #444;
+    font-size: 10px;
+    color: #fff;
+    text-align: left;
+    padding: 8px 8px;
+    margin: 5px;
+    border-radius: 6px;
+    position: absolute;
+    z-index: 10;
+}
+
+#tf-panel .handle {
+    cursor: pointer;
+    -webkit-user-select: none;
+}
+
+#tf-panel .handle:hover {
+    opacity: 0.7;
+    stroke: 'red';
+    stroke-width: '3px';
+}
+
+#tf-panel .drag {
+    cursor: move; /* or whatever cursor */
+}
+/* Tooltip text */
+#tf-panel .tooltip {
+    visibility: hidden;
+    display: inline-block;
+    background-color: #333;
+    border: #444;
+    font-size: 10px;
+    color: #fff;
+    text-align: left;
+    padding: 5px 8px;
+    margin: 5px;
+    border-radius: 6px;
+    position: absolute;
+    z-index: 10;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+#tf-panel:hover .tooltip {
+    visibility: visible;
 }
 
 
