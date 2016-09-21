@@ -36,6 +36,10 @@ class SVG {
 		}
 	}
 
+	static setColor( color ) {
+		this.setAttribute( 'fill', color );
+	}
+
 	static createCircle( parent, cx, cy, fill = 'none', r = 7, stroke = '#aaa', strokeWidth = '2px' ) {
 		let circle = document.createElementNS( svgNS, 'circle' );
 
@@ -53,6 +57,7 @@ class SVG {
 		circle.data.r = r;
 
 		circle.set = this.set;
+		circle.setColor = this.setColor;
 
 		circle.parent = parent;
 		circle.parent.appendChild( circle );
@@ -77,6 +82,7 @@ class SVG {
 		rect.data.height = h;
 
 		rect.set = this.set;
+		rect.setColor = this.setColor;
 
 		rect.parent = parent;
 		rect.parent.appendChild( rect );
@@ -112,6 +118,17 @@ class Color {
 	}
 
 	/**
+	 * remove callbacks owned by owner
+	 */
+	removeCallback( owner ) {
+		for( let i = 0; i < this.callbacks.length; i++ ) {
+			if( this.callbacks[ i ].owner === owner ) {
+				this.callbacks.splice( i, 1 );
+			}
+		}
+	}
+
+	/**
 	 * fires all registered callback functions
 	 */
 	fireChange( caller = null ) {
@@ -132,9 +149,24 @@ class Color {
 	 * caller may be passed to identify the element that triggered the change 
 	 * (in order to not fire the change event back to that element)
 	 */
-	set( components, caller = null ) {
-		//check keys in components object
-		let vars = Object.keys( components ).join( '' );
+	set( col, caller = null ) {
+		if( col === null ) return;
+		//check if color is a string, otherwise do conversion to color object
+		if( typeof col === 'string' ) {
+			//HEX
+			if( col.startsWith( '#' ) ) {
+				col = Color.HEXtoRGB( col );
+			} else if( col.startsWith( 'rgb' ) ) {
+				let parsedNumbers = col.match( /^\d+|\d+\b|\d+(?=\w)/g ).map( function ( v ) { return +v; } );
+				if( parsedNumbers.length < 3 ) {
+					console.err( 'tried to assign invalid color ' + col );
+					return;
+				}
+				col = RGB( parsedNumbers[ 0 ], parsedNumbers[ 1 ], parsedNumbers[ 2 ] );
+			}
+		}
+		//check keys in col object
+		let vars = Object.keys( col ).join( '' );
 		//test if string of keys contain 'rgb' or 'hsv'
 		let setRGB = /[rgb]/i.test( vars );
 		let setHSV = /[hsv]/i.test( vars );
@@ -145,9 +177,9 @@ class Color {
 		}
 		
 		//assign each component to the respective color parameter
-		Object.keys( components ).forEach( ( key ) => {
-			if( setRGB ) 		this.rgb[ key ] = components[ key ];
-			else if( setHSV )	this.hsv[ key ] = components[ key ];
+		Object.keys( col ).forEach( ( key ) => {
+			if( setRGB ) 		this.rgb[ key ] = col[ key ];
+			else if( setHSV )	this.hsv[ key ] = col[ key ];
 		} );
 
 		//update the color space value not assigned through the setter
@@ -175,12 +207,38 @@ class Color {
 	}
 
 	/**
+	 * accepts parameters { r: x, g: y, b: z } OR r, g, b
+	 */
+	static RGBtoHEX( r, g, b ) {
+		if ( arguments.length === 1 ) {
+			g = r.g, b = r.b, r = r.r;
+		}
+		let hex = '#' + ( ( 1 << 24 ) + ( r << 16 ) + ( g << 8 ) + b ).toString( 16 ).slice( 1 );
+		return hex;
+	}
+	/**
+	 * convert HEX color to RGB
+	 * from http://stackoverflow.com/a/5624139
+	 * accepts parameter #ffffff or #fff (shorthand hex)
+	 */
+	static HEXtoRGB( hex ) {
+		// Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+		let shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+		hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+			return r + r + g + g + b + b;
+		});
+
+		let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+		return result ? this.RGB( parseInt( result[ 1 ], 16 ), parseInt( result[ 2 ], 16 ), parseInt( result[ 3 ], 16 ) ) : null;
+	}
+
+	/**
 	 * convert HSV color to RGB
 	 * from http://stackoverflow.com/a/17243070
 	 * accepts parameters { h: x, s: y, v: z } OR h, s, v
 	 */
 	static HSVtoRGB( h, s, v ) {
-		var r, g, b, i, f, p, q, t;
+		let r, g, b, i, f, p, q, t;
 		if ( arguments.length === 1 ) {
 			s = h.s, v = h.v, h = h.h;
 		}
@@ -201,7 +259,8 @@ class Color {
 	}
 
 	/**
-	 *
+	 * convert RGB color to HSV
+	 * from http://stackoverflow.com/a/17243070
 	 * accepts parameters { r: x, g: y, b: z } OR r, g, b
 	 */
 	static RGBtoHSV( r, g, b ) {
@@ -304,6 +363,15 @@ class TF_panel {
 		//add tf_widgets
 		this.widgets = [];
 		this.addWidget();
+
+		//add color picker
+		let cp_widget = new CP_widget();
+		this.panel.cp_widget = cp_widget;
+		/*document.addEventListener( 'mousedown', function() {
+			cp_widget.hide();
+		}, false );
+*/
+		this.draw();
 	}
 
 	addWidget( options ) {
@@ -547,7 +615,8 @@ class TF_widget {
 		}
 
 		//add mouse move event when mouse is pressed
-		anchor.addEventListener( 'mousedown', function() {
+		anchor.addEventListener( 'mousedown', function( e ) {
+			e.preventDefault();
 			document.addEventListener( 'mousemove', moveFunction, false );
 		}, true );
 
@@ -555,6 +624,7 @@ class TF_widget {
 	}
 
 	addControlPoint( value, alpha, color ) {
+		let parent = this.parent;
 		let controlPoint = { value: value, alpha: alpha, color: color };
 
 		let handle = SVG.createCircle( this.parent.svgContext, value * this.canvas.width, this.canvas.height - alpha * this.canvas.height, controlPoint.color );
@@ -564,7 +634,8 @@ class TF_widget {
 			height = this.parent.height;
 
 		let self = this;
-		let callback = this.updateWidget.bind( self );
+		let update = this.updateWidget.bind( self );
+		let repaint = this.drawWidget.bind( self );
 		let moveFunction = moveHandle.bind( self );
 
 		/* moves control point handles on mousemove while mouse down */
@@ -578,18 +649,33 @@ class TF_widget {
 			//remove mouse move event on mouseup
 			document.addEventListener( 'mouseup', function() {
 				document.removeEventListener( 'mousemove', moveFunction, false );
-			}, true );
+			} );
 
 			//update widget through callback function
-			callback();
+			update();
 		}
 
 		//add mouse move event when mouse is pressed
-		handle.addEventListener( 'mousedown', function() {
+		handle.addEventListener( 'mousedown', function( e ) {
+			e.preventDefault();
 			document.addEventListener( 'mousemove', moveFunction, false );
-		}, true );
+		} );
 
-		//handle.addEventListener( 'dblclick', function() { console.log( 'doubleclick!' ) } );
+		handle.addEventListener( 'mouseup', function( e ) {
+			e.preventDefault();
+			console.log( 'doubleclick!' );
+			parent.cp_widget.attachTo( handle, e.pageX, e.pageY );
+			parent.cp_widget.color.onChange( handle, function( col ) {
+				let colHex = Color.RGBtoHEX( col.rgb );
+				handle.setColor( colHex )
+				controlPoint.color = colHex;
+				repaint();
+			} );
+			parent.cp_widget.color.set( controlPoint.color, handle );
+			parent.cp_widget.show();
+
+			document.addEventListener( 'mousemove', moveFunction, false );
+		} );
 
 		controlPoint.handle = handle;
 		this.controlPoints.push( controlPoint );
@@ -724,15 +810,11 @@ class CP_widget {
 		options.hPicker.cursorHeight = options.hPicker.cursorHeight || 4;
 
 		let panel = new Panel();
-
-		this.color = new Color();/*
-		this.color.set( { r: 255, g: 255, b: 255 }, null ); //white
-		this.color.set( { r: 255, g:   0, b:   0 }, null ); //red (should be (0, 100, 100)
-		this.color.set( { r:   0, g: 255, b:   0 }, null ); //green (should be (120, 100, 100)
-		this.color.set( { r:   0, g:   0, b: 255 }, null ); //blue (should be (240, 100, 100)*/
+		let parent = null;
+		this.color = new Color();
 
 		panel.dom.id = 'cp-panel';
-		panel.dom.classList.add( 'temporary', 'popup' );
+		panel.dom.classList.add( 'overlay', 'popup' );
 		this.panel = panel;
 		panel.dom.style.width = options.svPicker.size + options.hPicker.width + options.hPicker.pad + 4 + 'px';
 
@@ -741,6 +823,29 @@ class CP_widget {
 		let inputFields = this.createInputFields( this.color );
 
 		this.SVPicker.style.backgroundColor = "#FF0000";
+	}
+
+	attachTo( parent, x, y ) {
+		//todo refactor this
+		if( this.parent ) { //remove previous parent
+			this.color.removeCallback( this.parent );
+		}
+		this.parent = parent;
+
+		this.panel.dom.style.top = y + 'px';
+		this.panel.dom.style.left = x + 'px';
+	}
+
+	toggle() {
+		this.panel.dom.style.visibility = ( this.panel.dom.style.visibility === 'hidden' ) ? 'visible' : 'hidden';
+	}
+
+	hide() {
+		this.panel.dom.style.visibility = 'hidden';
+	}
+
+	show() {
+		this.panel.dom.style.visibility = 'visible';
 	}
 
 	createSVPicker( color, options ) {
@@ -802,7 +907,7 @@ class CP_widget {
 			e.preventDefault();
 			pickSV( e );
 			document.addEventListener( 'mousemove', pickSV );
-		} );
+		}, true );
 
 		document.addEventListener( 'mouseup', function( e ) {
 			e.preventDefault();
@@ -872,7 +977,7 @@ class CP_widget {
 			e.preventDefault();
 			pickHue( e );
 			document.addEventListener( 'mousemove', pickHue );
-		} );
+		}, true );
 
 		document.addEventListener( 'mouseup', function( e ) {
 			e.preventDefault();

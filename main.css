@@ -104,15 +104,15 @@ a:link {
 }
 
 .temporary {
-    position: absolute !important;
-    top: 200px;
-    left: 0;
+    position: absolute;
+    top: 100px;
+    left: 100px;
     /*margin-left: 8em;
     margin-top: 1em;*/
 }
 
 .popup {
-    /*visibility: hidden;*/
+    visibility: hidden;
     display: inline-block;
     background-color: #333;
     border: #444;

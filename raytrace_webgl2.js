@@ -960,9 +960,7 @@ function init( canvas ) {
         renderOnce.call( canvas );
 
 		tf_panel = new TF_panel( canvas );
-		tf_panel.draw();
-
-		let cp_panel = new CP_widget( canvas );
+		//tf_panel.draw();
     } );
 }
 
