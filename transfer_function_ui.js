@@ -4,7 +4,12 @@
 
 var svgNS = 'http://www.w3.org/2000/svg';
 
-/*
+/**
+ * add convenience function to Math for restricting range of a value
+ */
+Math.clamp = function( val, min, max ) { return Math.min( Math.max( min, val ), max ); };
+
+/**
  * UI element - eventually replace with Steve's UI class
  */
 class Panel {
@@ -16,7 +21,7 @@ class Panel {
 	}
 }
 
-/*
+/**
  * helper class for creating SVG elements
  */
 class SVG {
@@ -79,10 +84,151 @@ class SVG {
 	}
 }
 
-/*
+/**
+ * Color operates in two color spaces: HSV and RGB
+ * HSV colors are in a { hue ∈ [ 0, 1 ], saturation ∈ [ 0, 1 ], value ∈ [ 0, 1 ] } domain
+ * RGB colors are in a { red ∈ [ 0, 255 ], green ∈ [ 0, 255 ], blue ∈ [ 0, 255 ] } domain
+ */
+class Color {
+
+	constructor() {
+		this.rgb = { r: 0, g: 0, b: 0 };
+		this.hsv = { h: 0, s: 0, v: 0 };
+
+		this.callbacks = [];
+
+		this.set( this.rgb, null );
+	}
+
+	/**
+	 * attach a callback function to color object
+	 * owner is the element the function is contained in
+	 * callback is the actual callback function 
+	 */
+	onChange( owner, callback ) {
+		if ( this.callbacks.indexOf( { owner: owner, callback: callback } ) < 0 ) {
+			this.callbacks.push( { owner: owner, callback: callback } );
+		}
+	}
+
+	/**
+	 * fires all registered callback functions
+	 */
+	fireChange( caller = null ) {
+		for( let callbackObject of this.callbacks ) {
+			let owner = callbackObject.owner;
+			let callback = callbackObject.callback;
+			if( owner !== caller ) {
+				callback( this );
+			}
+		}
+	}
+
+	/**
+	 * value is an object containing key, value pairs specifying new color values, either in rgb or hsv
+	 * components may be missing
+	 * e.g. { r: 255, g: 0, b: 120 } or { r: 255 } or { s: 1, v: 0 }
+	 * 
+	 * caller may be passed to identify the element that triggered the change 
+	 * (in order to not fire the change event back to that element)
+	 */
+	set( components, caller = null ) {
+		//check keys in components object
+		let vars = Object.keys( components ).join( '' );
+		//test if string of keys contain 'rgb' or 'hsv'
+		let setRGB = /[rgb]/i.test( vars );
+		let setHSV = /[hsv]/i.test( vars );
+
+		if( vars.length == 0 || setRGB === setHSV ) {
+			console.err( 'invalid params in color setter: cannot assign' );
+			return;
+		}
+		
+		//assign each component to the respective color parameter
+		Object.keys( components ).forEach( ( key ) => {
+			if( setRGB ) 		this.rgb[ key ] = components[ key ];
+			else if( setHSV )	this.hsv[ key ] = components[ key ];
+		} );
+
+		//update the color space value not assigned through the setter
+		if( setRGB ) 		this.hsv = Color.RGBtoHSV( this.rgb );
+		else if( setHSV )	this.rgb = Color.HSVtoRGB( this.hsv );
+
+		//notify all attached callbacks
+		this.fireChange( caller );
+	}
+
+	getRGB() {
+		return this.rgb;
+	}
+
+	getHSV() {
+		return this.hsv;
+	}
+
+	static RGB( x, y, z ) {
+		return { r: x, g: y, b: z };
+	}
+
+	static HSV( x, y, z ) {
+		return { h: x, s: y, v: z };
+	}
+
+	/**
+	 * convert HSV color to RGB
+	 * from http://stackoverflow.com/a/17243070
+	 * accepts parameters { h: x, s: y, v: z } OR h, s, v
+	 */
+	static HSVtoRGB( h, s, v ) {
+		var r, g, b, i, f, p, q, t;
+		if ( arguments.length === 1 ) {
+			s = h.s, v = h.v, h = h.h;
+		}
+		i = Math.floor( h * 6 );
+		f = h * 6 - i;
+		p = v * ( 1 - s );
+		q = v * ( 1 - f * s );
+		t = v * ( 1 - ( 1 - f ) * s );
+		switch ( i % 6 ) {
+			case 0: r = v, g = t, b = p; break;
+			case 1: r = q, g = v, b = p; break;
+			case 2: r = p, g = v, b = t; break;
+			case 3: r = p, g = q, b = v; break;
+			case 4: r = t, g = p, b = v; break;
+			case 5: r = v, g = p, b = q; break;
+		}
+		return this.RGB( Math.round( r * 255 ), Math.round( g * 255 ), Math.round( b * 255 ) );
+	}
+
+	/**
+	 *
+	 * accepts parameters { r: x, g: y, b: z } OR r, g, b
+	 */
+	static RGBtoHSV( r, g, b ) {
+		if ( arguments.length === 1 ) {
+			g = r.g, b = r.b, r = r.r;
+		}
+		var max = Math.max( r, g, b ), min = Math.min( r, g, b ),
+			d = max - min,
+			h,
+			s = ( max === 0 ? 0 : d / max ),
+			v = max / 255;
+
+		switch ( max ) {
+			case min: h = 0; break;
+			case r: h = ( g - b ) + d * ( g < b ? 6: 0 ); h /= 6 * d; break;
+			case g: h = ( b - r ) + d * 2; h /= 6 * d; break;
+			case b: h = ( r - g ) + d * 4; h /= 6 * d; break;
+		}
+
+		return this.HSV( h, s, v );
+	}
+}
+
+/**
  * TF_panel is the base class for the transfer function panel
  * contains the container DIV (panel), the histogram canvas, one or multiple TF_widgets, the SVG context for UI elements
- * OPTIONS.*:
+ * options.*:
  * width:			number
  * height: 			number
  */
@@ -175,10 +321,10 @@ class TF_panel {
 		}
 	}
 
-	/*
+	/**
 	 * calculates the statistics for an array of data values necessary for displaying the histogram
 	 *
-	 * OPTIONS.STATS.*:
+	 * options.stats.*:
 	 * bins:		number
 	 * range:		{ min: number, max: number }
 	 */
@@ -232,7 +378,7 @@ class TF_panel {
 
 	/* draw the histogram to the histogram canvas
 	 *
-	 * OPTIONS.HISTOGRAM.*:
+	 * options.histogram.*:
 	 * fillColor:		color
 	 * lineColor:		color
 	 * style:			{ 'polygon', 'line' }
@@ -324,7 +470,7 @@ class TF_panel {
 
 /* TF-widget contains one range of two or more control points
  *
- * OPTIONS.*:
+ * options.*:
  * location:		number
  * controlPoints:	array of { value: number, alpha: number, color: color }
  * opacity:			number
@@ -447,76 +593,18 @@ class TF_widget {
 
 		controlPoint.handle = handle;
 		this.controlPoints.push( controlPoint );
-
-		/*$( handle ).colorPicker( {
-			color: controlPoint.color,
-			customBG: '#222',
-			margin: '4px 2px 0',
-			doRender: 'div div',
-			buildCallback: function( $elm ) {
-				var colorInstance = this.color,
-					colorPicker = this;
-				$elm.prepend('<div class="cp-panel">' +
-					'R <input type="text" class="cp-r" /><br>' +
-					'G <input type="text" class="cp-g" /><br>' +
-					'B <input type="text" class="cp-b" /><hr>' +
-					'H <input type="text" class="cp-h" /><br>' +
-					'S <input type="text" class="cp-s" /><br>' +
-					'B <input type="text" class="cp-v" /><hr>' +
-					'<input type="text" class="cp-HEX" />' +
-					'</div>').on('change', 'input', function(e) {
-						var value = this.value,
-							className = this.className,
-							type = className.split('-')[1],
-							color = {};
-
-						color[type] = value;
-						colorInstance.setColor( type === 'HEX' ? value : color,
-							type === 'HEX' ? 'HEX' : /(?:r|g|b)/.test(type) ? 'rgb' : 'hsv' );
-						colorPicker.render();
-						this.blur();
-					});
-			},
-			cssAddon: // could also be in a css file instead
-				'.cp-color-picker{box-sizing:border-box; width:226px;}' +
-				'.cp-color-picker .cp-panel {line-height: 21px; float:right;' +
-				'padding:0 1px 0 8px; margin-top:-1px; overflow:visible}' +
-				'.cp-xy-slider:active {cursor:none;}' +
-				'.cp-panel, .cp-panel input {color:#bbb; font-family:monospace,' +
-				'"Courier New",Courier,mono; font-size:12px; font-weight:bold;}' +
-				'.cp-panel input {width:28px; height:12px; padding:2px 3px 1px;' +
-				'text-align:right; line-height:12px; background:transparent;' +
-				'border:1px solid; border-color:#222 #666 #666 #222;}' +
-				'.cp-panel hr {margin:0 -2px 2px; height:1px; border:0;' +
-				'background:#666; border-top:1px solid #222;}' +
-				'.cp-panel .cp-HEX {width:44px; position:absolute; margin:1px -3px 0 -2px;}' +
-				'.cp-alpha {width:155px;}',
-			opacity: false,
-			renderCallback: function( $elm, toggled ) {
-				var colors = this.color.colors.RND,
-					modes = {
-						r: colors.rgb.r, g: colors.rgb.g, b: colors.rgb.b,
-						h: colors.hsv.h, s: colors.hsv.s, v: colors.hsv.v,
-						HEX: this.color.colors.HEX
-					};
-
-				$( 'input', '.cp-panel' ).each( function() {
-					this.value = modes[ this.className.substr(3) ];
-				});
-			}
-		});*/
 	}
 
 	updateControlPoint( controlPoint, x = null, y = null ) {
 		//update position of svg
 		if( x ) {
 			//restrict x coordinate to [ 0, width ]
-			x = Math.max( Math.min( x, this.parent.width ), 0 );
+			x = Math.clamp( x, 0, this.parent.width );
 			controlPoint.value = x / this.parent.width;
 		}
 		if( y ) {
 			//restrict y coordinate to [ 0, height ]
-			y = Math.max( Math.min( y, this.parent.height ), 0 );
+			y = Math.clamp( y, 0, this.parent.height );
 			controlPoint.alpha = 1.0 - ( y / this.parent.height );
 		}
 		controlPoint.handle.set( x, y );
@@ -532,7 +620,7 @@ class TF_widget {
 
 	}
 
-	/*
+	/**
 	 * find position of anchor point under TF_widget curve and move anchor handle to appropriate position
 	 */
 	updateAnchor() {
@@ -573,7 +661,7 @@ class TF_widget {
 		this.updateAnchor();
 	}
 
-	/*
+	/**
 	 * create polygon path for widget tracing positions of controlpoints
 	 * create gradient and draw polygon
 	 */
@@ -612,35 +700,63 @@ class TF_widget {
 	}
 }
 
+/**
+ * options.svPicker.*:
+ * size:		number
+ * cursorRadius:number
+ *
+ * options.hPicker.*:
+ * width:		number
+ * cursorHeight:number
+ * pad:			number
+ */
 class CP_widget {
 	constructor( options = {} ) {
 
-		let slSize = options.slSize || 128;
-		let slCursorRadius = options.slCursorRadius || 2;
-		let hWidth = options.hWidth || Math.min( Math.max( slSize / 5, 10 ), 25 );
-		let hCursorHeight = options.hCursorHeight || 3;
-		let hPad = options.hPad || 4;
+		options.svPicker = options.svPicker || {};
+		options.svPicker.size = options.svPicker.size || 128;
+		options.svPicker.cursorRadius = options.svPicker.cursorRadius || 3;
+
+		options.hPicker = options.hPicker || {};
+		options.hPicker.width = options.hPicker.width || Math.clamp( options.svPicker.size / 5, 10, 25 );
+		options.hPicker.height = options.svPicker.size;
+		options.hPicker.pad = options.hPicker.pad || 4;
+		options.hPicker.cursorHeight = options.hPicker.cursorHeight || 4;
 
 		let panel = new Panel();
+
+		this.color = new Color();/*
+		this.color.set( { r: 255, g: 255, b: 255 }, null ); //white
+		this.color.set( { r: 255, g:   0, b:   0 }, null ); //red (should be (0, 100, 100)
+		this.color.set( { r:   0, g: 255, b:   0 }, null ); //green (should be (120, 100, 100)
+		this.color.set( { r:   0, g:   0, b: 255 }, null ); //blue (should be (240, 100, 100)*/
 
 		panel.dom.id = 'cp-panel';
 		panel.dom.classList.add( 'temporary', 'popup' );
 		this.panel = panel;
-		panel.dom.style.width = slSize + hWidth + hPad + 4 + 'px';
+		panel.dom.style.width = options.svPicker.size + options.hPicker.width + options.hPicker.pad + 4 + 'px';
 
+		this.SVPicker = this.createSVPicker( this.color, options.svPicker );
+		this.HPicker = this.createHPicker( this.color, options.hPicker );
+		let inputFields = this.createInputFields( this.color );
+
+		this.SVPicker.style.backgroundColor = "#FF0000";
+	}
+
+	createSVPicker( color, options ) {
 		let SVPicker = document.createElement( 'div' );
 		SVPicker.className = 'field';
-		SVPicker.width = slSize;
-		SVPicker.height = slSize;
+		SVPicker.width = options.size;
+		SVPicker.height = options.size;
 		SVPicker.style =   `float:left;
 							height: ${ SVPicker.width }px;
 							width: ${ SVPicker.height }px;
 							background: linear-gradient( to right, #FFF, rgba( 255, 255, 255, 0 ) )`;
-		panel.dom.appendChild( SVPicker );
+		this.panel.dom.appendChild( SVPicker );
 
 		let SVPickerGradientOverlay = document.createElement( 'div' );
 		SVPickerGradientOverlay.style =
-						   `margin: 0;
+			`margin: 0;
 						   	padding: 0;
 						   	float: left;
 						   	height: 100%;
@@ -649,106 +765,164 @@ class CP_widget {
 		SVPicker.appendChild( SVPickerGradientOverlay );
 
 		let SVPickerCursor = document.createElement( 'div' );
-		SVPickerCursor.className = 'picker';
-		SVPickerCursor.width = slCursorRadius * 2;
-		SVPickerCursor.height = slCursorRadius * 2;
+		SVPickerCursor.className = 'handle';
+		SVPickerCursor.width = options.cursorRadius * 2;
+		SVPickerCursor.height = options.cursorRadius * 2;
 		SVPickerCursor.style =
-						   `height: ${ SVPickerCursor.height }px;
+			`height: ${ SVPickerCursor.height }px;
 							width: ${ SVPickerCursor.width }px;				
     						border-radius: 50%;
     						position: relative;
-    						top: -${ slCursorRadius }px;
-    						left: -${ slCursorRadius }px`;
+    						top: -${ options.cursorRadius }px;
+    						left: -${ options.cursorRadius }px`;
 		SVPicker.appendChild( SVPickerCursor );
 
+		let pickSV = function( e ) {
+			e.preventDefault();
+
+			let xPos = e.clientX - Math.floor( SVPicker.getBoundingClientRect().left );
+			let yPos = e.clientY - Math.floor( SVPicker.getBoundingClientRect().top );
+
+			xPos = Math.clamp( xPos, 0, SVPicker.width );
+			yPos = Math.clamp( yPos, 0, SVPicker.height );
+
+			let saturation = xPos / SVPicker.width;
+			let value = 1 - ( yPos / SVPicker.height );
+
+			color.set( { s: saturation, v: value }, SVPicker );
+
+			let cursorX = xPos - options.cursorRadius;
+			let cursorY = yPos - options.cursorRadius;
+
+			SVPickerCursor.style.left = cursorX + 'px';
+			SVPickerCursor.style.top = cursorY + 'px';
+		};
+
+		SVPicker.addEventListener( 'mousedown', function( e ) {
+			e.preventDefault();
+			pickSV( e );
+			document.addEventListener( 'mousemove', pickSV );
+		} );
+
+		document.addEventListener( 'mouseup', function( e ) {
+			e.preventDefault();
+			document.removeEventListener( 'mousemove', pickSV );
+		} );
+
+		SVPicker.update = function( color ) {
+			let hsv = color.getHSV();
+			let rgb = Color.HSVtoRGB( hsv.h, 1, 1 );
+			SVPicker.style.backgroundColor = 'rgb(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ')';
+
+			let xPos = hsv.s * SVPicker.width;
+			let yPos = ( 1 - hsv.v ) * SVPicker.height;
+
+			let cursorX = xPos - options.cursorRadius;
+			let cursorY = yPos - options.cursorRadius;
+
+			SVPickerCursor.style.left = cursorX + 'px';
+			SVPickerCursor.style.top = cursorY + 'px';
+		};
+
+		color.onChange( SVPicker, SVPicker.update );
+
+		return SVPicker;
+	}
+
+	createHPicker( color, options ) {
 		let HPicker = document.createElement( 'div' );
 		HPicker.className = 'field';
-		HPicker.width = hWidth;
-		HPicker.height = SVPicker.height;
+		HPicker.width = options.width;
+		HPicker.height = options.height;
 		HPicker.style =    `float: right;
-							margin-left: ${ hPad }px;
+							margin-left: ${ options.pad }px;
 						   	padding: 0;
 							height: ${ HPicker.height }px;
 							width: ${ HPicker.width }px;
-							background: linear-gradient(red 0, #f0f 17%, #00f 33%, #0ff 50%, #0f0 67%, #ff0 83%, red 100%)`;
+							background: linear-gradient(#f00 0, #f0f 17%, #00f 33%, #0ff 50%, #0f0 67%, #ff0 83%, #f00 100%)`;
 
-		panel.dom.appendChild( HPicker );
+		this.panel.dom.appendChild( HPicker );
 
 		let HPickerCursor = document.createElement( 'div' );
-		HPickerCursor.className = 'picker';
+		HPickerCursor.className = 'handle';
 		HPickerCursor.width = HPicker.width;
-		HPickerCursor.height = hCursorHeight;
+		HPickerCursor.height = options.cursorHeight;
 		HPickerCursor.style =
-						   `position:relative;
+			`position:relative;
 						   	top: 0px;
 						   	left: 0px;
 						   	height: ${ HPickerCursor.height }px;
 							width: ${ HPickerCursor.width }px`;
 		HPicker.appendChild( HPickerCursor );
 
-		let pickSV = function( e ) {
-			//HPickerCursor.style.left = e.pageX;
-			//console.log( HPicker.getBoundingClientRect().top );
-			let xPos = e.clientX - Math.floor( SVPicker.getBoundingClientRect().left );
-			let yPos = e.clientY - Math.floor( SVPicker.getBoundingClientRect().top );
-
-			xPos = Math.max( Math.min( xPos, SVPicker.width ), 0 );
-			yPos = Math.max( Math.min( yPos, SVPicker.height ), 0 );
-
-			let elemX = xPos - slCursorRadius;
-			let elemY = yPos - slCursorRadius;
-
-			SVPickerCursor.style.left = elemX + 'px';
-			SVPickerCursor.style.top = elemY + 'px';
-			console.log( xPos+ ', ' + yPos );
-		};
-
-		SVPicker.addEventListener( 'mousedown', function( e ) {
-			pickSV( e );
-			document.addEventListener( 'mousemove', pickSV );
-		} );
-
-		document.addEventListener( 'mouseup', function() {
-			document.removeEventListener( 'mousemove', pickSV );
-		} );
-
 		let pickHue = function( e ) {
-			//HPickerCursor.style.left = e.pageX;
-			//console.log( HPicker.getBoundingClientRect().top );
-			console.log( HPicker.getBoundingClientRect().top );
+			e.preventDefault();
+
 			let yPos = Math.round( e.clientY - HPicker.getBoundingClientRect().top );
-			yPos = Math.max( Math.min( yPos, HPicker.height - 1 ), 1 );
+			yPos = Math.clamp( yPos, 0, HPicker.height );
 
-			let elemPos = yPos - ( HPickerCursor.height / 2 );
+			let hue = 1 - ( yPos / HPicker.height );
+			color.set( { h: hue }, HPicker );
 
-			HPickerCursor.style.top = elemPos + 'px';
-			console.log( yPos );
+			let cursorY = yPos - ( HPickerCursor.height / 2 );
+			HPickerCursor.style.top = cursorY + 'px';
 		};
 
 		HPicker.addEventListener( 'mousedown', function( e ) {
+			e.preventDefault();
 			pickHue( e );
 			document.addEventListener( 'mousemove', pickHue );
 		} );
 
-		document.addEventListener( 'mouseup', function() {
+		document.addEventListener( 'mouseup', function( e ) {
+			e.preventDefault();
 			document.removeEventListener( 'mousemove', pickHue );
 		} );
 
+		HPicker.update = function( color ) {
+			let hue = color.getHSV().h;
+
+			let yPos = ( 1 - hue ) * HPicker.height;
+			let cursorY = yPos - ( HPickerCursor.height / 2 );
+			HPickerCursor.style.top = cursorY + 'px';
+		};
+
+		color.onChange( HPicker, HPicker.update );
+		return HPicker;
+	}
+
+	createInputFields( color ) {
 		let inputContainer = document.createElement( 'div' );
 		inputContainer.height = 20;
 		inputContainer.style =
-						   `float: left;
+			`float: left;
 						    height: ${ inputContainer.height }px;`;
-		panel.dom.appendChild( inputContainer );
+		this.panel.dom.appendChild( inputContainer );
 
-		let inputWidth = Math.max( Math.floor( ( SVPicker.width / 3 ) - 5 ), 22 );
+		let inputWidth = Math.max( Math.floor( ( this.SVPicker.width / 3 ) - 5 ), 22 );
 
 		let inputStyle =   `margin-top: 4px;
 						    height: 12px;
 						    width: ${ inputWidth }px;`;
 
-		let inputs = [ 'R', 'G', 'B' ];
+		let inputs = [ 'r', 'g', 'b' ];
 		let range = [ 0, 255 ];
+
+		function inputEvent() {
+			let value = Number( this.value );
+
+			//constrain input to valid numbers
+			value = Math.clamp( value, range[ 0 ], range[ 1 ] );
+			if( value !== this.value ) this.value = value;
+			let components = {};
+			components[ this.name ] = value;
+			color.set( components, inputContainer );
+			//console.log('input changed to: ' + this.value + ' ' + this.name );
+		}
+
+		function pickColor() {
+			color.set( { r: Number( inputs[ 0 ].value ), g: Number( inputs[ 1 ].value ), b: Number( inputs[ 2 ].value ) }, inputContainer );
+		}
 
 		for( let num = 0; num < inputs.length; num++ ) {
 			let input = document.createElement( 'input' );
@@ -762,18 +936,17 @@ class CP_widget {
 			input.style = inputStyle;
 			if( num < inputs.length - 1 ) input.style.marginRight = '3px';
 			inputContainer.appendChild( input );
+			input.addEventListener('input', inputEvent);
 			inputs[ num ] = input;
 		}
-/*
 
-		let button = document.createElement( 'input' );
-		button.type = 'button';
-		button.text = 'RGB';
-		button.name = 'RGB';
-		button.style = inputStyle;
-		inputContainer.appendChild( button );
-*/
+		inputContainer.update = function( color ) {
+			let rgb = color.getRGB();
+			inputs[ 0 ].value = rgb.r;
+			inputs[ 1 ].value = rgb.g;
+			inputs[ 2 ].value = rgb.b;
+		};
 
-		SVPicker.style.backgroundColor = "#D93600";
+		color.onChange( inputContainer, inputContainer.update );
 	}
 }

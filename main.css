@@ -161,7 +161,8 @@ a:link {
     visibility: visible;
 }
 
-#cp-panel .picker {
+#cp-panel .handle {
+    cursor: pointer;
     border: 1px solid #ddd;
     margin: -1px; /* takes into account border width */
     pointer-events: none;
@@ -188,11 +189,11 @@ a:link {
     border: 1px solid #222;
 }
 
-#cp-panel input::-webkit-outer-spin-button,
+/*#cp-panel input::-webkit-outer-spin-button,
 #cp-panel input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
-}
+}*/
 
 /*
 .rect {
