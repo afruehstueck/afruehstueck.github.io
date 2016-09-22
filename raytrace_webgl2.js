@@ -24,7 +24,7 @@ let volumes = {
 	torso:	'res/tiled/torso128x128x256.png'
 };
 
-let volumePath = volumes.case4_tp1;
+let volumePath = volumes.torso;
 
 let volumeDimensions = {
 	x: 256,
@@ -77,6 +77,8 @@ let iteratePerClick = 1;
 let updateTF = true;
 
 let tf_panel;
+
+let tf_img;
 
 function resizeCanvases() {
     for( let canvas of canvases ) {
@@ -725,7 +727,7 @@ for( let canvas of canvases ) {
 function getSeedValue() {
 	let gl = this.context;
 
-	if( gl.type !== 'webgl2') {
+	if( gl.type !== 'webgl2' ) {
 		console.log( 'no picking here :P ');
 		return;
 	}
@@ -818,6 +820,13 @@ function init( canvas ) {
 									createFBO.call( canvas, [ volumeDimensions.x, volumeDimensions.y, volumeDimensions.z ] ) ];
 
 			canvas.sourceImage = sourceImage;
+
+			var tmpCanvas = document.createElement( 'canvas' );
+			tmpCanvas.width = sourceImage.width;
+			tmpCanvas.height = sourceImage.height;
+			var tmpContext = tmpCanvas.getContext( '2d' ); // Get canvas 2d context
+			tmpContext.drawImage( sourceImage, 0, 0 ); // Draw the texture
+			canvas.data = tmpContext.getImageData( 0, 0, sourceImage.width, sourceImage.height ).data;
 
 			volume_async_load.resolve();
 		};
@@ -957,16 +966,28 @@ function init( canvas ) {
         gl.enableVertexAttribArray( canvas.programs[ 'raytrace' ].position );
         gl.enableVertexAttribArray( canvas.programs[ 'raytrace' ].texCoord );
         //updateRaytraceUniforms( programs[ 'raytrace' ] );
-        renderOnce.call( canvas );
 
+		let lastCalledTime = Date.now();
 		tf_panel = new TF_panel( canvas );
+		tf_panel.registerCallback( function() {
+			var delta = ( Date.now() - lastCalledTime ) / 1000;
+			if( delta < 0.1 ) return;
+
+			updateTF = true;
+
+			for( let canvas of canvases ) {
+				render.call( canvas );
+			};
+		});
+		renderOnce.call( canvas );
 		//tf_panel.draw();
     } );
 }
 
 function updateTransferFunctionTextures( canvas ) {
-	canvas.transferColor = createTextureFromImage.call( canvas, document.getElementById( 'transferColor' ), false );
-	canvas.transferAlpha = createTextureFromImage.call( canvas, document.getElementById( 'transferAlpha' ), false );
+	tf_img = tf_panel.TFtoIMG();
+	canvas.transferColor = createTextureFromImage.call( canvas, tf_img, false );
+	//canvas.transferAlpha = createTextureFromImage.call( canvas, document.getElementById( 'transferAlpha' ), false );
 	console.log( 'updated transfer function texture' );
 }
 
@@ -999,8 +1020,6 @@ function renderOnce() {
 	}
 
 	getSeedValue.call( this );
-
-	updateTransferFunction();
 
 	updateDistanceFieldUniforms.call( this, this.programs[ 'update_sdf' ] );
 
@@ -1038,7 +1057,7 @@ function update( skipRendering = false ) {
 }
 
 function animate() {
-	requestAnimationFrame( animate );
+	window.requestAnimationFrame( animate );
 
 	for( let canvas of canvases ) {
 		render.call( canvas );

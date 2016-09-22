@@ -111,7 +111,7 @@ class Color {
 	 * owner is the element the function is contained in
 	 * callback is the actual callback function 
 	 */
-	onChange( owner, callback ) {
+	registerCallback( owner, callback ) {
 		if ( this.callbacks.indexOf( { owner: owner, callback: callback } ) < 0 ) {
 			this.callbacks.push( { owner: owner, callback: callback } );
 		}
@@ -150,21 +150,7 @@ class Color {
 	 * (in order to not fire the change event back to that element)
 	 */
 	set( col, caller = null ) {
-		if( col === null ) return;
-		//check if color is a string, otherwise do conversion to color object
-		if( typeof col === 'string' ) {
-			//HEX
-			if( col.startsWith( '#' ) ) {
-				col = Color.HEXtoRGB( col );
-			} else if( col.startsWith( 'rgb' ) ) {
-				let parsedNumbers = col.match( /^\d+|\d+\b|\d+(?=\w)/g ).map( function ( v ) { return +v; } );
-				if( parsedNumbers.length < 3 ) {
-					console.err( 'tried to assign invalid color ' + col );
-					return;
-				}
-				col = RGB( parsedNumbers[ 0 ], parsedNumbers[ 1 ], parsedNumbers[ 2 ] );
-			}
-		}
+		col = Color.parseColor( col );
 		//check keys in col object
 		let vars = Object.keys( col ).join( '' );
 		//test if string of keys contain 'rgb' or 'hsv'
@@ -206,6 +192,44 @@ class Color {
 		return { h: x, s: y, v: z };
 	}
 
+	/**
+	 * parses an unknown input color value
+	 * can be HEX = #FFFFFF or #FFF, RGB = rgb( 255, 255, 255 ) or color object
+	 * returns RGB object for parsed strings or the original object for color objects
+	 */
+	static parseColor( col ) {
+		if( col === null ) return null;
+		//check if color is a string, otherwise do conversion to color object
+		if( typeof col === 'string' ) {
+			//HEX
+			if( col.startsWith( '#' ) ) {
+				return Color.HEXtoRGB( col );
+			//RGB(A) (would discard alpha value)
+			} else if( col.startsWith( 'rgb' ) ) {
+				let parsedNumbers = col.match( /^\d+|\d+\b|\d+(?=\w)/g ).map( function ( v ) { return +v; } );
+				if( parsedNumbers.length < 3 ) {
+					console.err( 'tried to assign invalid color ' + col );
+					return;
+				}
+				return RGB( parsedNumbers[ 0 ], parsedNumbers[ 1 ], parsedNumbers[ 2 ] );
+			}
+		} else if( typeof col === 'object' ) {
+			return col;
+			/*//check keys in col object
+			let vars = Object.keys( col ).join( '' );
+			//test if string of keys contain 'rgb' or 'hsv'
+			let isRGB = vars.includes( r ) && vars.includes( g ) && vars.includes( b );
+			let isHSV = vars.includes( h ) && vars.includes( s ) && vars.includes( v );
+
+			if( vars.length == 0 || isRGB === isHSV ) {
+				console.err( 'could not parse color, invalid keys ' + vars + ' in passed color object' );
+				return null;
+			}
+
+			if( isRGB ) 		return col;
+			else if( isHSV )	return Color.HSVtoRGB( col );*/
+		}
+	}
 	/**
 	 * accepts parameters { r: x, g: y, b: z } OR r, g, b
 	 */
@@ -296,6 +320,9 @@ class TF_panel {
 		this.parent = parent;
 		this.options = options;
 
+		this.callbacks = [];
+
+		//parent dom element of TF panel
 		let panel = new Panel();
 
 		panel.dom.id = 'tf-panel';
@@ -304,6 +331,7 @@ class TF_panel {
 		panel.width = options.width || 800;
 		panel.height = options.height || 200;
 
+		//canvas for drawing background histogram
 		let canvas = document.createElement( 'canvas' );
 		canvas.width = panel.width;
 		canvas.height = panel.height;
@@ -311,6 +339,7 @@ class TF_panel {
 		this.panel.dom.appendChild( canvas );
 		this.canvas = canvas;
 
+		//underlying data
 		let data = this.parent.data;
 		if ( data !== this.data ) {
 			options.stats = { bins: this.canvas.width / 5 };
@@ -367,7 +396,9 @@ class TF_panel {
 		//add color picker
 		let cp_widget = new CP_widget();
 		this.panel.cp_widget = cp_widget;
-		/*document.addEventListener( 'mousedown', function() {
+
+		/*document.addEventListener( 'mouseup', function() {
+			console.log( 'clicked outside!' );
 			cp_widget.hide();
 		}, false );
 */
@@ -375,7 +406,27 @@ class TF_panel {
 	}
 
 	addWidget( options ) {
-		this.widgets.push( new TF_widget( this.panel, options ) );
+		let widget = new TF_widget( this.panel, options );
+		let self = this;
+		widget.registerCallback( this.fireChange.bind( self ) );
+		this.widgets.push( widget );
+	}
+
+	/**
+	 * attach a callback function to color object
+	 * owner is the element the function is contained in
+	 * callback is the actual callback function
+	 */
+	registerCallback( callback ) {
+		if ( this.callbacks.indexOf( callback ) < 0 ) {
+			this.callbacks.push( callback );
+		}
+	}
+
+	fireChange() {
+		for( let callback of this.callbacks ) {
+			callback();
+		}
 	}
 
 	//redraw the histogram
@@ -534,6 +585,40 @@ class TF_panel {
 			}
 		}
 	}
+
+	TFtoIMG() {
+			var img = document.createElement( 'img' );
+			let tfCanvas = document.createElement( 'canvas' );
+			tfCanvas.height = 30;
+			tfCanvas.width = 256;
+
+			let ctx = tfCanvas.getContext( '2d' );
+
+
+			for( let widget of this.widgets ) {
+				let gradient = ctx.createLinearGradient( 0, 0, tfCanvas.width, 0 );
+
+				let leftBorder = 1, rightBorder = 0;
+				for( let controlPoint of widget.controlPoints ) {
+					if( controlPoint.value < leftBorder ) leftBorder = controlPoint.value;
+					if( controlPoint.value > rightBorder ) rightBorder = controlPoint.value;
+				}
+				let width = rightBorder - leftBorder;
+
+				for( let controlPoint of widget.controlPoints ) {
+					let rgbColor = Color.parseColor( controlPoint.color );
+					let rgbaColorString = 'rgba( ' + rgbColor.r + ', ' + rgbColor.g + ', ' + rgbColor.b + ', ' + controlPoint.alpha + ')';
+					gradient.addColorStop( ( controlPoint.value - leftBorder ) / width, rgbaColorString );
+					console.log( 'color ' + rgbaColorString + ' at ' + ( controlPoint.value - leftBorder ) / width );
+				}
+
+				ctx.fillStyle = gradient;
+				ctx.fillRect( leftBorder * tfCanvas.width, 0, ( rightBorder - leftBorder ) * tfCanvas.width, tfCanvas.height )
+			}
+
+			img.src = tfCanvas.toDataURL();
+			return img;
+	}
 }
 
 /* TF-widget contains one range of two or more control points
@@ -546,6 +631,7 @@ class TF_panel {
 class TF_widget {
 	constructor( parent, options = {} ) {
 		this.parent = parent;
+
 		let canvas = document.createElement( 'canvas' );
 		this.canvas = canvas;
 		canvas.width = parent.width;
@@ -558,6 +644,8 @@ class TF_widget {
 		let location = options.location || 0.5;
 		let controlPoints = options.controlPoints || [];
 		this.controlPoints = controlPoints;
+
+		this.callbacks = [];
 
 		if( controlPoints.length === 0 ) {
 			//add default points
@@ -572,7 +660,7 @@ class TF_widget {
 		this.anchor = anchor;
 
 		let self = this;
-		let callback = this.drawWidget.bind( self );
+		let repaint = this.drawWidget.bind( self );
 		let moveFunction = moveAnchor.bind( self );
 		anchor.moveLock = 'N';
 
@@ -611,7 +699,7 @@ class TF_widget {
 				document.removeEventListener( 'mousemove', moveFunction, false );
 			}.bind( self ), true );
 
-			callback();
+			repaint();
 		}
 
 		//add mouse move event when mouse is pressed
@@ -621,6 +709,18 @@ class TF_widget {
 		}, true );
 
 		this.updateAnchor();
+	}
+
+	registerCallback( callback ) {
+		if ( this.callbacks.indexOf( callback ) < 0 ) {
+			this.callbacks.push( callback );
+		}
+	}
+
+	fireChange() {
+		for( let callback of this.callbacks ) {
+			callback();
+		}
 	}
 
 	addControlPoint( value, alpha, color ) {
@@ -665,7 +765,7 @@ class TF_widget {
 			e.preventDefault();
 			console.log( 'doubleclick!' );
 			parent.cp_widget.attachTo( handle, e.pageX, e.pageY );
-			parent.cp_widget.color.onChange( handle, function( col ) {
+			parent.cp_widget.color.registerCallback( handle, function( col ) {
 				let colHex = Color.RGBtoHEX( col.rgb );
 				handle.setColor( colHex )
 				controlPoint.color = colHex;
@@ -674,7 +774,7 @@ class TF_widget {
 			parent.cp_widget.color.set( controlPoint.color, handle );
 			parent.cp_widget.show();
 
-			document.addEventListener( 'mousemove', moveFunction, false );
+			document.removeEventListener( 'mousemove', moveFunction, false );
 		} );
 
 		controlPoint.handle = handle;
@@ -783,6 +883,9 @@ class TF_widget {
 		context.strokeStyle = '#aaa';
 		context.lineWidth = 2;
 		context.stroke();
+
+		this.fireChange();
+		//propagate change to callbacks
 	}
 }
 
@@ -929,7 +1032,7 @@ class CP_widget {
 			SVPickerCursor.style.top = cursorY + 'px';
 		};
 
-		color.onChange( SVPicker, SVPicker.update );
+		color.registerCallback( SVPicker, SVPicker.update );
 
 		return SVPicker;
 	}
@@ -992,7 +1095,7 @@ class CP_widget {
 			HPickerCursor.style.top = cursorY + 'px';
 		};
 
-		color.onChange( HPicker, HPicker.update );
+		color.registerCallback( HPicker, HPicker.update );
 		return HPicker;
 	}
 
@@ -1052,6 +1155,6 @@ class CP_widget {
 			inputs[ 2 ].value = rgb.b;
 		};
 
-		color.onChange( inputContainer, inputContainer.update );
+		color.registerCallback( inputContainer, inputContainer.update );
 	}
 }

@@ -114,10 +114,10 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
 
             sampleAlpha = sampleValue * alphaCorrection;
 
-            vec3 color = texture( transferColor, vec2( sampleValue, 0.9 ) ).rgb;
-            float alpha = texture( transferAlpha, vec2( sampleValue, 0.9 ) ).a * alphaCorrection;
+            vec4 color = texture( transferColor, vec2( sampleValue, 0.9 ) ).rgba;
+            float alpha = color/*texture( transferAlpha, vec2( sampleValue, 0.9 ) )*/.a * alphaCorrection;
 
-            accumulatedColor += ( 1. - accumulatedAlpha ) * color * alpha;
+            accumulatedColor += ( 1. - accumulatedAlpha ) * color.rgb * alpha;
 
             accumulatedAlpha += alpha;
         }
