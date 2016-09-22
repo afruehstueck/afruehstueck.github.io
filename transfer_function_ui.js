@@ -761,7 +761,7 @@ class TF_widget {
 			document.addEventListener( 'mousemove', moveFunction, false );
 		} );
 
-		handle.addEventListener( 'mouseup', function( e ) {
+		handle.addEventListener( 'dblclick', function( e ) {
 			e.preventDefault();
 			console.log( 'doubleclick!' );
 			parent.cp_widget.attachTo( handle, e.pageX, e.pageY );

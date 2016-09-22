@@ -92,13 +92,13 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
         prev = sdfSample;
 
         //do trilinear sampling (leave in this comment for trilinear polyfill)
-        float sdfSample = texture( distanceFieldTexture, position ).r;
+        /*float sdfSample = texture( distanceFieldTexture, position ).r;
 
-        if( sdfSample >= 0. /*sign( sdfSample ) != sign( prev )*/ ) {
+        if( sdfSample >= 0. *//*sign( sdfSample ) != sign( prev )*//* ) {
             //found isosurface, stop raycasting
             foundSurface = true;
             break;
-        }
+        }*/
 
         if( accumulatedAlpha < 1. ) {
             //if( position.x > 1. || position.y > 1. || position.z > 1. ) break;
@@ -125,16 +125,16 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
         position += deltaDirection;
         accumulatedLength += deltaLength;
 
-        if( /*accumulatedAlpha >= 1. ||*/ accumulatedLength >= rayLength ) {
+        if( accumulatedAlpha >= 1. || accumulatedLength >= rayLength ) {
             //ray is outside of box
             break;
         }
     }
 
-    if( foundSurface ) {
+    /*if( foundSurface ) {
          vec3 normal = texture( distanceFieldTexture, position ).gba;//calcNormal( distanceFieldTexture, position );
          accumulatedColor += normal * .5 + .5;
-    }
+    }*/
     clamp( accumulatedColor, 0., 1. );
     clamp( accumulatedAlpha, 0., 1. );
     return vec4( accumulatedColor, accumulatedAlpha );
