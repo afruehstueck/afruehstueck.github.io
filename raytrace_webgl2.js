@@ -722,6 +722,18 @@ for( let canvas of canvases ) {
 
         init( canvas );
     }
+
+	tf_panel = new TF_panel( canvas );
+	tf_panel.registerCallback( function() {
+		var delta = ( Date.now() - lastCalledTime ) / 1000;
+		if( delta < 0.1 ) return;
+
+		updateTF = true;
+
+		for( let canvas of canvases ) {
+			render.call( canvas );
+		};
+	});
 }
 
 function getSeedValue() {
@@ -968,17 +980,6 @@ function init( canvas ) {
         //updateRaytraceUniforms( programs[ 'raytrace' ] );
 
 		let lastCalledTime = Date.now();
-		tf_panel = new TF_panel( canvas );
-		tf_panel.registerCallback( function() {
-			var delta = ( Date.now() - lastCalledTime ) / 1000;
-			if( delta < 0.1 ) return;
-
-			updateTF = true;
-
-			for( let canvas of canvases ) {
-				render.call( canvas );
-			};
-		});
 		renderOnce.call( canvas );
 		//tf_panel.draw();
     } );
