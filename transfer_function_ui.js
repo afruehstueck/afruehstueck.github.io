@@ -342,7 +342,7 @@ class TF_panel {
 		//underlying data
 		let data = this.parent.data;
 		if ( data !== this.data ) {
-			options.stats = { bins: this.canvas.width / 5 };
+			options.stats = { numBins: this.canvas.width / 5 };
 			this.data = data;
 			this.statistics = this.calcStatistics();
 			this.histogram = this.statistics.histogram;
@@ -374,7 +374,7 @@ class TF_panel {
 		let self = this;
 		//show tooltips on hover over tf panel
 		svgContext.addEventListener( 'mousemove', function( e ) {
-			let binWidth = this.canvas.width / this.statistics.bins;
+			let binWidth = this.canvas.width / this.statistics.numBins;
 			let bin = Math.floor( e.pageX / binWidth );
 
 			let xHover = e.pageX;
@@ -397,11 +397,11 @@ class TF_panel {
 		let cp_widget = new CP_widget();
 		this.panel.cp_widget = cp_widget;
 
-		/*document.addEventListener( 'mouseup', function() {
+		document.addEventListener( 'mouseup', function() {
 			console.log( 'clicked outside!' );
 			cp_widget.hide();
 		}, false );
-*/
+
 		this.draw();
 	}
 
@@ -444,7 +444,7 @@ class TF_panel {
 	 * calculates the statistics for an array of data values necessary for displaying the histogram
 	 *
 	 * options.stats.*:
-	 * bins:		number
+	 * numBins:		number
 	 * range:		{ min: number, max: number }
 	 */
 	calcStatistics() {
@@ -452,7 +452,7 @@ class TF_panel {
 		let data = this.data;
 		let options = this.options.stats || {};
 
-		statistics.bins = options.bins || 250;
+		statistics.numBins = options.numBins || 250;
 
 		statistics.range = options.range;
 
@@ -474,18 +474,19 @@ class TF_panel {
 			statistics.range = { min: min, max: max };
 		}
 
-		let histogram = new Int32Array( statistics.bins );
-		let binScale = statistics.bins / ( statistics.range.max - statistics.range.min );
+		let histogram = new Int32Array( statistics.numBins );
+		let binScale = statistics.numBins / ( statistics.range.max - statistics.range.min );
 
-		for( let index = 0; index < data.length; index++ ) {
-			let bin = Math.floor( ( data[ index ] - statistics.range.min ) * binScale );
+		//for( let index = 0; index < data.length; index++ ) {
+		for (let value of data ) {
+			let bin = Math.floor( ( value - statistics.range.min ) * binScale );
 			histogram[ bin ] += 1;
 		}
 		statistics.histogram = histogram;
 
 		statistics.maxBin = 0;
 		statistics.maxBinValue = 0;
-		for ( let bin = 0; bin < statistics.bins; bin++ ) {
+		for ( let bin = 0; bin < statistics.numBins; bin++ ) {
 			if (statistics.histogram[ bin ] > statistics.maxBinValue ) {
 				statistics.maxBin = bin;
 				statistics.maxBinValue = statistics.histogram[ bin ];
@@ -519,7 +520,7 @@ class TF_panel {
 		context.fillRect( 0, 0, canvas.width, canvas.height );
 		context.fillStyle = options.fillColor || '#333';
 
-		let xScale = canvas.width / this.statistics.bins;
+		let xScale = canvas.width / this.statistics.numBins;
 
 		/* plots the histogram bins as a polygon that traces the centers of each bin */
 		let drawPolygonHistogram = function ( scale ) {
@@ -532,11 +533,11 @@ class TF_panel {
 			context.lineTo( 0, canvas.height - canvas.height * scale( this.statistics.histogram[ 0 ] ) / maxVal );
 
 			let x = xScale / 2;
-			for( let bin = 0; bin < this.statistics.bins; bin++ ) {
+			for( let bin = 0; bin < this.statistics.numBins; bin++ ) {
 				context.lineTo( x, canvas.height - canvas.height * scale( this.statistics.histogram[ bin ] ) / maxVal );
 				x += xScale;
 			}
-			context.lineTo( canvas.width, canvas.height - canvas.height * scale( this.statistics.histogram[ this.statistics.bins - 1 ] ) / maxVal );
+			context.lineTo( canvas.width, canvas.height - canvas.height * scale( this.statistics.histogram[ this.statistics.numBins - 1 ] ) / maxVal );
 			context.lineTo( canvas.width, canvas.height );
 			context.lineTo( 0, canvas.height );
 
@@ -554,7 +555,7 @@ class TF_panel {
 			let maxVal = scale( this.statistics.maxBinValue );
 			context.beginPath();
 
-			for( let bin = 0; bin < this.statistics.bins; bin++ ) {
+			for( let bin = 0; bin < this.statistics.numBins; bin++ ) {
 				context.moveTo( xScale * bin, canvas.height );
 				context.lineTo( xScale * bin, canvas.height - ( canvas.height * scale( this.statistics.histogram[ bin ] ) ) / maxVal );
 			}
@@ -594,7 +595,6 @@ class TF_panel {
 
 			let ctx = tfCanvas.getContext( '2d' );
 
-
 			for( let widget of this.widgets ) {
 				let gradient = ctx.createLinearGradient( 0, 0, tfCanvas.width, 0 );
 
@@ -609,7 +609,8 @@ class TF_panel {
 					let rgbColor = Color.parseColor( controlPoint.color );
 					let rgbaColorString = 'rgba( ' + rgbColor.r + ', ' + rgbColor.g + ', ' + rgbColor.b + ', ' + controlPoint.alpha + ')';
 					gradient.addColorStop( ( controlPoint.value - leftBorder ) / width, rgbaColorString );
-					console.log( 'color ' + rgbaColorString + ' at ' + ( controlPoint.value - leftBorder ) / width );
+
+					//console.log( 'color ' + rgbaColorString + ' at ' + ( controlPoint.value - leftBorder ) / width );
 				}
 
 				ctx.fillStyle = gradient;
@@ -763,7 +764,7 @@ class TF_widget {
 
 		handle.addEventListener( 'dblclick', function( e ) {
 			e.preventDefault();
-			console.log( 'doubleclick!' );
+			console.log( 'request colorpicker' );
 			parent.cp_widget.attachTo( handle, e.pageX, e.pageY );
 			parent.cp_widget.color.registerCallback( handle, function( col ) {
 				let colHex = Color.RGBtoHEX( col.rgb );
@@ -1015,7 +1016,7 @@ class CP_widget {
 		document.addEventListener( 'mouseup', function( e ) {
 			e.preventDefault();
 			document.removeEventListener( 'mousemove', pickSV );
-		} );
+		}, false );
 
 		SVPicker.update = function( color ) {
 			let hsv = color.getHSV();
@@ -1085,7 +1086,7 @@ class CP_widget {
 		document.addEventListener( 'mouseup', function( e ) {
 			e.preventDefault();
 			document.removeEventListener( 'mousemove', pickHue );
-		} );
+		}, false );
 
 		HPicker.update = function( color ) {
 			let hue = color.getHSV().h;

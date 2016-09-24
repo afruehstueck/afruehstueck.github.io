@@ -112,7 +112,7 @@ function resizeCanvas( canvas ) {
         camera.update();
     }
 
-    //animate();
+	requestRendering();
 }
 
 //adjust canvas dimensions and re-render on resize
@@ -682,6 +682,7 @@ let canvases = document.querySelectorAll( '.renderCanvas.webgl2' ); //.webgl2
 
 for( let canvas of canvases ) {
     canvas.active = true;
+	canvas.isRendering = false;
 
     // OpenGL context
     let glType = $( canvas ).data( 'gltype' );
@@ -722,18 +723,6 @@ for( let canvas of canvases ) {
 
         init( canvas );
     }
-
-	tf_panel = new TF_panel( canvas );
-	tf_panel.registerCallback( function() {
-		var delta = ( Date.now() - lastCalledTime ) / 1000;
-		if( delta < 0.1 ) return;
-
-		updateTF = true;
-
-		for( let canvas of canvases ) {
-			render.call( canvas );
-		};
-	});
 }
 
 function getSeedValue() {
@@ -980,6 +969,11 @@ function init( canvas ) {
         //updateRaytraceUniforms( programs[ 'raytrace' ] );
 
 		let lastCalledTime = Date.now();
+		tf_panel = new TF_panel( canvas );
+		tf_panel.registerCallback( function() {
+			updateTF = true;
+			requestRendering();
+		});
 		renderOnce.call( canvas );
 		//tf_panel.draw();
     } );
@@ -1057,11 +1051,15 @@ function update( skipRendering = false ) {
     if( !skipRendering ) render.call( this );
 }
 
-function animate() {
-	window.requestAnimationFrame( animate );
-
+function requestRendering() {
 	for( let canvas of canvases ) {
-		render.call( canvas );
+		if( canvas.isRendering ) {
+			console.log( 'skipping rendering' );
+			return;
+		}
+		canvas.isRendering = window.requestAnimationFrame( function() {
+			render.call( canvas );
+		} );
 	}
 	//stats.update();
 }
@@ -1078,6 +1076,7 @@ function render() {
     //raytrace volume
     renderRaytrace.call( this, this.programs[ 'raytrace' ], this.volumeFrameBuffer, this.frameBuffers[ iteration % 2 ], this.backfaceFrameBuffer, this.transferColor, this.transferAlpha );
 
+	this.isRendering = false;
     //render a texture to fullscreen (for debug purposes)
     //renderTextureToViewport.call( this, this.programs[ 'debug_texture' ], this.frameBuffers[ iteration % 2 ].texture );
     //renderTextureToViewport.call( this, this.programs[ 'debug_texture' ], this.backfaceFrameBuffer.texture );
