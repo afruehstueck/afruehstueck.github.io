@@ -19,6 +19,19 @@ class Panel {
 		document.body.appendChild( dom );
 		this.dom = dom;
 	}
+
+	toggle() {
+		this.dom.style.visibility = ( this.panel.dom.style.visibility === 'hidden' ) ? 'visible' : 'hidden';
+	}
+
+	hide() {
+		console.log( 'hide' );
+		this.dom.style.visibility = 'hidden';
+	}
+
+	show() {
+		this.dom.style.visibility = 'visible';
+	}
 }
 
 /**
@@ -395,12 +408,7 @@ class TF_panel {
 
 		//add color picker
 		let cp_widget = new CP_widget();
-		this.panel.cp_widget = cp_widget;
-
-		document.addEventListener( 'mouseup', function() {
-			console.log( 'clicked outside!' );
-			cp_widget.hide();
-		}, false );
+		panel.cp_widget = cp_widget;
 
 		this.draw();
 	}
@@ -587,34 +595,39 @@ class TF_panel {
 		}
 	}
 
+	getTF() {
+		/**
+		 * TODO
+		 */
+	}
+
 	TFtoIMG() {
 			var img = document.createElement( 'img' );
 			let tfCanvas = document.createElement( 'canvas' );
 			tfCanvas.height = 30;
 			tfCanvas.width = 256;
 
-			let ctx = tfCanvas.getContext( '2d' );
+			let context = tfCanvas.getContext( '2d' );
 
 			for( let widget of this.widgets ) {
-				let gradient = ctx.createLinearGradient( 0, 0, tfCanvas.width, 0 );
+				let start = 1, end = 0;
 
-				let leftBorder = 1, rightBorder = 0;
 				for( let controlPoint of widget.controlPoints ) {
-					if( controlPoint.value < leftBorder ) leftBorder = controlPoint.value;
-					if( controlPoint.value > rightBorder ) rightBorder = controlPoint.value;
+					if( controlPoint.value < start ) start = controlPoint.value;
+					if( controlPoint.value > end ) end = controlPoint.value;
 				}
-				let width = rightBorder - leftBorder;
+				let width = end - start;
+
+				let gradient = context.createLinearGradient( start * tfCanvas.width, 0, end * tfCanvas.width, 0 ); //horizontal gradient
 
 				for( let controlPoint of widget.controlPoints ) {
 					let rgbColor = Color.parseColor( controlPoint.color );
 					let rgbaColorString = 'rgba( ' + rgbColor.r + ', ' + rgbColor.g + ', ' + rgbColor.b + ', ' + controlPoint.alpha + ')';
-					gradient.addColorStop( ( controlPoint.value - leftBorder ) / width, rgbaColorString );
-
-					//console.log( 'color ' + rgbaColorString + ' at ' + ( controlPoint.value - leftBorder ) / width );
+					gradient.addColorStop( ( controlPoint.value - start ) / width, rgbaColorString );
 				}
 
-				ctx.fillStyle = gradient;
-				ctx.fillRect( leftBorder * tfCanvas.width, 0, ( rightBorder - leftBorder ) * tfCanvas.width, tfCanvas.height )
+				context.fillStyle = gradient;
+				context.fillRect( start * tfCanvas.width, 0, ( end - start ) * tfCanvas.width, tfCanvas.height )
 			}
 
 			img.src = tfCanvas.toDataURL();
@@ -667,7 +680,7 @@ class TF_widget {
 
 		/* moves anchor on mousemove while mouse down */
 		function moveAnchor( e ) {
-			e.preventDefault();
+			//e.preventDefault();
 			//restrict area of movement for control points
 			let mouseX = e.pageX,
 				mouseY = e.pageY;
@@ -692,22 +705,23 @@ class TF_widget {
 			for( let controlPoint of controlPoints ) {
 				this.updateControlPoint( controlPoint, controlPoint.handle.data.x - offsetX, controlPoint.handle.data.y - offsetY );
 			}
-
-			//remove mouse move event on mouseup
-			document.addEventListener( 'mouseup', function() {
-				this.anchor.moveLock = 'N';
-				parent.dom.classList.remove( 'drag' );
-				document.removeEventListener( 'mousemove', moveFunction, false );
-			}.bind( self ), true );
-
 			repaint();
 		}
 
+		function onMouseUp() {
+			this.anchor.moveLock = 'N';
+			parent.dom.classList.remove( 'drag' );
+			document.removeEventListener( 'mousemove', moveFunction );
+		}
+
+		function onMouseDown() {
+			document.addEventListener( 'mousemove', moveFunction );
+			//remove mouse move event on mouseup
+			document.addEventListener( 'mouseup', onMouseUp.bind( self ), { once: true } );
+		}
+
 		//add mouse move event when mouse is pressed
-		anchor.addEventListener( 'mousedown', function( e ) {
-			e.preventDefault();
-			document.addEventListener( 'mousemove', moveFunction, false );
-		}, true );
+		anchor.addEventListener( 'mousedown', onMouseDown );
 
 		this.updateAnchor();
 	}
@@ -747,20 +761,24 @@ class TF_widget {
 
 			this.updateControlPoint( controlPoint, e.pageX, e.pageY );
 
-			//remove mouse move event on mouseup
-			document.addEventListener( 'mouseup', function() {
-				document.removeEventListener( 'mousemove', moveFunction, false );
-			} );
-
 			//update widget through callback function
 			update();
 		}
 
-		//add mouse move event when mouse is pressed
-		handle.addEventListener( 'mousedown', function( e ) {
+		function onMouseUp() {
+			document.removeEventListener( 'mousemove', moveFunction );
+		}
+
+		function onMouseDown( e ) {
 			e.preventDefault();
-			document.addEventListener( 'mousemove', moveFunction, false );
-		} );
+			document.addEventListener( 'mousemove', moveFunction );
+
+			//remove mouse move event on mouseup
+			document.addEventListener( 'mouseup', onMouseUp, { once: true } );
+		}
+
+		//add mouse move event when mouse is pressed
+		handle.addEventListener( 'mousedown', onMouseDown );
 
 		handle.addEventListener( 'dblclick', function( e ) {
 			e.preventDefault();
@@ -773,9 +791,9 @@ class TF_widget {
 				repaint();
 			} );
 			parent.cp_widget.color.set( controlPoint.color, handle );
-			parent.cp_widget.show();
+			parent.cp_widget.panel.show();
 
-			document.removeEventListener( 'mousemove', moveFunction, false );
+			document.addEventListener( 'mousedown', parent.cp_widget.hidePanel, { once: true } );
 		} );
 
 		controlPoint.handle = handle;
@@ -784,16 +802,18 @@ class TF_widget {
 
 	updateControlPoint( controlPoint, x = null, y = null ) {
 		//update position of svg
+
 		if( x ) {
 			//restrict x coordinate to [ 0, width ]
-			x = Math.clamp( x, 0, this.parent.width );
+			//x = Math.clamp( x, 0, this.parent.width );
 			controlPoint.value = x / this.parent.width;
 		}
 		if( y ) {
 			//restrict y coordinate to [ 0, height ]
-			y = Math.clamp( y, 0, this.parent.height );
+			//y = Math.clamp( y, 0, this.parent.height );
 			controlPoint.alpha = 1.0 - ( y / this.parent.height );
 		}
+
 		controlPoint.handle.set( x, y );
 	}
 
@@ -856,25 +876,27 @@ class TF_widget {
 		let controlPoints = this.controlPoints;
 		let canvas = this.canvas;
 
-		let leftPoint = controlPoints[ 0 ].value;
-		let rightPoint = controlPoints[ controlPoints.length - 1 ].value;
+		let start = controlPoints[ 0 ].value;
+		let end = controlPoints[ controlPoints.length - 1 ].value;
 		let context = canvas.getContext( '2d' );
 
 		context.clearRect( 0, 0, canvas.width, canvas.height );
 		context.beginPath();
-		context.moveTo( leftPoint * canvas.width, canvas.height );
+		context.moveTo( start * canvas.width, canvas.height );
 
-		let widgetWidth = rightPoint - leftPoint;
-		var gradient = context.createLinearGradient( leftPoint * canvas.width, 0, rightPoint * canvas.width, 0 ); //horizontal gradient
+		let widgetWidth = end - start;
+		var gradient = context.createLinearGradient( start * canvas.width, 0, end * canvas.width, 0 ); //horizontal gradient
 
 		for( let controlPoint of controlPoints ) {
+			//draw line
 			context.lineTo( controlPoint.value * canvas.width, canvas.height - controlPoint.alpha * canvas.height );
-			let stopPos = ( controlPoint.value - leftPoint ) / widgetWidth;
+			//add gradient stop
+			let stopPos = ( controlPoint.value - start ) / widgetWidth;
 			gradient.addColorStop( stopPos, controlPoint.color );
 		}
 
-		context.lineTo( rightPoint * canvas.width, canvas.height );
-		context.lineTo( leftPoint * canvas.width, canvas.height );
+		context.lineTo( end * canvas.width, canvas.height );
+		context.lineTo( start * canvas.width, canvas.height );
 
 		context.closePath();
 
@@ -919,6 +941,7 @@ class CP_widget {
 
 		panel.dom.id = 'cp-panel';
 		panel.dom.classList.add( 'overlay', 'popup' );
+		this.hidePanel = panel.hide.bind( panel );
 		this.panel = panel;
 		panel.dom.style.width = options.svPicker.size + options.hPicker.width + options.hPicker.pad + 4 + 'px';
 
@@ -938,18 +961,6 @@ class CP_widget {
 
 		this.panel.dom.style.top = y + 'px';
 		this.panel.dom.style.left = x + 'px';
-	}
-
-	toggle() {
-		this.panel.dom.style.visibility = ( this.panel.dom.style.visibility === 'hidden' ) ? 'visible' : 'hidden';
-	}
-
-	hide() {
-		this.panel.dom.style.visibility = 'hidden';
-	}
-
-	show() {
-		this.panel.dom.style.visibility = 'visible';
 	}
 
 	createSVPicker( color, options ) {
@@ -1007,16 +1018,27 @@ class CP_widget {
 			SVPickerCursor.style.top = cursorY + 'px';
 		};
 
-		SVPicker.addEventListener( 'mousedown', function( e ) {
+		let cp_widget = this;
+
+		function onMouseUp() {
+			//remove mousemove function
+			document.removeEventListener( 'mousemove', pickSV );
+			//hide color picker on next click in document
+			document.addEventListener( 'mousedown', cp_widget.hidePanel, { once: true } );
+		}
+
+		function onMouseDown( e ) {
 			e.preventDefault();
 			pickSV( e );
+			//add mousemove function (while mouse is down)
 			document.addEventListener( 'mousemove', pickSV );
-		}, true );
+			//prevent panel from hiding while mouse is down
+			document.removeEventListener( 'mousedown', cp_widget.hidePanel );
 
-		document.addEventListener( 'mouseup', function( e ) {
-			e.preventDefault();
-			document.removeEventListener( 'mousemove', pickSV );
-		}, false );
+			document.addEventListener( 'mouseup', onMouseUp, { once: true } );
+		}
+
+		SVPicker.addEventListener( 'mousedown', onMouseDown );
 
 		SVPicker.update = function( color ) {
 			let hsv = color.getHSV();
@@ -1077,16 +1099,27 @@ class CP_widget {
 			HPickerCursor.style.top = cursorY + 'px';
 		};
 
-		HPicker.addEventListener( 'mousedown', function( e ) {
+
+		let cp_widget = this;
+
+		function onMouseUp() {
+			//remove mousemove function
+			document.removeEventListener( 'mousemove', pickHue );
+			//hide color picker on next click in document
+			document.addEventListener( 'mousedown', cp_widget.hidePanel, { once: true } );
+		}
+
+		function onMouseDown( e ) {
 			e.preventDefault();
 			pickHue( e );
+			//add mousemove function (while mouse is down)
 			document.addEventListener( 'mousemove', pickHue );
-		}, true );
+			//prevent panel from hiding while mouse is down
+			document.removeEventListener( 'mousedown', cp_widget.hidePanel );
 
-		document.addEventListener( 'mouseup', function( e ) {
-			e.preventDefault();
-			document.removeEventListener( 'mousemove', pickHue );
-		}, false );
+			document.addEventListener( 'mouseup', onMouseUp, { once: true } );
+		}
+		HPicker.addEventListener( 'mousedown', onMouseDown );
 
 		HPicker.update = function( color ) {
 			let hue = color.getHSV().h;
