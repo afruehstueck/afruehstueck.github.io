@@ -971,7 +971,6 @@ function init( canvas ) {
 		let lastCalledTime = Date.now();
 		tf_panel = new TF_panel( canvas );
 		tf_panel.registerCallback( function() {
-			updateTF = true;
 			requestRendering();
 		});
 		renderOnce.call( canvas );

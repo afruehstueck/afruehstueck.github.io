@@ -22,7 +22,6 @@ const float eps = 1e-9;
 uniform float sensitivity;
 uniform float alpha;
 
-
 uniform int channel;
 uniform vec4 mask[ 4 ];
 

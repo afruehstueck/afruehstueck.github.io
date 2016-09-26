@@ -288,11 +288,10 @@ function onMouseUpEvent( event ) {
     event.preventDefault();
     leftMouseDown = false;
     rightMouseDown = false;
-
-    // on mouseup, update all (other) canvases
+    /*// on mouseup, update all (other) canvases
     for( let canvas of canvases ) {
         render.call( canvas );
-    }
+    }*/
 }
 
 function onMouseMoveEvent( event ) {
@@ -321,6 +320,7 @@ function onMouseMoveEvent( event ) {
 
     camera.update();
 
+	requestRendering();
     //render.call( event.target );
 }
 
