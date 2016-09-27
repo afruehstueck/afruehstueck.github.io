@@ -9,6 +9,23 @@ var svgNS = 'http://www.w3.org/2000/svg';
  */
 Math.clamp = function( val, min, max ) { return Math.min( Math.max( min, val ), max ); };
 
+class UI {
+	static getRelativePosition( x, y, elem ) {
+		return {
+			x: x ? x - Math.floor( elem.getBoundingClientRect().left ) : null,
+			y: y ? y - Math.floor( elem.getBoundingClientRect().top ) : null
+		};
+	}
+
+	/**
+	 * interpolate between array elements in arrays a and b
+	 * t is percentage of a in interpolation
+	 */
+	static interpolate( a, b, t ) {
+		return a.map( ( _, i )  => a[ i ] * ( 1 - t ) + b[ i ] * t );// a * ( 1 - t ) + b * t;
+	}
+}
+
 /**
  * UI element - eventually replace with Steve's UI class
  */
@@ -53,6 +70,10 @@ class SVG {
 		this.setAttribute( 'fill', color );
 	}
 
+	static setLineColor( color ) {
+		this.setAttribute( 'stroke', color );
+	}
+
 	static createCircle( parent, cx, cy, fill = 'none', r = 7, stroke = '#aaa', strokeWidth = '2px' ) {
 		let circle = document.createElementNS( svgNS, 'circle' );
 
@@ -71,6 +92,7 @@ class SVG {
 
 		circle.set = this.set;
 		circle.setColor = this.setColor;
+		circle.setLineColor = this.setLineColor;
 
 		circle.parent = parent;
 		circle.parent.appendChild( circle );
@@ -96,10 +118,46 @@ class SVG {
 
 		rect.set = this.set;
 		rect.setColor = this.setColor;
+		rect.setLineColor = this.setLineColor;
 
 		rect.parent = parent;
 		rect.parent.appendChild( rect );
 		return rect;
+	}
+
+	static createPolyline( parent, points, width = 1, height = 1, attrX = 'x', attrY = 'y', fill = 'none', stroke = '#222', strokeWidth = '3px' ) {
+		let polyline = document.createElementNS( svgNS, 'polyline' );
+		polyline.setAttribute( 'class', 'line' );
+		if( points ) {
+			polyline.setAttribute( 'points', pointsToString( points, width, height ) );
+		}
+		polyline.setAttribute( 'fill', fill );
+		polyline.setAttribute( 'stroke', stroke );
+		polyline.setAttribute( 'stroke-width', strokeWidth );
+
+		polyline.data = {};
+		polyline.data.points = points;
+
+		function pointsToString( points ) {
+			let pointString = '';
+			for( let point of points ) {
+				pointString += point[ attrX ] * width + ',' + ( 1 - point[ attrY ] ) * height + ' ';
+			}
+			return pointString;
+		}
+
+		function setPoints( points ) {
+			this.setAttribute( 'points', pointsToString( points ) );
+			this.data.points = points;
+		}
+
+		polyline.setPoints = setPoints;
+		polyline.setColor = this.setColor;
+		polyline.setLineColor = this.setLineColor;
+
+		polyline.parent = parent;
+		polyline.parent.appendChild( polyline );
+		return polyline;
 	}
 }
 
@@ -248,8 +306,15 @@ class Color {
 	 */
 	static RGBtoHEX( r, g, b ) {
 		if ( arguments.length === 1 ) {
-			g = r.g, b = r.b, r = r.r;
+			g = r.g;
+			b = r.b;
+			r = r.r;
 		}
+		//round to nearest integers
+		r = Math.round( r );
+		g = Math.round( g );
+		b = Math.round( b );
+
 		let hex = '#' + ( ( 1 << 24 ) + ( r << 16 ) + ( g << 8 ) + b ).toString( 16 ).slice( 1 );
 		return hex;
 	}
@@ -330,6 +395,7 @@ class Color {
  */
 class TF_panel {
 	constructor( parent, options = {} ) {
+		let self = this;
 		this.parent = parent;
 		this.options = options;
 
@@ -351,6 +417,24 @@ class TF_panel {
 		canvas.id = 'histogram-canvas';
 		this.panel.dom.appendChild( canvas );
 		this.canvas = canvas;
+
+		let panelContextMenu = new ContextMenu();
+		let menuItems = [
+			{ name: 'Add widget', 	callback: function( e ) { self.addWidget( { location: e.clientX / panel.width } ); } }
+		];
+		panelContextMenu.addItems( menuItems );
+		this.panelContextMenu = panelContextMenu;
+
+		function showContextMenu( e ) {
+			self.panelContextMenu.showAt( e.clientX, e.clientY );
+
+			document.addEventListener( 'mousedown', self.panelContextMenu.hidePanel, { once: true } );
+
+			//disable default context menu
+			e.preventDefault();
+		}
+
+		panel.dom.addEventListener( 'contextmenu', showContextMenu );
 
 		//underlying data
 		let data = this.parent.data;
@@ -384,7 +468,6 @@ class TF_panel {
 		this.histogramTooltip.className = 'tooltip';
 		this.panel.dom.appendChild( this.histogramTooltip );
 
-		let self = this;
 		//show tooltips on hover over tf panel
 		svgContext.addEventListener( 'mousemove', function( e ) {
 			let binWidth = this.canvas.width / this.statistics.numBins;
@@ -417,7 +500,15 @@ class TF_panel {
 		let widget = new TF_widget( this.panel, options );
 		let self = this;
 		widget.registerCallback( this.fireChange.bind( self ) );
+		widget.destroyCallback = this.deleteWidget.bind( self );
 		this.widgets.push( widget );
+
+		this.draw();
+	}
+
+	deleteWidget( widget ) {
+		let index = this.widgets.findIndex( elem => elem === widget );
+		this.widgets.splice( index, 1 );
 
 		this.draw();
 	}
@@ -445,6 +536,7 @@ class TF_panel {
 			this.drawHistogram();
 			this.updateHistogram = false;
 		}
+
 		for( let widget of this.widgets ) {
 			widget.drawWidget();
 		}
@@ -647,6 +739,7 @@ class TF_panel {
 class TF_widget {
 	constructor( parent, options = {} ) {
 		this.parent = parent;
+		let self = this;
 
 		let canvas = document.createElement( 'canvas' );
 		this.canvas = canvas;
@@ -657,27 +750,86 @@ class TF_widget {
 		//insert canvases below UI svg context
 		parent.dom.insertBefore( canvas, parent.svgContext );
 
+		//create context menus for rightclick interaction
+		let widgetContextMenu = new ContextMenu();
+		let menuItems = [
+			{ name: 'Delete widget', 	callback: this.destructor.bind( self ) },
+			{ name: 'Duplicate widget',	callback: function( e ) { console.log( 'click b' ) } },
+			{ name: 'Bring to front',	callback: function( e ) { console.log( 'click b' ) } },
+			{ name: 'Send to back',		callback: function( e ) { console.log( 'click b' ) } },
+			{ name: 'Store as preset',	callback: function( e ) { console.log( 'click c' ) } },
+		];
+		widgetContextMenu.addItems( menuItems );
+		this.widgetContextMenu = widgetContextMenu;
+
+		/*let handleContextMenu = new ContextMenu();
+		let menuItems = [
+			{ name: 'Delete point', 	callback: function( e ) { console.log( 'click a' ) } }
+		];
+		handleContextMenu.addItems( menuItems );
+		this.widgetContextMenu = handleContextMenu;*/
+
 		let location = options.location || 0.5;
 		let controlPoints = options.controlPoints || [];
+		controlPoints.sortPoints = function() {
+			this.sort( ( a, b ) => ( a.value > b.value ) );
+		}
+		controlPoints.addPoint = function( point ) {
+			this.push( point );
+			this.sortPoints();
+		};
 		this.controlPoints = controlPoints;
 
 		this.callbacks = [];
+		this.createOutline();
 
 		if( controlPoints.length === 0 ) {
 			//add default points
-			this.addControlPoint( location + 0.0, 0.00, '#000000' );
-			this.addControlPoint( location + 0.1, 0.25, '#3333ff' );
-			this.addControlPoint( location + 0.2, 0.40, '#3366ff' );
-			this.addControlPoint( location + 0.3, 0.80, '#ffffff' );
+			this.addControlPoint( location - 0.15, 0.00, '#040312' );
+			this.addControlPoint( location - 0.05, 0.20, '#3e0067' );
+			this.addControlPoint( location + 0.05, 0.40, '#cc3e47' );
+			this.addControlPoint( location + 0.15, 0.60, '#f5fa8c' );
 		}
+
+		this.outline.setPoints( controlPoints );
+
+		this.createAnchor();
+	}
+
+	destructor() {
+		while( this.controlPoints.length > 0 ) {
+			let deletedPoint = this.controlPoints.pop();
+			this.parent.svgContext.removeChild( deletedPoint.handle );
+
+		}
+		this.parent.svgContext.removeChild( this.outline );
+		this.parent.svgContext.removeChild( this.anchor );
+		this.parent.dom.removeChild( this.canvas );
+		this.destroyCallback( this );
+	}
+
+	registerCallback( callback ) {
+		if ( this.callbacks.indexOf( callback ) < 0 ) {
+			this.callbacks.push( callback );
+		}
+	}
+
+	fireChange() {
+		for( let callback of this.callbacks ) {
+			callback();
+		}
+	}
+
+	createAnchor() {
+		let parent = this.parent;
 
 		let anchor = SVG.createRect( this.parent.svgContext, 0, 0 );
 		anchor.classList.add( 'handle' );
 		this.anchor = anchor;
 
 		let self = this;
-		let repaint = this.drawWidget.bind( self );
-		let moveFunction = moveAnchor.bind( self );
+		let drawWidgetBound = this.drawWidget.bind( self );
+		let moveAnchorBound = moveAnchor.bind( self );
 		anchor.moveLock = 'N';
 
 		/* moves anchor on mousemove while mouse down */
@@ -703,24 +855,39 @@ class TF_widget {
 			let setY = ( anchor.moveLock !== 'H' ) ? mouseY : null;
 
 			anchor.set( setX, setY );
-			
-			for( let controlPoint of controlPoints ) {
+
+			for( let controlPoint of this.controlPoints ) {
 				this.updateControlPoint( controlPoint, controlPoint.handle.data.x - offsetX, controlPoint.handle.data.y - offsetY );
 			}
-			repaint();
+			this.outline.setPoints( this.controlPoints );
+
+			drawWidgetBound();
 		}
 
 		function onMouseUp() {
 			this.anchor.moveLock = 'N';
 			parent.dom.classList.remove( 'drag' );
-			document.removeEventListener( 'mousemove', moveFunction );
+			document.removeEventListener( 'mousemove', moveAnchorBound );
 		}
 
-		function onMouseDown() {
-			document.addEventListener( 'mousemove', moveFunction );
-			//remove mouse move event on mouseup
+		function onMouseDown( e ) {
+			if ( e.which !== 1 ) { //left mouse button
+				return false;
+			}
+			document.addEventListener( 'mousemove', moveAnchorBound );
+			//remove mouse move event on mouseup (one-time event)
 			document.addEventListener( 'mouseup', onMouseUp.bind( self ), { once: true } );
 		}
+
+		function showContextMenu( e ) {
+			self.widgetContextMenu.showAt( e.clientX, e.clientY );
+
+			document.addEventListener( 'mousedown', self.widgetContextMenu.hidePanel, { once: true } );
+
+			//disable default context menu
+			e.preventDefault();
+		}
+		anchor.addEventListener( 'contextmenu', showContextMenu );
 
 		//add mouse move event when mouse is pressed
 		anchor.addEventListener( 'mousedown', onMouseDown );
@@ -728,19 +895,46 @@ class TF_widget {
 		this.updateAnchor();
 	}
 
-	registerCallback( callback ) {
-		if ( this.callbacks.indexOf( callback ) < 0 ) {
-			this.callbacks.push( callback );
+	createOutline() {
+		let parent = this.parent;
+		let outline = SVG.createPolyline( this.parent.svgContext, null, this.canvas.width, this.canvas.height, 'value', 'alpha', 'none', '#eee' );
+		outline.classList.add( 'handle' );
+		this.outline = outline;
+		let self = this;
+
+		function onMouseDown( e ) {
+			if ( !e.ctrlKey ) {
+				return;
+			}
+
+			let pos = UI.getRelativePosition( e.clientX, e.clientY, parent.dom );
+			//pos.y = this.parent.height - pos.y;
+
+			let value = pos.x / parent.width;
+			let alpha = 1.0 - ( pos.y / parent.height );
+
+			console.log( 'outline clicked at ' + value + ', ' + alpha );
+
+			let neighbors = self.findNeighborControlPoints( value );
+
+			let leftColor = Color.parseColor( neighbors.left.color ),
+				rightColor = Color.parseColor( neighbors.right.color );
+
+			let pct = ( value - neighbors.left.value ) / ( neighbors.right.value - neighbors.left.value );
+			let rgb = UI.interpolate( [ leftColor.r, leftColor.g, leftColor.b ], [ rightColor.r, rightColor.g, rightColor.b ], pct );
+
+			console.log( rgb[ 0 ] + ' ' + rgb[ 1 ] + ' ' + rgb[ 2 ] );
+			//let color = Color.RGBtoHEX( Color.HSVtoRGB( hsv[ 0 ], hsv[ 1 ], hsv[ 2 ] ) );
+			let color = Color.RGBtoHEX( rgb[ 0 ], rgb[ 1 ], rgb[ 2 ] );
+			console.log( 'left: ' + Color.RGBtoHEX( leftColor ) + ' right: ' + Color.RGBtoHEX( rightColor ) + '% :' + pct + ' col: ' + color );
+
+			self.addControlPoint( value, alpha, color );
 		}
+
+		outline.addEventListener( 'mousedown', onMouseDown );
 	}
 
-	fireChange() {
-		for( let callback of this.callbacks ) {
-			callback();
-		}
-	}
-
-	addControlPoint( value, alpha, color ) {
+	addControlPoint( value, alpha, color = '#000' ) {
 		let parent = this.parent;
 		let controlPoint = { value: value, alpha: alpha, color: color };
 
@@ -751,9 +945,9 @@ class TF_widget {
 			height = this.parent.height;
 
 		let self = this;
-		let update = this.updateWidget.bind( self );
-		let repaint = this.drawWidget.bind( self );
-		let moveFunction = moveHandle.bind( self );
+		let updateWidgetBound = this.updateWidget.bind( self );
+		let drawWidgetBound = this.drawWidget.bind( self );
+		let moveHandleBound = moveHandle.bind( self );
 
 		/* moves control point handles on mousemove while mouse down */
 		function moveHandle( e ) {
@@ -764,16 +958,21 @@ class TF_widget {
 			this.updateControlPoint( controlPoint, e.pageX, e.pageY );
 
 			//update widget through callback function
-			update();
+			updateWidgetBound();
 		}
 
 		function onMouseUp() {
-			document.removeEventListener( 'mousemove', moveFunction );
+			document.removeEventListener( 'mousemove', moveHandleBound );
 		}
 
 		function onMouseDown( e ) {
 			e.preventDefault();
-			document.addEventListener( 'mousemove', moveFunction );
+			if ( e.ctrlKey ) {
+				self.deleteControlPoint( controlPoint );
+				updateWidgetBound();
+			}
+
+			document.addEventListener( 'mousemove', moveHandleBound );
 			//remove mouse move event on mouseup
 			document.addEventListener( 'mouseup', onMouseUp, { once: true } );
 		}
@@ -784,12 +983,12 @@ class TF_widget {
 		handle.addEventListener( 'dblclick', function( e ) {
 			e.preventDefault();
 			console.log( 'request colorpicker' );
-			parent.cp_widget.attachTo( handle, e.pageX, e.pageY );
+			parent.cp_widget.showAt( e.pageX, e.pageY, handle );
 			parent.cp_widget.color.registerCallback( handle, function( col ) {
 				let colHex = Color.RGBtoHEX( col.rgb );
 				handle.setColor( colHex )
 				controlPoint.color = colHex;
-				repaint();
+				drawWidgetBound();
 			} );
 			parent.cp_widget.color.set( controlPoint.color, handle );
 			parent.cp_widget.panel.show();
@@ -798,12 +997,14 @@ class TF_widget {
 		} );
 
 		controlPoint.handle = handle;
-		this.controlPoints.push( controlPoint );
+		this.controlPoints.addPoint( controlPoint );
 	}
 
 	updateControlPoint( controlPoint, x = null, y = null ) {
+		if( typeof controlPoint !== 'object' ) {
+			controlPoint = this.findControlPoint( controlPoint );
+		}
 		//update position of svg
-
 		if( x ) {
 			//restrict x coordinate to [ 0, width ]
 			//x = Math.clamp( x, 0, this.parent.width );
@@ -818,16 +1019,39 @@ class TF_widget {
 		controlPoint.handle.set( x, y );
 	}
 
-	deleteControlPoint( value ) {
+	findControlPoint( value, remove = false ) {
 		let index = this.controlPoints.findIndex( point => point.value === value );
-
-		if( index > -1 ) {
-			this.parent.svgContext.removeChild( this.controlPoints[ index ].handle );
-			this.controlPoints.splice( index, 1 );
+		if ( index < 0 ) {
+			return null;
 		}
-
+		if( remove ) {
+			this.controlPoints.splice( index, 1 );
+			return null;
+		} else {
+			return this.controlPoints[ index ];
+		}
 	}
 
+	deleteControlPoint( controlPoint ) {
+		this.parent.svgContext.removeChild( controlPoint.handle );
+
+		this.findControlPoint( controlPoint.value, true );
+	}
+
+	/**
+	 * find the two controlPoints that the value lies inbetween
+	 */
+	findNeighborControlPoints( value ) {
+		let right = {}, left = {};
+		for( let controlPoint of this.controlPoints ) {
+			right = controlPoint;
+			if( controlPoint.value > value ) {
+				break;
+			}
+			left = right;
+		}
+		return { left: left, right: right };
+	}
 	/**
 	 * find position of anchor point under TF_widget curve and move anchor handle to appropriate position
 	 */
@@ -840,14 +1064,9 @@ class TF_widget {
 		let anchorValue = startValue + ( endValue - startValue ) / 2;
 
 		//find two controlPoints that anchor lies underneath
-		let right = {}, left = {};
-		for( let controlPoint of controlPoints ) {
-			right = controlPoint;
-			if( controlPoint.value > anchorValue ) {
-				break;
-			}
-			left = right;
-		}
+		let neighbors = this.findNeighborControlPoints( anchorValue ),
+			left = neighbors.left,
+			right = neighbors.right;
 
 		let anchorAlpha = ( left.alpha + ( right.alpha - left.alpha ) * ( anchorValue - left.value ) / ( right.value - left.value ) ) / 2;
 		let w = this.anchor.data.width,
@@ -860,9 +1079,9 @@ class TF_widget {
 	updateWidget() {
 		//sort controlPoints by ascending value
 		let controlPoints = this.controlPoints;
+		controlPoints.sortPoints();
 
-		controlPoints.sort( ( a, b ) => ( a.value > b.value ) );
-
+		this.outline.setPoints( controlPoints );
 		//redraw
 		this.drawWidget();
 		
@@ -904,8 +1123,8 @@ class TF_widget {
 		context.fillStyle = gradient;
 		context.fill();
 
-		context.strokeStyle = '#aaa';
-		context.lineWidth = 2;
+		context.strokeStyle = '#000';
+		context.lineWidth = 0;//2;
 		context.stroke();
 
 		this.fireChange();
@@ -942,7 +1161,9 @@ class CP_widget {
 
 		panel.dom.id = 'cp-panel';
 		panel.dom.classList.add( 'overlay', 'popup' );
-		this.hidePanel = panel.hide.bind( panel );
+
+		this.hidePanel = this.hide.bind( this );
+
 		this.panel = panel;
 		panel.dom.style.width = options.svPicker.size + options.hPicker.width + options.hPicker.pad + 4 + 'px';
 
@@ -953,12 +1174,16 @@ class CP_widget {
 		this.SVPicker.style.backgroundColor = "#FF0000";
 	}
 
-	attachTo( parent, x, y ) {
-		//todo refactor this
+	hide() {
+		this.panel.hide();
+
 		if( this.parent ) { //remove previous parent
 			this.color.removeCallback( this.parent );
 		}
-		this.parent = parent;
+	}
+
+	showAt( x, y, parent = null ) {
+		if( parent ) this.parent = parent;
 
 		this.panel.dom.style.top = y + 'px';
 		this.panel.dom.style.left = x + 'px';
@@ -1001,19 +1226,18 @@ class CP_widget {
 		let pickSV = function( e ) {
 			e.preventDefault();
 
-			let xPos = e.clientX - Math.floor( SVPicker.getBoundingClientRect().left );
-			let yPos = e.clientY - Math.floor( SVPicker.getBoundingClientRect().top );
+			let pos = UI.getRelativePosition( e.clientX, e.clientY, SVPicker );
 
-			xPos = Math.clamp( xPos, 0, SVPicker.width );
-			yPos = Math.clamp( yPos, 0, SVPicker.height );
+			pos.x = Math.clamp( pos.x, 0, SVPicker.width );
+			pos.y = Math.clamp( pos.y, 0, SVPicker.height );
 
-			let saturation = xPos / SVPicker.width;
-			let value = 1 - ( yPos / SVPicker.height );
+			let saturation = pos.x / SVPicker.width;
+			let value = 1 - ( pos.y / SVPicker.height );
 
 			color.set( { s: saturation, v: value }, SVPicker );
 
-			let cursorX = xPos - options.cursorRadius;
-			let cursorY = yPos - options.cursorRadius;
+			let cursorX = pos.x - options.cursorRadius;
+			let cursorY = pos.y - options.cursorRadius;
 
 			SVPickerCursor.style.left = cursorX + 'px';
 			SVPickerCursor.style.top = cursorY + 'px';
@@ -1090,13 +1314,15 @@ class CP_widget {
 		let pickHue = function( e ) {
 			e.preventDefault();
 
-			let yPos = Math.round( e.clientY - HPicker.getBoundingClientRect().top );
-			yPos = Math.clamp( yPos, 0, HPicker.height );
+			let pos = UI.getRelativePosition( null, e.clientY, HPicker );
 
-			let hue = 1 - ( yPos / HPicker.height );
+			//pos.y = Math.round( e.clientY - HPicker.getBoundingClientRect().top );
+			pos.y = Math.clamp( pos.y, 0, HPicker.height );
+
+			let hue = 1 - ( pos.y / HPicker.height );
 			color.set( { h: hue }, HPicker );
 
-			let cursorY = yPos - ( HPickerCursor.height / 2 );
+			let cursorY = pos.y - ( HPickerCursor.height / 2 );
 			HPickerCursor.style.top = cursorY + 'px';
 		};
 
@@ -1179,7 +1405,8 @@ class CP_widget {
 			input.style = inputStyle;
 			if( num < inputs.length - 1 ) input.style.marginRight = '3px';
 			inputContainer.appendChild( input );
-			input.addEventListener('input', inputEvent);
+			input.addEventListener( 'mousedown', function( e ) { e.stopPropagation(); } );
+			input.addEventListener( 'input', inputEvent );
 			inputs[ num ] = input;
 		}
 
@@ -1191,5 +1418,84 @@ class CP_widget {
 		};
 
 		color.registerCallback( inputContainer, inputContainer.update );
+	}
+}
+
+class ContextMenu {
+	constructor( options = {} ) {
+		let panel = new Panel();
+		panel.dom.classList.add( 'menu', 'popup' );
+
+		let itemsContainer = document.createElement( 'ul' );
+		panel.dom.appendChild( itemsContainer );
+		this.itemsContainer = itemsContainer;
+
+		this.folders = new Map();
+
+		this.panel = panel;
+		this.hidePanel = this.hide.bind( this );
+
+		this.caller = null;
+	}
+
+	addItems( items ) {
+		for( let item of items ) {
+			this.addItem( item.name, item.callback, item.folderName );
+		}
+	}
+
+	addItem( name, callback, folderName = null ) {
+		let item = document.createElement( 'li' );
+		item.id = name;
+		item.onmousedown = function( e ) { e.preventDefault(); callback( e ); };
+
+		let link = document.createElement( 'a' );
+		link.href = '#';
+		link.target = '_self';
+
+		link.innerHTML = name;
+
+		item.appendChild( link );
+		let parent = this.itemsContainer;
+
+		if( folderName ) {
+			let folder = this.folders.get( folderName );
+			if( folder ) parent = folder;
+		}
+		parent.appendChild( item );
+	}
+
+	addFolder( name ) {
+		let folder = document.createElement( 'li' );
+		folder.id = name;
+		folder.class = 'hasSubMenu';
+
+		let link = document.createElement( 'a' );
+		link.href = '#';
+		link.target = '_self';
+		link.innerHTML = name;
+		folder.appendChild( link );
+
+		let itemsSubContainer = document.createElement( 'ul' );
+		itemsSubContainer.class = 'submenu';
+		itemsSubContainer.id = name + 'SubMenu';
+		folder.appendChild( itemsSubContainer );
+		//<ul class="subMenu" id="colorSubMenu">
+
+		this.itemsContainer.appendChild( folder );
+		this.folders.set( name, itemsSubContainer );
+	}
+
+	showAt( x, y, caller = null ) {
+		this.panel.dom.style.top = y + 'px';
+		this.panel.dom.style.left = x + 'px';
+
+		this.panel.show();
+		this.caller = null;
+	}
+
+	hide() {
+		this.panel.hide();
+		this.caller = null;
 	}
 }

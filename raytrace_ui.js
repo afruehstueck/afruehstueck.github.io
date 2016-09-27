@@ -241,8 +241,6 @@ tf_pos_control3.onFinishChange( refresh );
 var leftMouseDown = false;
 var rightMouseDown = false;
 
-let deltaTime,
-    lastCalledTime = Date.now();
 let mousePos,
     prevMousePos;
 
@@ -258,7 +256,6 @@ for( let canvas of canvases ) {
     canvas.oncontextmenu  = function( event ) {
         return false;
     };
-
 }
 
 // converts global mouse coordinates to canvas-specific coordinates
@@ -288,10 +285,6 @@ function onMouseUpEvent( event ) {
     event.preventDefault();
     leftMouseDown = false;
     rightMouseDown = false;
-    /*// on mouseup, update all (other) canvases
-    for( let canvas of canvases ) {
-        render.call( canvas );
-    }*/
 }
 
 function onMouseMoveEvent( event ) {
@@ -312,21 +305,12 @@ function onMouseMoveEvent( event ) {
 
     prevMousePos = mousePos;
 
-    deltaTime = ( Date.now() - lastCalledTime ) / 1000;
-
-    if( deltaTime < 0.01 ) return;
-
-    lastCalledTime = Date.now();
-
     camera.update();
-
 	requestRendering();
-    //render.call( event.target );
 }
 
 function onKeyPressEvent( event ) {
     updating = true;
-    //nextIteration.call( event.target );
 }
 
 function onKeyReleaseEvent( event ) {

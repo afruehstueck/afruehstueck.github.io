@@ -13,9 +13,7 @@ uniform sampler2D tiledTexture;
 uniform vec2 tiles;
 uniform float layer;
 
-//const float factor = 2.;
 const float MAX_DOWNSAMPLE = 8.;
-//uniform vec3 downsample;
 uniform vec3 volumeDimensions;
 uniform vec3 datasetDimensions;
 
@@ -27,7 +25,6 @@ vec4 sampleAs3DTexture( sampler2D volume, vec2 texCoord ) {
     vec3 downsample = datasetDimensions / volumeDimensions; //e.g. { 1., 1., 2. }
     float x_step = 1. / datasetDimensions.x;
     float y_step = 1. / datasetDimensions.y;
-    //vec3 multiplier = downsample;
 
     float accumulate = 0.;
     for( float z_offset = 0.; z_offset < MAX_DOWNSAMPLE; z_offset++ ) {

@@ -822,10 +822,10 @@ function init( canvas ) {
 
 			canvas.sourceImage = sourceImage;
 
-			var tmpCanvas = document.createElement( 'canvas' );
-			tmpCanvas.width = sourceImage.width;
-			tmpCanvas.height = sourceImage.height;
-			var tmpContext = tmpCanvas.getContext( '2d' ); // Get canvas 2d context
+			var dataCanvas = document.createElement( 'canvas' );
+			dataCanvas.width = sourceImage.width;
+			dataCanvas.height = sourceImage.height;
+			var tmpContext = dataCanvas.getContext( '2d' ); // Get canvas 2d context
 			tmpContext.drawImage( sourceImage, 0, 0 ); // Draw the texture
 			canvas.data = tmpContext.getImageData( 0, 0, sourceImage.width, sourceImage.height ).data;
 
@@ -968,13 +968,11 @@ function init( canvas ) {
         gl.enableVertexAttribArray( canvas.programs[ 'raytrace' ].texCoord );
         //updateRaytraceUniforms( programs[ 'raytrace' ] );
 
-		let lastCalledTime = Date.now();
 		tf_panel = new TF_panel( canvas );
 		tf_panel.registerCallback( function() {
 			requestRendering();
 		});
 		renderOnce.call( canvas );
-		//tf_panel.draw();
     } );
 }
 
@@ -1053,8 +1051,8 @@ function update( skipRendering = false ) {
 function requestRendering() {
 	for( let canvas of canvases ) {
 		if( canvas.isRendering ) {
-			console.log( 'skipping rendering' );
-			return;
+			//console.log( 'skipping rendering' );
+			continue;
 		}
 		canvas.isRendering = window.requestAnimationFrame( function() {
 			render.call( canvas );
@@ -1252,8 +1250,6 @@ function updateRaytraceUniforms( program ) {
     gl.uniform3f( program.volumeDimensions, width, height, slices.x * slices.y );
     gl.uniform3f( program.seedOrigin, seedOrigin[ 0 ], seedOrigin[ 1 ], seedOrigin[ 2 ] );
 }*/
-
-
 
 //Render a 3D box using current program
 function renderCube( program ) {

@@ -62,12 +62,6 @@ vec3 calcNormal( sampler3D volume, vec3 pos ) {
                     offset4 * textureWithOffset( distanceFieldTexture, pos, offset4 ) );
 }
 
-//returns -1.0 if x < 0, and 1.0 if x >= 0
-float signGreaterEqualZero( float x )
-{
-    return step( 0., x ) * 2. - 1.;
-}
-
 vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
     vec3 accumulatedColor = vec3( 0.0 );
     float accumulatedAlpha = 0.0;

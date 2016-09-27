@@ -38,7 +38,7 @@ void main() {
     //gl_FragColor.rgb = vec3( texture2D( texture, textureCoordinate ).a );
     gl_FragColor.a = 1.;*/
 
-    float value = texture( tex, textureCoordinate ).r;
-    color = vec4( vec3( ( value + 1. ) / 2. ), 1. );
-    //color = sampleAs3DTexture( tex, textureCoordinate );
+    /*float value = texture( tex, textureCoordinate ).r;
+    color = vec4( vec3( ( value + 1. ) / 2. ), 1. );*/
+    color = texture( tex, textureCoordinate );
 }

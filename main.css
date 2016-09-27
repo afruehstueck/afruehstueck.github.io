@@ -120,21 +120,86 @@ a:link {
     color: #fff;
     text-align: left;
     padding: 6px;
-    margin: 5px;
-    border-radius: 5px;
+    margin: 6px;
+    border-radius: 6px;
     position: absolute;
     z-index: 10;
 }
 
+.menu {
+    padding: 6px 0px;
+}
+
+.menu ul {
+    list-style: none;
+    top: 0;
+    left: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.menu li a {
+    font-size: 11px;
+    position: relative;
+    min-width: 60px;
+    display: inline-block;
+    margin: 6px 12px;
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.menu li:hover {
+    background: #444;
+    color: #fff;
+    /*border-radius: 6px;*/
+}
+
+.menu li ul li {
+    display: none;
+}
+
+.menu li:hover ul li {
+    display: block;
+    margin-left: 0px; margin-top: 0px;
+}
+
+/*
+.menu li+li:before {
+    content: '';
+    background: #444;
+    display: block;
+    margin: 0 auto;
+    width: 86%;
+    height: 1px;
+}
+*/
+
+.menu ul+li:before {
+    content: '';
+    background: #444;
+    display: block;
+    margin: 0 auto;
+    width: 86%;
+    height: 1px;
+}
+
+.menu li ul li a {
+    padding-left: 10px;
+}
+
 #tf-panel .handle {
+    opacity: 0.7;
     cursor: pointer;
     -webkit-user-select: none;
 }
 
 #tf-panel .handle:hover {
-    opacity: 0.7;
-    stroke: 'red';
-    stroke-width: '3px';
+    opacity: 1;
+}
+
+.addCursor:hover {
+    cursor: pointer;
 }
 
 #tf-panel .drag {
