@@ -2,7 +2,6 @@
  * @author afruehstueck
  */
 
-var svgNS = 'http://www.w3.org/2000/svg';
 
 /**
  * add convenience function to Math for restricting range of a value
@@ -22,7 +21,7 @@ class UI {
 	 * t is percentage of a in interpolation
 	 */
 	static interpolate( a, b, t ) {
-		return a.map( ( _, i )  => a[ i ] * ( 1 - t ) + b[ i ] * t );// a * ( 1 - t ) + b * t;
+		return a.map( ( _, i )  => a[ i ] * ( 1 - t ) + b[ i ] * t );
 	}
 }
 
@@ -55,6 +54,7 @@ class Panel {
  * helper class for creating SVG elements
  */
 class SVG {
+
 	static set( x, y ) {
 		if( x ) {
 			this.setAttribute( ( this.tagName === 'circle' ) ? 'cx' : 'x', x );
@@ -75,7 +75,7 @@ class SVG {
 	}
 
 	static createCircle( parent, cx, cy, fill = 'none', r = 7, stroke = '#aaa', strokeWidth = '2px' ) {
-		let circle = document.createElementNS( svgNS, 'circle' );
+		let circle = document.createElementNS( SVG.svgNS, 'circle' );
 
 		circle.setAttribute( 'class', 'circle' );
 		circle.setAttribute( 'cx', cx );
@@ -100,7 +100,7 @@ class SVG {
 	}
 
 	static createRect( parent, x, y, fill = 'black', w = 12, h = 12, stroke = '#aaa', strokeWidth = '3px' ) {
-		let rect = document.createElementNS( svgNS, 'rect' );
+		let rect = document.createElementNS( SVG.svgNS, 'rect' );
 		rect.setAttribute( 'class', 'rect' );
 		rect.setAttribute( 'x', x );
 		rect.setAttribute( 'y', y );
@@ -125,11 +125,16 @@ class SVG {
 		return rect;
 	}
 
-	static createPolyline( parent, points, width = 1, height = 1, attrX = 'x', attrY = 'y', fill = 'none', stroke = '#222', strokeWidth = '3px' ) {
-		let polyline = document.createElementNS( svgNS, 'polyline' );
+	/*
+	 * accepts an array of point objects where attrX and and attrY denotes the key to the x and y components within the point object
+	 * (e.g. points = [ { value: 0.6, alpha: 0.2 }, { value: 0.9, alpha: 0.5 } ] where attrX = 'value' and attrY = 'alpha'
+	 * width and height allow the point values to be scaled to the range of the parent element
+	 */
+	static createPolyline( parent, points, scaleWidth = 1, scaleHeight = 1, attrX = 'x', attrY = 'y', invertY = true, fill = 'none', stroke = '#eee', strokeWidth = '3px' ) {
+		let polyline = document.createElementNS( SVG.svgNS, 'polyline' );
 		polyline.setAttribute( 'class', 'line' );
 		if( points ) {
-			polyline.setAttribute( 'points', pointsToString( points, width, height ) );
+			polyline.setAttribute( 'points', pointsToString( points, scaleWidth, scaleHeight ) );
 		}
 		polyline.setAttribute( 'fill', fill );
 		polyline.setAttribute( 'stroke', stroke );
@@ -141,7 +146,7 @@ class SVG {
 		function pointsToString( points ) {
 			let pointString = '';
 			for( let point of points ) {
-				pointString += point[ attrX ] * width + ',' + ( 1 - point[ attrY ] ) * height + ' ';
+				pointString += point[ attrX ] * scaleWidth + ',' + ( invertY ? ( 1 - point[ attrY ] ) : point[ attrY ] ) * scaleHeight + ' ';
 			}
 			return pointString;
 		}
@@ -159,8 +164,39 @@ class SVG {
 		polyline.parent.appendChild( polyline );
 		return polyline;
 	}
+
+
+	static createLine( parent, points, scaleWidth = 1, scaleHeight = 1, invertY = true, stroke = '#eee', strokeWidth = '3px' ) {
+		let line = document.createElementNS( SVG.svgNS, 'line' );
+		line.setAttribute( 'class', 'line' );
+		if( points ) {
+			line.setPoints( points );
+		}
+		line.setAttribute( 'stroke', stroke );
+		line.setAttribute( 'stroke-width', strokeWidth );
+
+		line.data = {};
+		line.data.points = [];
+		
+		function setPoints( points ) {
+			this.setAttribute( 'x1', String( points[ 0 ].x * scaleWidth ) );
+			this.setAttribute( 'y1', String( ( invertY ? ( 1 - points[ 0 ].y ) : points[ 0 ].y ) * scaleHeight ) );
+			this.setAttribute( 'x2', String( points[ 1 ].x * scaleWidth ) );
+			this.setAttribute( 'y2', String( ( invertY ? ( 1 - points[ 1 ].y ) : points[ 1 ].y ) * scaleHeight ) );
+			this.data.points = points;
+		}
+
+		line.setPoints = setPoints;
+		line.setColor = this.setColor;
+		line.setLineColor = this.setLineColor;
+
+		line.parent = parent;
+		line.parent.appendChild( line );
+		return line;
+	}
 }
 
+SVG.svgNS = 'http://www.w3.org/2000/svg';
 /**
  * Color operates in two color spaces: HSV and RGB
  * HSV colors are in a { hue ∈ [ 0, 1 ], saturation ∈ [ 0, 1 ], value ∈ [ 0, 1 ] } domain
@@ -315,8 +351,7 @@ class Color {
 		g = Math.round( g );
 		b = Math.round( b );
 
-		let hex = '#' + ( ( 1 << 24 ) + ( r << 16 ) + ( g << 8 ) + b ).toString( 16 ).slice( 1 );
-		return hex;
+		return '#' + ( ( 1 << 24 ) + ( r << 16 ) + ( g << 8 ) + b ).toString( 16 ).slice( 1 );
 	}
 	/**
 	 * convert HEX color to RGB
@@ -389,15 +424,113 @@ class Color {
 /**
  * TF_panel is the base class for the transfer function panel
  * contains the container DIV (panel), the histogram canvas, one or multiple TF_widgets, the SVG context for UI elements
- * options.*:
- * width:			number
- * height: 			number
  */
 class TF_panel {
+	parseOptions( options ) {
+		if( typeof options === 'string' ) {
+			options = JSON.parse( options );
+		}
+		/** panel appearance options
+		 * width:			number 				width of histogram panel
+		 * height: 			number
+		 */
+		options.panel = options.panel || {};
+		options.panel.width = options.panel.width || 750;
+		options.panel.height = options.panel.height || 150;
+
+		/** histogram calculation options
+		 * numBins:			number				denotes the number of bins for the histogram calculation
+		 */
+		options.statistics = options.statistics || {};
+		options.statistics.numBins = options.statistics.numBins || ( options.panel.width / 5 );
+
+		/** histogram style options
+		 * backgroundColor:	color				background color for the histogram background
+		 * fillColor:		color				fill color for the histogram drawing
+		 * lineColor:		color				line color for the histogram drawing
+		 * style:			'polygon' or 'bars'	whether the histogram should be plotted as a polyline or vertical rectangular bars
+		 * scale:			function			(mathematical) function by which the histogram values should be scaled (e.g. logarithmic, ...)
+		 * overlayUnscaled:	boolean				whether the histogram (scaled by the 'scale' function should be overlayed with an unscaled version
+		 */
+		options.histogram = options.histogram || {};
+		options.histogram.backgroundColor = options.histogram.backgroundColor || '#000000';
+		options.histogram.fillColor = options.histogram.fillColor || '#333333';
+		options.histogram.lineColor = options.histogram.lineColor || '#666666';
+		options.histogram.style = options.histogram.style || 'polygon';
+		options.histogram.scale = options.histogram.scale || Math.log;
+		if( options.histogram.overlayUnscaled === undefined ) options.histogram.overlayUnscaled = true;
+
+		/** gradient preset options
+		 * defaultPresets:	boolean			specifies whether the default presets should be loaded and appended to the custom presets. If presets is empty, default presets will be loaded anyway
+		 * presets:			array 			array of { name, colorArray } objects describing gradient presets. format: [ { name: string, colors: array[ colors ] } ]
+		 */
+		// preset example: [ { name: 'testGradientA', colors: [ '#123456', '#de24f1', '#9933ff' ] }, { name: 'testGradientB', colors: [ '#123456', '#654132', '#fffaa1', '#d32f1e', '#f451ae' ] } ] };
+		let defaultPresets = [
+			{ name: 'Magma',		colors: [ '#000004', '#3b0f70', '#8c2981', '#de4968', '#fea16e', '#fcfdbf' ] },
+			{ name: 'Inferno',		colors: [ '#000004', '#420a68', '#932667', '#dd513a', '#fbbc21', '#fcffa4' ] },
+			{ name: 'Plasma',		colors: [ '#0d0887', '#6a00a8', '#b12a90', '#e16462', '#fca835', '#f0f921' ] },
+			{ name: 'Viridis',		colors: [ '#440154', '#414487', '#2a788e', '#22a884', '#7cd250', '#fde725' ] },
+			{ name: 'Greyscale',	colors: [ '#000000', '#888888', '#ffffff' ] }
+		];
+		options.gradientPresets = options.gradientPresets || {};
+		if( options.gradientPresets.defaultPresets === undefined ) options.gradientPresets.defaultPresets = true;
+		options.gradientPresets.presets = options.gradientPresets.presets || [];
+		if( options.gradientPresets.defaultPresets || options.gradientPresets.presets.length === 0 ) {
+			options.gradientPresets.presets = options.gradientPresets.presets.concat( defaultPresets );
+		}
+
+		/** array of widget options:
+		 * location:		number
+		 * controlPoints:	array of { value: number, alpha: number, color: color }
+		 * opacity:			number
+		 * colors:			array of color values
+		 */
+		options.widgets = options.widgets || [];
+		for( let index = 0; index < options.widgets.length; index++ ) {
+			options.widgets[ index ] = options.widgets[ index ] || {};
+			options.widgets[ index ].location = options.widgets[ index ].location || 0.5;
+			options.widgets[ index ].controlPoints = options.widgets[ index ].controlPoints || [];
+			options.widgets[ index ].opacity = options.widgets[ index ].opacity || 0.6;
+		}
+
+		/** colorpicker options
+		 * options.svPicker.*:			saturation/value pickerrectangle
+		 * size:			number		size of rectangle
+		 * cursorRadius:	number		radius of colorpicker cursor
+		 *
+		 * options.hPicker.*:			hue picker rectangle
+		 * width:			number		width of hue picker
+		 * cursorHeight:	number		height of hue picker cursor
+		 * pad:			number		padding between sv picker and hue picker
+		 */
+		options.colorpicker = options.colorpicker || {};
+
+		options.colorpicker.svPicker = options.colorpicker.svPicker || {};
+		options.colorpicker.svPicker.size = options.colorpicker.svPicker.size || 128;
+		options.colorpicker.svPicker.cursorRadius = options.colorpicker.svPicker.cursorRadius || 3;
+
+		options.colorpicker.hPicker = options.colorpicker.hPicker || {};
+		options.colorpicker.hPicker.width = options.colorpicker.hPicker.width || Math.clamp( options.colorpicker.svPicker.size / 5, 10, 25 );
+		options.colorpicker.hPicker.height = options.colorpicker.svPicker.size;
+		options.colorpicker.hPicker.pad = options.colorpicker.hPicker.pad || 4;
+		options.colorpicker.hPicker.cursorHeight = options.colorpicker.hPicker.cursorHeight || 4;
+
+		return options;
+	}
+
+	exportOptions() {
+		for( let widget of this.widgets ) {
+			this.options.widgets.push( widget.getOptions() );
+		}
+		console.log( JSON.stringify( this.options ) );
+	}
+
 	constructor( parent, options = {} ) {
 		let self = this;
 		this.parent = parent;
-		this.options = options;
+
+		options = '{"panel":{"width":750,"height":150},"statistics":{"numBins":150},"histogram":{"backgroundColor":"#000000","fillColor":"#333333","lineColor":"#666666","style":"polygon","overlayUnscaled":true},"gradientPresets":{"defaultPresets":true,"presets":[{"name":"Magma","colors":["#000004","#3b0f70","#8c2981","#de4968","#fea16e","#fcfdbf"]},{"name":"Inferno","colors":["#000004","#420a68","#932667","#dd513a","#fbbc21","#fcffa4"]},{"name":"Plasma","colors":["#0d0887","#6a00a8","#b12a90","#e16462","#fca835","#f0f921"]},{"name":"Viridis","colors":["#440154","#414487","#2a788e","#22a884","#7cd250","#fde725"]},{"name":"Greyscale","colors":["#000000","#888888","#ffffff"]},{"name":"Magma","colors":["#000004","#3b0f70","#8c2981","#de4968","#fea16e","#fcfdbf"]},{"name":"Inferno","colors":["#000004","#420a68","#932667","#dd513a","#fbbc21","#fcffa4"]},{"name":"Plasma","colors":["#0d0887","#6a00a8","#b12a90","#e16462","#fca835","#f0f921"]},{"name":"Viridis","colors":["#440154","#414487","#2a788e","#22a884","#7cd250","#fde725"]},{"name":"Greyscale","colors":["#000000","#888888","#ffffff"]}]},"widgets":[{"controlPoints":[{"value":0.6060000000000001,"alpha":0.18833333333333335,"color":"#440154","handle":{"data":{"x":454.50000000000006,"y":121.75,"r":7},"parent":{}}},{"value":0.666,"alpha":0.28833333333333333,"color":"#414487","handle":{"data":{"x":499.50000000000006,"y":106.75,"r":7},"parent":{}}},{"value":0.726,"alpha":0.3883333333333333,"color":"#2a788e","handle":{"data":{"x":544.5,"y":91.75,"r":7},"parent":{}}},{"value":0.786,"alpha":0.4883333333333333,"color":"#22a884","handle":{"data":{"x":589.5,"y":76.75,"r":7},"parent":{}}},{"value":0.846,"alpha":0.5883333333333334,"color":"#7cd250","handle":{"data":{"x":634.5,"y":61.75,"r":7},"parent":{}}},{"value":0.906,"alpha":0.6883333333333334,"color":"#fde725","handle":{"data":{"x":679.5,"y":46.75,"r":7},"parent":{}}}],"location":0.5,"opacity":0.6},{"controlPoints":[{"value":0.05266666666666667,"alpha":0,"color":"#000004","handle":{"data":{"x":39.5,"y":150,"r":7},"parent":{}}},{"value":0.15866666666666668,"alpha":0.6666666666666667,"color":"#932667","handle":{"data":{"x":119,"y":50,"r":7},"parent":{}}},{"value":0.204,"alpha":0.7733333333333333,"color":"#420a68","handle":{"data":{"x":153,"y":34,"r":7},"parent":{}}},{"value":0.23266666666666666,"alpha":0.30000000000000004,"color":"#dd513a","handle":{"data":{"x":174.5,"y":105,"r":7},"parent":{}}},{"value":0.32666666666666666,"alpha":0.54,"color":"#fbbc21","handle":{"data":{"x":245,"y":69,"r":7},"parent":{}}},{"value":0.41733333333333333,"alpha":0.28,"color":"#fcffa4","handle":{"data":{"x":313,"y":108,"r":7},"parent":{}}}],"location":0.5,"opacity":0.6},{"controlPoints":[{"value":0.6060000000000001,"alpha":0.18833333333333335,"color":"#440154","handle":{"data":{"x":454.50000000000006,"y":121.75,"r":7},"parent":{}}},{"value":0.666,"alpha":0.28833333333333333,"color":"#414487","handle":{"data":{"x":499.5,"y":106.75,"r":7},"parent":{}}},{"value":0.726,"alpha":0.3883333333333333,"color":"#2a788e","handle":{"data":{"x":544.5,"y":91.75,"r":7},"parent":{}}},{"value":0.786,"alpha":0.4883333333333333,"color":"#22a884","handle":{"data":{"x":589.5,"y":76.75,"r":7},"parent":{}}},{"value":0.846,"alpha":0.5883333333333334,"color":"#7cd250","handle":{"data":{"x":634.5,"y":61.75,"r":7},"parent":{}}},{"value":0.906,"alpha":0.6883333333333334,"color":"#fde725","handle":{"data":{"x":679.5,"y":46.75,"r":7},"parent":{}}}]},{"controlPoints":[{"value":0.13233333333333333,"alpha":0.03368794326241131,"color":"#000004","handle":{"data":{"x":99.25,"y":144.9468085106383,"r":7},"parent":{}}},{"value":0.156,"alpha":0.6066666666666667,"color":"#420a68","handle":{"data":{"x":117,"y":59,"r":7},"parent":{}}},{"value":0.228,"alpha":0.3466666666666667,"color":"#932667","handle":{"data":{"x":171,"y":98,"r":7},"parent":{}}},{"value":0.2946666666666667,"alpha":0.1466666666666666,"color":"#dd513a","handle":{"data":{"x":221,"y":128,"r":7},"parent":{}}},{"value":0.384,"alpha":0.09999999999999998,"color":"#fbbc21","handle":{"data":{"x":288,"y":135,"r":7},"parent":{}}},{"value":0.4693333333333333,"alpha":0.07999999999999996,"color":"#fcffa4","handle":{"data":{"x":352,"y":138,"r":7},"parent":{}}}]}],"colorpicker":{"svPicker":{"size":128,"cursorRadius":3},"hPicker":{"width":25,"height":128,"pad":4,"cursorHeight":4}}}';
+		this.options = this.parseOptions( options );
 
 		this.callbacks = [];
 
@@ -407,8 +540,8 @@ class TF_panel {
 		panel.dom.id = 'tf-panel';
 		panel.dom.classList.add( 'overlay' );
 		this.panel = panel;
-		panel.width = options.width || 800;
-		panel.height = options.height || 200;
+		panel.width = this.options.panel.width;
+		panel.height = this.options.panel.height;
 
 		//canvas for drawing background histogram
 		let canvas = document.createElement( 'canvas' );
@@ -417,38 +550,16 @@ class TF_panel {
 		canvas.id = 'histogram-canvas';
 		this.panel.dom.appendChild( canvas );
 		this.canvas = canvas;
+		this.canvas.getContext( '2d' ).fillStyle = options.backgroundColor;
+		this.canvas.getContext( '2d' ).fillRect( 0, 0, canvas.width, canvas.height );
 
-		let panelContextMenu = new ContextMenu();
-		let menuItems = [
-			{ name: 'Add widget', 	callback: function( e ) { self.addWidget( { location: e.clientX / panel.width } ); } }
-		];
-		panelContextMenu.addItems( menuItems );
-		this.panelContextMenu = panelContextMenu;
+		this.panelContextMenu = this.addContextMenu( this.options.gradientPresets );
 
-		function showContextMenu( e ) {
-			self.panelContextMenu.showAt( e.clientX, e.clientY );
-
-			document.addEventListener( 'mousedown', self.panelContextMenu.hidePanel, { once: true } );
-
-			//disable default context menu
-			e.preventDefault();
-		}
-
-		panel.dom.addEventListener( 'contextmenu', showContextMenu );
-
-		//underlying data
-		let data = this.parent.data;
-		if ( data !== this.data ) {
-			options.stats = { numBins: this.canvas.width / 5 };
-			this.data = data;
-			this.statistics = this.calcStatistics();
-			this.histogram = this.statistics.histogram;
-			this.updateHistogram = true;
-		}
+		this.updateHistogram = false;
 
 		//create SVG context for interaction elements
-		let svgContext = document.createElementNS( svgNS, 'svg' );
-		svgContext.setAttribute( 'xmlns', svgNS );
+		let svgContext = document.createElementNS( SVG.svgNS, 'svg' );
+		svgContext.setAttribute( 'xmlns', SVG.svgNS );
 		svgContext.setAttribute( 'xmlns:xlink', 'http://www.w3.org/1999/xlink' );
 		svgContext.setAttribute( 'width', panel.width );
 		svgContext.setAttribute( 'height', panel.height );
@@ -486,14 +597,60 @@ class TF_panel {
 		}.bind( self ), true );
 
 		//add tf_widgets
+
 		this.widgets = [];
-		this.addWidget();
+		for( let widgetOptions of this.options.widgets ) {
+			this.addWidget( widgetOptions );
+		}
+		if( this.options.widgets.length === 0 ) {
+			this.addWidget(); //add one default widget
+		}
 
 		//add color picker
-		let cp_widget = new CP_widget();
+		let cp_widget = new CP_widget( this.options.colorpicker );
 		panel.cp_widget = cp_widget;
 
 		this.draw();
+	}
+
+	/**
+	 *
+	 */
+	addContextMenu( options = {} ) {
+		let self = this;
+		let panelContextMenu = new ContextMenu();
+
+		let folderName = 'Add widget';
+		panelContextMenu.addFolder( folderName );
+
+		function createGradientPresetObject( name, colors ) {
+			return {
+				name: name,
+				folder: folderName,
+				colors: colors,
+				callback: function( e ) {
+					self.addWidget( { location: e.clientX / self.panel.width, colors: colors } );
+				}
+			};
+		}
+
+		let menuObjects = [];
+		for( let preset of options.presets ) {
+			menuObjects.push( createGradientPresetObject( preset.name, preset.colors ) );
+		}
+
+		panelContextMenu.addItems( menuObjects );
+		function showContextMenu( e ) {
+			self.panelContextMenu.showAt( e.clientX, e.clientY );
+
+			document.addEventListener( 'mousedown', self.panelContextMenu.hidePanel, { once: true } );
+
+			//disable default context menu
+			e.preventDefault();
+		}
+
+		this.panel.dom.addEventListener( 'contextmenu', showContextMenu );
+		return panelContextMenu;
 	}
 
 	addWidget( options ) {
@@ -533,7 +690,14 @@ class TF_panel {
 	//redraw the histogram
 	draw() {
 		if( this.updateHistogram ) {
-			this.drawHistogram();
+			//underlying data
+			let data = this.parent.data;
+			if ( data !== this.data ) {
+				this.data = data;
+				this.statistics = this.calcStatistics( this.options.statistics );
+				this.histogram = this.statistics.histogram;
+			}
+			this.drawHistogram( this.options.histogram );
 			this.updateHistogram = false;
 		}
 
@@ -545,36 +709,31 @@ class TF_panel {
 	/**
 	 * calculates the statistics for an array of data values necessary for displaying the histogram
 	 *
-	 * options.stats.*:
+	 * options.*:
 	 * numBins:		number
-	 * range:		{ min: number, max: number }
 	 */
-	calcStatistics() {
+	calcStatistics( options = {} ) {
 		let statistics = {};
 		let data = this.data;
-		let options = this.options.stats || {};
 
-		statistics.numBins = options.numBins || 250;
+		statistics.numBins = options.numBins;
 
-		statistics.range = options.range;
+		//calculate range of data values
+		let min = Infinity;
+		let max = -Infinity;
 
-		if( !statistics.range ) {
-			let min = Infinity;
-			let max = -Infinity;
-
-			let index = data.length;
-			while ( index-- ) {
-				let value = data[ index ];
-				if ( value < min ) {
-					min = value;
-				}
-				if ( value > max ) {
-					max = value;
-				}
+		let index = data.length;
+		while ( index-- ) {
+			let value = data[ index ];
+			if ( value < min ) {
+				min = value;
 			}
-
-			statistics.range = { min: min, max: max };
+			if ( value > max ) {
+				max = value;
+			}
 		}
+
+		statistics.range = { min: min, max: max };
 
 		let histogram = new Int32Array( statistics.numBins );
 		let binScale = statistics.numBins / ( statistics.range.max - statistics.range.min );
@@ -598,36 +757,27 @@ class TF_panel {
 		return( statistics );
 	}
 
-	/* draw the histogram to the histogram canvas
-	 *
-	 * options.histogram.*:
-	 * fillColor:		color
-	 * lineColor:		color
-	 * style:			{ 'polygon', 'line' }
-	 * scale:			function (e.g. logarithmic, ...)
-	 * overlayUnscaled:	boolean
+	/*
+	 * draw the histogram to the histogram canvas
 	 */
-	drawHistogram() {
+	drawHistogram( options = {} ) {
 		let data = this.parent.data;
 		if ( !data ) {
 			return;
 		}
 
-		let options = this.options.histogram || {};
-
 		let canvas = this.canvas;
 		let context = canvas.getContext( '2d' );
 		context.clearRect( 0, 0, canvas.width, canvas.height );
-		context.fillStyle = options.fillColor || 'black';
+		context.fillStyle = options.backgroundColor;
 		context.fillRect( 0, 0, canvas.width, canvas.height );
-		context.fillStyle = options.fillColor || '#333';
+		context.fillStyle = options.fillColor;
+		context.strokeStyle = options.lineColor;
 
 		let xScale = canvas.width / this.statistics.numBins;
 
 		/* plots the histogram bins as a polygon that traces the centers of each bin */
 		let drawPolygonHistogram = function ( scale ) {
-			scale = scale || Math.log;
-
 			context.beginPath();
 			let maxVal = scale( this.statistics.maxBinValue );
 
@@ -645,15 +795,11 @@ class TF_panel {
 
 			context.closePath();
 			context.fill();
-
-			context.strokeStyle = options.lineColor || '#666';
 			context.stroke();
 		};
 
-		/* plots the histogram bins as a series of n vertical lines (n = number of bins) */
-		let drawLineHistogram = function( scale ) {
-			scale = scale || Math.log;
-
+		/* plots the histogram bins as a series of n vertical bars (n = number of bins) */
+		let drawBarHistogram = function( scale ) {
 			let maxVal = scale( this.statistics.maxBinValue );
 			context.beginPath();
 
@@ -663,7 +809,7 @@ class TF_panel {
 			}
 
 			context.closePath();
-			context.strokeStyle = options.lineColor || '#444';
+			context.strokeStyle = options.fillColor;
 			context.lineWidth = xScale;
 			context.stroke();
 		};
@@ -671,7 +817,7 @@ class TF_panel {
 		let style = options.style || 'polygon';
 		let scale = options.scale || Math.log;
 		this.histogram.scale = scale;
-		let overlayUnscaled = options.overlayUnscaled || true;
+		let overlayUnscaled = options.overlayUnscaled;
 		let identityFunction = function( x ) { return x; };
 		if( overlayUnscaled ) {
 			context.globalAlpha = 0.6;
@@ -681,10 +827,10 @@ class TF_panel {
 			if( overlayUnscaled ) {
 				drawPolygonHistogram.call( this, identityFunction );
 			}
-		} else if( style === 'line' ) {
-			drawLineHistogram.call( this, scale );
+		} else if( style === 'bars' ) {
+			drawBarHistogram.call( this, scale );
 			if( overlayUnscaled ) {
-				drawLineHistogram.call( this, identityFunction );
+				drawBarHistogram.call( this, identityFunction );
 			}
 		}
 	}
@@ -731,22 +877,26 @@ class TF_panel {
 
 /* TF-widget contains one range of two or more control points
  *
- * options.*:
- * location:		number
- * controlPoints:	array of { value: number, alpha: number, color: color }
- * opacity:			number
  */
 class TF_widget {
 	constructor( parent, options = {} ) {
-		this.parent = parent;
 		let self = this;
+		this.parent = parent;
+		this.callbacks = [];
 
+		options.location = options.location || 0.5;
+		options.controlPoints = options.controlPoints || [];
+		options.opacity = options.opacity || 0.6;
+		this.options = options;
+
+		//create canvas for gradient background
 		let canvas = document.createElement( 'canvas' );
 		this.canvas = canvas;
+
 		canvas.width = parent.width;
 		canvas.height = parent.height;
 		canvas.className = 'tf-widget-canvas overlay';
-		canvas.style.opacity = options.opacity || 0.7;
+		canvas.style.opacity = options.opacity;
 		//insert canvases below UI svg context
 		parent.dom.insertBefore( canvas, parent.svgContext );
 
@@ -754,46 +904,50 @@ class TF_widget {
 		let widgetContextMenu = new ContextMenu();
 		let menuItems = [
 			{ name: 'Delete widget', 	callback: this.destructor.bind( self ) },
-			{ name: 'Duplicate widget',	callback: function( e ) { console.log( 'click b' ) } },
+			/*{ name: 'Duplicate widget',	callback: function( e ) { console.log( 'click b' ) } },
 			{ name: 'Bring to front',	callback: function( e ) { console.log( 'click b' ) } },
 			{ name: 'Send to back',		callback: function( e ) { console.log( 'click b' ) } },
-			{ name: 'Store as preset',	callback: function( e ) { console.log( 'click c' ) } },
+			{ name: 'Store as preset',	callback: function( e ) { console.log( 'click c' ) } },*/
 		];
 		widgetContextMenu.addItems( menuItems );
 		this.widgetContextMenu = widgetContextMenu;
 
-		/*let handleContextMenu = new ContextMenu();
-		let menuItems = [
-			{ name: 'Delete point', 	callback: function( e ) { console.log( 'click a' ) } }
-		];
-		handleContextMenu.addItems( menuItems );
-		this.widgetContextMenu = handleContextMenu;*/
+		this.controlPoints = [];//options.controlPoints;
 
-		let location = options.location || 0.5;
-		let controlPoints = options.controlPoints || [];
-		controlPoints.sortPoints = function() {
+		this.controlPoints.sortPoints = function() {
 			this.sort( ( a, b ) => ( a.value > b.value ) );
 		}
-		controlPoints.addPoint = function( point ) {
+		this.controlPoints.addPoint = function( point ) {
 			this.push( point );
 			this.sortPoints();
 		};
-		this.controlPoints = controlPoints;
 
-		this.callbacks = [];
 		this.createOutline();
 
-		if( controlPoints.length === 0 ) {
-			//add default points
-			this.addControlPoint( location - 0.15, 0.00, '#040312' );
-			this.addControlPoint( location - 0.05, 0.20, '#3e0067' );
-			this.addControlPoint( location + 0.05, 0.40, '#cc3e47' );
-			this.addControlPoint( location + 0.15, 0.60, '#f5fa8c' );
+		if( options.colors ) {
+			this.addControlPoints( options.colors, 0.3, 0.5, options.location, 0.25 );
+		}
+		if(  options.controlPoints.length > 0 ) {
+			for( let controlPointOptions of options.controlPoints ) {
+				this.addControlPoint( controlPointOptions );
+			}
+		} else if( this.controlPoints.length === 0 ) {
+			let viridis = [ '#440154', '#414487', '#2a788e', '#22a884', '#7cd250', '#fde725' ]; //viridis
+			this.addControlPoints( viridis, 0.3, 0.5, options.location, 0.25 ); //add one default widget
 		}
 
-		this.outline.setPoints( controlPoints );
+		this.outline.setPoints( this.controlPoints );
 
 		this.createAnchor();
+	}
+
+	getOptions() {
+		let options = {};
+		options.controlPoints = [];
+		for( let controlPoint of this.controlPoints ) {
+			options.controlPoints.push( controlPoint );
+		}
+		return options;
 	}
 
 	destructor() {
@@ -834,7 +988,8 @@ class TF_widget {
 
 		/* moves anchor on mousemove while mouse down */
 		function moveAnchor( e ) {
-			//e.preventDefault();
+			e.preventDefault();
+			e.stopPropagation();
 			//restrict area of movement for control points
 			let mouseX = e.pageX,
 				mouseY = e.pageY;
@@ -897,16 +1052,17 @@ class TF_widget {
 
 	createOutline() {
 		let parent = this.parent;
-		let outline = SVG.createPolyline( this.parent.svgContext, null, this.canvas.width, this.canvas.height, 'value', 'alpha', 'none', '#eee' );
+		let outline = SVG.createPolyline( this.parent.svgContext, null, this.canvas.width, this.canvas.height, 'value', 'alpha' );
 		outline.classList.add( 'handle' );
 		this.outline = outline;
+
 		let self = this;
 
 		function onMouseDown( e ) {
+			console.log( 'mousedown');
 			if ( !e.ctrlKey ) {
 				return;
 			}
-
 			let pos = UI.getRelativePosition( e.clientX, e.clientY, parent.dom );
 			//pos.y = this.parent.height - pos.y;
 
@@ -932,10 +1088,34 @@ class TF_widget {
 		}
 
 		outline.addEventListener( 'mousedown', onMouseDown );
+
+		//change cursor on hover+ctrl-hold to indicate addPoint function
+		outline.addEventListener( 'mousemove', function( e ) {
+			if ( e.ctrlKey ) this.classList.add( 'addCursor' );
+		} );
+
+		//remove cursor on mouseout
+		outline.addEventListener( 'mouseleave', function() {
+			this.classList.remove( 'addCursor' );
+		} );
+	}
+
+	addControlPoints( colors, rangeValues, rangeAlpha, anchorValue, anchorAlpha ) {
+		let stepValues = rangeValues / ( colors.length - 1 );
+		let startValues = anchorValue - ( rangeValues / 2 );
+		let stepAlpha = rangeAlpha / ( colors.length - 1 );
+		let startAlpha = anchorAlpha - ( rangeAlpha / 2 );
+		colors.map( ( color, index ) => { this.addControlPoint( startValues + index * stepValues, startAlpha + index * stepAlpha, color ); } );
 	}
 
 	addControlPoint( value, alpha, color = '#000' ) {
 		let parent = this.parent;
+		if( typeof value === 'object' ) {
+			color = value.color;
+			alpha = value.alpha;
+			value = value.value;
+		}
+
 		let controlPoint = { value: value, alpha: alpha, color: color };
 
 		let handle = SVG.createCircle( this.parent.svgContext, value * this.canvas.width, this.canvas.height - alpha * this.canvas.height, controlPoint.color );
@@ -994,6 +1174,16 @@ class TF_widget {
 			parent.cp_widget.panel.show();
 
 			document.addEventListener( 'mousedown', parent.cp_widget.hidePanel, { once: true } );
+		} );
+
+		//modify cursor on hover and ctrl-hold to indicate deletePoint function
+		handle.addEventListener( 'mousemove', function( e ) {
+			if ( e.ctrlKey ) this.classList.add( 'deleteCursor' );
+		} );
+
+		//remove cursor on mouseout
+		handle.addEventListener( 'mouseleave', function() {
+			this.classList.remove( 'deleteCursor' );
 		} );
 
 		controlPoint.handle = handle;
@@ -1111,7 +1301,7 @@ class TF_widget {
 			//draw line
 			context.lineTo( controlPoint.value * canvas.width, canvas.height - controlPoint.alpha * canvas.height );
 			//add gradient stop
-			let stopPos = ( controlPoint.value - start ) / widgetWidth;
+			let stopPos = Math.clamp( controlPoint.value - start, 0, 1 ) / widgetWidth;
 			gradient.addColorStop( stopPos, controlPoint.color );
 		}
 
@@ -1123,8 +1313,8 @@ class TF_widget {
 		context.fillStyle = gradient;
 		context.fill();
 
-		context.strokeStyle = '#000';
-		context.lineWidth = 0;//2;
+		context.strokeStyle = '#eee';
+		context.lineWidth = 1;
 		context.stroke();
 
 		this.fireChange();
@@ -1132,28 +1322,8 @@ class TF_widget {
 	}
 }
 
-/**
- * options.svPicker.*:
- * size:		number
- * cursorRadius:number
- *
- * options.hPicker.*:
- * width:		number
- * cursorHeight:number
- * pad:			number
- */
 class CP_widget {
 	constructor( options = {} ) {
-
-		options.svPicker = options.svPicker || {};
-		options.svPicker.size = options.svPicker.size || 128;
-		options.svPicker.cursorRadius = options.svPicker.cursorRadius || 3;
-
-		options.hPicker = options.hPicker || {};
-		options.hPicker.width = options.hPicker.width || Math.clamp( options.svPicker.size / 5, 10, 25 );
-		options.hPicker.height = options.svPicker.size;
-		options.hPicker.pad = options.hPicker.pad || 4;
-		options.hPicker.cursorHeight = options.hPicker.cursorHeight || 4;
 
 		let panel = new Panel();
 		let parent = null;
@@ -1363,10 +1533,10 @@ class CP_widget {
 	createInputFields( color ) {
 		let inputContainer = document.createElement( 'div' );
 		inputContainer.height = 20;
+		this.panel.dom.appendChild( inputContainer );
 		inputContainer.style =
 			`float: left;
-						    height: ${ inputContainer.height }px;`;
-		this.panel.dom.appendChild( inputContainer );
+			 height: ${ inputContainer.height }px;`;
 
 		let inputWidth = Math.max( Math.floor( ( this.SVPicker.width / 3 ) - 5 ), 22 );
 
@@ -1440,28 +1610,41 @@ class ContextMenu {
 
 	addItems( items ) {
 		for( let item of items ) {
-			this.addItem( item.name, item.callback, item.folderName );
+			this.addItem( item );
 		}
 	}
 
-	addItem( name, callback, folderName = null ) {
+	/**
+	 * accepts four parameters or an object containing four params
+	 */
+	addItem( name, callback, folder = null, colors = null ) {
+		if( typeof name === 'object' ) {
+			colors = name.colors;
+			folder = name.folder;
+			callback = name.callback;
+			name = name.name;
+		}
 		let item = document.createElement( 'li' );
 		item.id = name;
 		item.onmousedown = function( e ) { e.preventDefault(); callback( e ); };
 
+		if( colors ) {
+			item.style.height = '24px';
+			item.style.width = '200px';
+			item.style.margin = '3px 0px';
+			item.style.background = 'linear-gradient(to right, ' + colors.join() + ')';
+		}
+
 		let link = document.createElement( 'a' );
 		link.href = '#';
 		link.target = '_self';
-
 		link.innerHTML = name;
 
 		item.appendChild( link );
+
 		let parent = this.itemsContainer;
 
-		if( folderName ) {
-			let folder = this.folders.get( folderName );
-			if( folder ) parent = folder;
-		}
+		if( folder && this.folders.get( folder ) ) parent = this.folders.get( folder );
 		parent.appendChild( item );
 	}
 
