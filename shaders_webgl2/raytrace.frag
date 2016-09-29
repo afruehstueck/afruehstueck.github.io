@@ -18,13 +18,14 @@ uniform sampler3D volumeTexture;
 uniform sampler3D distanceFieldTexture;
 uniform vec3 volumeDimensions;
 uniform vec2 dataRange;
+uniform int samplingRate;
+uniform float alphaCorrection;
 
 uniform int channel;
 uniform vec4 mask[ 4 ];
 
 //todo: make this uniform
 const int MAX_STEPS = 500;
-const float alphaCorrection = 0.3;
 
 vec3 doMaterial( vec3 position, vec3 normal ) {
   return vec3( 0.2, 0.768, 1.0 ) * 0.7;
@@ -86,13 +87,13 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
         prev = sdfSample;
 
         //do trilinear sampling (leave in this comment for trilinear polyfill)
-        /*float sdfSample = texture( distanceFieldTexture, position ).r;
+        float sdfSample = texture( distanceFieldTexture, position ).r;
 
-        if( sdfSample >= 0. *//*sign( sdfSample ) != sign( prev )*//* ) {
+        if( sdfSample >= 0./* sign( sdfSample ) != sign( prev )*/ ) {
             //found isosurface, stop raycasting
             foundSurface = true;
             break;
-        }*/
+        }
 
         if( accumulatedAlpha < 1. ) {
             //if( position.x > 1. || position.y > 1. || position.z > 1. ) break;
@@ -119,24 +120,22 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
         position += deltaDirection;
         accumulatedLength += deltaLength;
 
-        if( accumulatedAlpha >= 1. || accumulatedLength >= rayLength ) {
+        if( /*accumulatedAlpha >= 1. || */accumulatedLength >= rayLength ) {
             //ray is outside of box
             break;
         }
     }
 
-    /*if( foundSurface ) {
+    if( foundSurface ) {
          vec3 normal = texture( distanceFieldTexture, position ).gba;//calcNormal( distanceFieldTexture, position );
          accumulatedColor += normal * .5 + .5;
-    }*/
+    }
     clamp( accumulatedColor, 0., 1. );
     clamp( accumulatedAlpha, 0., 1. );
     return vec4( accumulatedColor, accumulatedAlpha );
 }
 
 void main() {
-    int steps = 150;
-
     vec2 tex = vec2( ( ( projectedCoordinate.x / projectedCoordinate.w ) + 1.0 ) / 2.0,
                        ( ( projectedCoordinate.y / projectedCoordinate.w ) + 1.0 ) / 2.0 );
 
@@ -145,7 +144,7 @@ void main() {
 
     vec3 ray = rayEnd - rayStart;
 
-    vec4 accumulatedColor = rayAccumulate( rayStart, ray, steps );
+    vec4 accumulatedColor = rayAccumulate( rayStart, ray, samplingRate );
 
     vec4 backgroundColor = vec4( 0., 0., 0., 1. );
 

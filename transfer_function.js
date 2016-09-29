@@ -519,6 +519,7 @@ class TF_panel {
 	}
 
 	exportOptions() {
+		this.options.widgets = [];
 		for( let widget of this.widgets ) {
 			this.options.widgets.push( widget.getOptions() );
 		}
@@ -529,7 +530,39 @@ class TF_panel {
 		let self = this;
 		this.parent = parent;
 
-		options = '{"panel":{"width":750,"height":150},"statistics":{"numBins":150},"histogram":{"backgroundColor":"#000000","fillColor":"#333333","lineColor":"#666666","style":"polygon","overlayUnscaled":true},"gradientPresets":{"defaultPresets":true,"presets":[{"name":"Magma","colors":["#000004","#3b0f70","#8c2981","#de4968","#fea16e","#fcfdbf"]},{"name":"Inferno","colors":["#000004","#420a68","#932667","#dd513a","#fbbc21","#fcffa4"]},{"name":"Plasma","colors":["#0d0887","#6a00a8","#b12a90","#e16462","#fca835","#f0f921"]},{"name":"Viridis","colors":["#440154","#414487","#2a788e","#22a884","#7cd250","#fde725"]},{"name":"Greyscale","colors":["#000000","#888888","#ffffff"]},{"name":"Magma","colors":["#000004","#3b0f70","#8c2981","#de4968","#fea16e","#fcfdbf"]},{"name":"Inferno","colors":["#000004","#420a68","#932667","#dd513a","#fbbc21","#fcffa4"]},{"name":"Plasma","colors":["#0d0887","#6a00a8","#b12a90","#e16462","#fca835","#f0f921"]},{"name":"Viridis","colors":["#440154","#414487","#2a788e","#22a884","#7cd250","#fde725"]},{"name":"Greyscale","colors":["#000000","#888888","#ffffff"]}]},"widgets":[{"controlPoints":[{"value":0.6060000000000001,"alpha":0.18833333333333335,"color":"#440154","handle":{"data":{"x":454.50000000000006,"y":121.75,"r":7},"parent":{}}},{"value":0.666,"alpha":0.28833333333333333,"color":"#414487","handle":{"data":{"x":499.50000000000006,"y":106.75,"r":7},"parent":{}}},{"value":0.726,"alpha":0.3883333333333333,"color":"#2a788e","handle":{"data":{"x":544.5,"y":91.75,"r":7},"parent":{}}},{"value":0.786,"alpha":0.4883333333333333,"color":"#22a884","handle":{"data":{"x":589.5,"y":76.75,"r":7},"parent":{}}},{"value":0.846,"alpha":0.5883333333333334,"color":"#7cd250","handle":{"data":{"x":634.5,"y":61.75,"r":7},"parent":{}}},{"value":0.906,"alpha":0.6883333333333334,"color":"#fde725","handle":{"data":{"x":679.5,"y":46.75,"r":7},"parent":{}}}],"location":0.5,"opacity":0.6},{"controlPoints":[{"value":0.05266666666666667,"alpha":0,"color":"#000004","handle":{"data":{"x":39.5,"y":150,"r":7},"parent":{}}},{"value":0.15866666666666668,"alpha":0.6666666666666667,"color":"#932667","handle":{"data":{"x":119,"y":50,"r":7},"parent":{}}},{"value":0.204,"alpha":0.7733333333333333,"color":"#420a68","handle":{"data":{"x":153,"y":34,"r":7},"parent":{}}},{"value":0.23266666666666666,"alpha":0.30000000000000004,"color":"#dd513a","handle":{"data":{"x":174.5,"y":105,"r":7},"parent":{}}},{"value":0.32666666666666666,"alpha":0.54,"color":"#fbbc21","handle":{"data":{"x":245,"y":69,"r":7},"parent":{}}},{"value":0.41733333333333333,"alpha":0.28,"color":"#fcffa4","handle":{"data":{"x":313,"y":108,"r":7},"parent":{}}}],"location":0.5,"opacity":0.6},{"controlPoints":[{"value":0.6060000000000001,"alpha":0.18833333333333335,"color":"#440154","handle":{"data":{"x":454.50000000000006,"y":121.75,"r":7},"parent":{}}},{"value":0.666,"alpha":0.28833333333333333,"color":"#414487","handle":{"data":{"x":499.5,"y":106.75,"r":7},"parent":{}}},{"value":0.726,"alpha":0.3883333333333333,"color":"#2a788e","handle":{"data":{"x":544.5,"y":91.75,"r":7},"parent":{}}},{"value":0.786,"alpha":0.4883333333333333,"color":"#22a884","handle":{"data":{"x":589.5,"y":76.75,"r":7},"parent":{}}},{"value":0.846,"alpha":0.5883333333333334,"color":"#7cd250","handle":{"data":{"x":634.5,"y":61.75,"r":7},"parent":{}}},{"value":0.906,"alpha":0.6883333333333334,"color":"#fde725","handle":{"data":{"x":679.5,"y":46.75,"r":7},"parent":{}}}]},{"controlPoints":[{"value":0.13233333333333333,"alpha":0.03368794326241131,"color":"#000004","handle":{"data":{"x":99.25,"y":144.9468085106383,"r":7},"parent":{}}},{"value":0.156,"alpha":0.6066666666666667,"color":"#420a68","handle":{"data":{"x":117,"y":59,"r":7},"parent":{}}},{"value":0.228,"alpha":0.3466666666666667,"color":"#932667","handle":{"data":{"x":171,"y":98,"r":7},"parent":{}}},{"value":0.2946666666666667,"alpha":0.1466666666666666,"color":"#dd513a","handle":{"data":{"x":221,"y":128,"r":7},"parent":{}}},{"value":0.384,"alpha":0.09999999999999998,"color":"#fbbc21","handle":{"data":{"x":288,"y":135,"r":7},"parent":{}}},{"value":0.4693333333333333,"alpha":0.07999999999999996,"color":"#fcffa4","handle":{"data":{"x":352,"y":138,"r":7},"parent":{}}}]}],"colorpicker":{"svPicker":{"size":128,"cursorRadius":3},"hPicker":{"width":25,"height":128,"pad":4,"cursorHeight":4}}}';
+		options = `{"panel":			{	"width":			750,
+											"height":			150	},
+					"statistics":		{	"numBins":			150	},
+					"histogram":		{	"backgroundColor":	"#000000",
+											"fillColor":		"#333333",
+											"lineColor":		"#666666",
+											"style":			"polygon",
+											"overlayUnscaled":	true },
+					"gradientPresets":	{	"defaultPresets":	true,
+											"presets":			[ 	{"name":	"Magma",	"colors":	["#000004","#3b0f70","#8c2981","#de4968","#fea16e","#fcfdbf"]},
+																	{"name":	"Inferno",	"colors":	["#000004","#420a68","#932667","#dd513a","#fbbc21","#fcffa4"]},
+																	{"name":	"Plasma",	"colors":	["#0d0887","#6a00a8","#b12a90","#e16462","#fca835","#f0f921"]},
+																	{"name":	"Viridis",	"colors":	["#440154","#414487","#2a788e","#22a884","#7cd250","#fde725"]},
+																	{"name":	"Greyscale","colors":	["#000000","#888888","#ffffff"]}	]	},
+					"widgets":			[	{"controlPoints":	[	{"value":0.5793333333333334,"alpha":0.18833333333333335,"color":"#440154"},
+																	{"value":0.6393333333333334,"alpha":0.28833333333333333,"color":"#414487"},
+																	{"value":0.6993333333333334,"alpha":0.3883333333333333,"color":"#2a788e"},
+																	{"value":0.7593333333333333,"alpha":0.4883333333333333,"color":"#22a884"},
+																	{"value":0.8193333333333334,"alpha":0.5883333333333334,"color":"#7cd250"},
+																	{"value":0.8793333333333333,"alpha":0.6883333333333334,"color":"#fde725"}	]	},
+											{"controlPoints":	[	{"value":0.15399999999999997,"alpha":0.11499999999999999,"color":"#000004"},
+																	{"value":0.214,"alpha":0.21499999999999997,"color":"#420a68"},
+																	{"value":0.27399999999999997,"alpha":0.31499999999999995,"color":"#932667"},
+																	{"value":0.334,"alpha":0.41500000000000004,"color":"#dd513a"},
+																	{"value":0.3939999999999999,"alpha":0.515,"color":"#fbbc21"},
+																	{"value":0.454,"alpha":0.615,"color":"#fcffa4"}	]	}	],
+					"colorpicker":		{	"svPicker":			{	"size":128,
+																	"cursorRadius":3	},
+											"hPicker":			{	"width":25,
+																	"height":128,
+																	"pad":4,
+																	"cursorHeight":4}	}	}`;
+
 		this.options = this.parseOptions( options );
 
 		this.callbacks = [];
@@ -945,7 +978,7 @@ class TF_widget {
 		let options = {};
 		options.controlPoints = [];
 		for( let controlPoint of this.controlPoints ) {
-			options.controlPoints.push( controlPoint );
+			options.controlPoints.push( { value: controlPoint.value, alpha: controlPoint.alpha, color: controlPoint.color } );
 		}
 		return options;
 	}
@@ -1598,6 +1631,9 @@ class ContextMenu {
 
 		let itemsContainer = document.createElement( 'ul' );
 		panel.dom.appendChild( itemsContainer );
+		panel.dom.style.top = '0px';
+		panel.dom.style.left = '0px';
+
 		this.itemsContainer = itemsContainer;
 
 		this.folders = new Map();

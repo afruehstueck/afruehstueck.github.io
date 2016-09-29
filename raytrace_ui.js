@@ -22,6 +22,8 @@ var Controls = function() {
     this.dimension_x = volumeDimensions.x;
     this.dimension_y = volumeDimensions.y;
     this.dimension_z = volumeDimensions.z;
+	this.samplingRate = samplingRate;
+	this.alphaCorrection = alphaCorrection;
     this.channel = channel;
 	this.color1 = "#000000";
 	this.alpha1 = 0.0;
@@ -117,6 +119,10 @@ var volume_downsample_z = f_volume.add( controls, 'dimension_z',
                                             [ datasetDimensions.z / 4 ]: datasetDimensions.z / 4,
                                             [ datasetDimensions.z / 8 ]: datasetDimensions.z / 8 } ).listen();
 
+
+var volume_samplingRate = f_volume.add( controls, 'samplingRate', 1., 1000. ).step( 1. );
+var volume_alphaCorrection = f_volume.add( controls, 'alphaCorrection', 0., 1. ).step( 0.001 );
+
 volume_channel.onChange( function( value ) {
 	channel = value;
 });
@@ -133,11 +139,20 @@ volume_downsample_z.onChange( function( value ) {
     volumeDimensions.z = value;
 });
 
+volume_samplingRate.onChange( function( value ) {
+	samplingRate = value;
+});
+volume_alphaCorrection.onChange( function( value ) {
+	alphaCorrection = value;
+});
+
 volume_select.onFinishChange( onVolumeChanged );
 volume_downsample_x.onFinishChange( initVolume );
 volume_downsample_y.onFinishChange( initVolume );
 volume_downsample_z.onFinishChange( initVolume );
 volume_channel.onFinishChange( initVolume );
+volume_samplingRate.onFinishChange( requestRendering );
+volume_alphaCorrection.onFinishChange( requestRendering );
 
 var f_update = gui.addFolder( 'Update' );
 if( canvases.length > 1 ) {

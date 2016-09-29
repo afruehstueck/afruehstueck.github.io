@@ -50,6 +50,9 @@ let slices = {
 
 let tiles = slices;
 
+let samplingRate = 250;
+let alphaCorrection = 0.1;
+
 let iteration = 0;
 let MAX_ITERATION = 50000;
 
@@ -786,6 +789,12 @@ function freeResources( canvas ) {
 function init( canvas ) {
     let gl = canvas.context;
 
+	tf_panel = new TF_panel( canvas );
+	tf_panel.registerCallback( function() {
+		updateTF = true;
+		requestRendering();
+	});
+
     freeResources( canvas );
     resizeCanvas( canvas );
     let volume_async_load = $.Deferred();
@@ -918,6 +927,8 @@ function init( canvas ) {
                 { name: 'channel',              type: 'int',       	variable: 'channel' },
                 { name: 'mask',              	type: 'vec4v',      variable: 'mask' },
 				{ name: 'dataRange',          	type: 'vec2',	    variable: 'dataRange' },
+				{ name: 'samplingRate',        	type: 'int',	    variable: 'samplingRate' },
+				{ name: 'alphaCorrection',    	type: 'float',	    variable: 'alphaCorrection' },
 				{ name: 'backfaceTexture',      type: 'sampler2D',  variable: 'backfaceTexture' },
                 { name: 'volumeDimensions',     type: 'vec3',       variable: 'volumeDimensions' },
                 { name: 'volumeTexture',        type: 'sampler3D',  variable: 'volumeTexture' },
@@ -968,10 +979,9 @@ function init( canvas ) {
         gl.enableVertexAttribArray( canvas.programs[ 'raytrace' ].texCoord );
         //updateRaytraceUniforms( programs[ 'raytrace' ] );
 
-		tf_panel = new TF_panel( canvas );
-		tf_panel.registerCallback( function() {
-			requestRendering();
-		});
+		tf_panel.updateHistogram = true;
+		tf_panel.draw();
+
 		renderOnce.call( canvas );
     } );
 }
@@ -1027,7 +1037,6 @@ function nextNIterations() {
 		for( let canvas of canvases ) {
 			update.call( canvas, iter < ( iteratePerClick - 1 ) );
 		}
-
 		nextIteration();
 	}
 }
@@ -1210,6 +1219,8 @@ function renderRaytrace( program, volumeFrameBuffer, distanceFieldFrameBuffer, b
     gl.uniform2f( program.tiles, tiles.x, tiles.y );
     gl.uniform2f( program.dataRange, dataRange.min, dataRange.max );
     gl.uniform3f( program.volumeDimensions, volumeDimensions.x, volumeDimensions.y, volumeDimensions.z );
+	gl.uniform1i( program.samplingRate, samplingRate );
+	gl.uniform1f( program.alphaCorrection, alphaCorrection );
 
     gl.activeTexture( gl.TEXTURE0 );
     gl.bindTexture( backfaceFrameBuffer.type, backfaceFrameBuffer.texture );
