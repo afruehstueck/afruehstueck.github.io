@@ -105,8 +105,8 @@ a:link {
 }
 
 #loading div {
-    display: block;
-    position: relative;
+    /*display: block;*/
+    position: absolute;
     left: 50%;
     top: 50%;
     width: 100px;
@@ -241,6 +241,13 @@ a:link {
 .menu li ul li a {
     position: relative;
 }*/
+
+#tf-collapsible div {
+    background-color: black;
+    color: white;
+    font-size: 11px;
+    cursor: pointer;
+}
 
 #tf-panel .handle {
     opacity: 0.7;

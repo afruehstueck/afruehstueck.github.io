@@ -1,6 +1,8 @@
 'use strict';
 
 let volumes = {
+	/*engine:'res/nrrd/engine.nrrd',
+	skull:'res/nrrd/skull.nrrd',*/
 	case1_tp1:'res/nrrd/case1_tp1.nrrd',
 	case1_tp2:'res/nrrd/case1_tp2.nrrd',
 	case2_tp1:'res/nrrd/case2_tp1.nrrd',
@@ -682,7 +684,7 @@ if( gl ) {
 function freeResources( canvas ) {
 	let gl = canvas.context;
 	if( gl == undefined ) {
-		console.err( 'freeResources: gl undefined' );
+		console.error( 'freeResources: gl undefined' );
 		return;
 	}
 

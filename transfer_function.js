@@ -31,13 +31,15 @@ class UI {
 	}
 
 	/* display spinning loading icon */
-	static loading() {
+	static loading( container = null ) {
+		container = container || document.body;
+
 		let loading = document.getElementById( 'loading' );
 		if( !loading ) {
 			loading = document.createElement( 'div' );
 			loading.id = 'loading';
-			document.body.appendChild( loading );
 
+			container.appendChild( loading );
 			let spinner = document.createElement( 'div' );
 			loading.appendChild( spinner );
 		}
@@ -60,12 +62,13 @@ class Panel {
 	constructor( options = {} ) {
 		let dom = document.createElement( 'div' );
 		dom.className = 'panel';
-		document.body.appendChild( dom );
+		options.container = options.container || document.body;
+		options.container.appendChild( dom );
 		this.dom = dom;
 	}
 
 	toggle() {
-		this.dom.style.visibility = ( this.panel.dom.style.visibility === 'hidden' ) ? 'visible' : 'hidden';
+		this.dom.style.visibility = ( this.dom.style.visibility === 'hidden' ) ? 'visible' : 'hidden';
 	}
 
 	hide() {
@@ -517,8 +520,8 @@ class TF_panel {
 		 * height: 			number
 		 */
 		options.panel = options.panel || {};
-		options.panel.width = options.panel.width || 750;
-		options.panel.height = options.panel.height || 150;
+		options.panel.width = options.panel.width || 500;
+		options.panel.height = options.panel.height || 100;
 
 		/** histogram calculation options
 		 * numBins:			number				denotes the number of bins for the histogram calculation
@@ -612,9 +615,9 @@ class TF_panel {
 		let self = this;
 		this.parent = parent;
 
-		options = `{"panel":			{	"width":			750,
-											"height":			150	},
-					"statistics":		{	"numBins":			150	},
+		options = `{"panel":			{	"width":			600,
+											"height":			140	},
+					"statistics":		{	"numBins":			140	},
 					"histogram":		{	"backgroundColor":	"#000000",
 											"fillColor":		"#333333",
 											"lineColor":		"#666666",
@@ -649,11 +652,32 @@ class TF_panel {
 
 		this.callbacks = [];
 
+		let collapsiblePanel = new Panel( { container: parent.parentElement } );
+		collapsiblePanel.dom.id = 'tf-collapsible';
+		collapsiblePanel.dom.style.position = 'absolute';
+		collapsiblePanel.dom.style.top = 0;
+		collapsiblePanel.dom.style.left = 0;
+		collapsiblePanel.dom.style.transform = 'translateX(-100%)';
+
+		let collapsibleText = document.createElement( 'div' );
+		collapsibleText.innerHTML = 'Transfer Function Editor';
+		collapsibleText.style.transform = 'rotate(-90deg)';
+		collapsibleText.style.width = this.options.panel.height + 'px';
+		collapsibleText.style.height = '16px';
+		collapsibleText.style.boxShadow = '0px 0px 0px 1px #333 inset';
+		collapsibleText.style.padding = '4px 0px';
+		collapsibleText.style.transformOrigin = 'right top';
+		collapsibleText.style.textAlign = 'center';
+		collapsiblePanel.dom.appendChild( collapsibleText );
+
 		//parent dom element of TF panel
-		let panel = new Panel();
+		let panel = new Panel( { container: parent.parentElement } );
+
+		collapsiblePanel.dom.onclick = panel.toggle.bind( panel );
 
 		panel.dom.id = 'tf-panel';
 		panel.dom.classList.add( 'overlay' );
+		panel.dom.style.left = '24px';
 		this.panel = panel;
 		panel.width = this.options.panel.width;
 		panel.height = this.options.panel.height;
@@ -696,6 +720,7 @@ class TF_panel {
 
 		//show tooltips on hover over tf panel
 		svgContext.addEventListener( 'mousemove', function( e ) {
+			if( !this.statistics ) return;
 			let binWidth = this.canvas.width / this.statistics.numBins;
 			let bin = Math.floor( e.pageX / binWidth );
 
@@ -1106,14 +1131,15 @@ class TF_widget {
 			e.preventDefault();
 			e.stopPropagation();
 			//restrict area of movement for control points
-			let mouseX = e.pageX,
-				mouseY = e.pageY;
+
+			let mouse = UI.getRelativePosition( e.clientX, e.clientY, parent.dom );
+
 			//todo this is not handled very well yet
-			if( mouseX < 0 || mouseX > canvas.width || mouseY < 0 || mouseY > canvas.height ) return;
+			if( mouse.x < 0 || mouse.x > this.canvas.width || mouse.y < 0 || mouse.y > this.canvas.height ) return;
 
 			parent.dom.classList.add( 'drag' );
-			let offsetX = anchor.data.x - mouseX;
-			let offsetY = anchor.data.y - mouseY;
+			let offsetX = anchor.data.x - mouse.x;
+			let offsetY = anchor.data.y - mouse.y;
 			if ( e.ctrlKey && anchor.moveLock == 'N' ) {
 				anchor.moveLock = ( offsetX > offsetY ) ? 'H' : 'V';
 			}
@@ -1121,8 +1147,8 @@ class TF_widget {
 			if( anchor.moveLock === 'H' ) offsetY = 0;
 			if( anchor.moveLock === 'V' ) offsetX = 0;
 
-			let setX = ( anchor.moveLock !== 'V' ) ? mouseX : null;
-			let setY = ( anchor.moveLock !== 'H' ) ? mouseY : null;
+			let setX = ( anchor.moveLock !== 'V' ) ? mouse.x : null;
+			let setY = ( anchor.moveLock !== 'H' ) ? mouse.y : null;
 
 			anchor.set( setX, setY );
 
@@ -1245,11 +1271,14 @@ class TF_widget {
 
 		/* moves control point handles on mousemove while mouse down */
 		function moveHandle( e ) {
+
+			let mouse = UI.getRelativePosition( e.clientX, e.clientY, parent.dom );
+
 			//restrict area of movement for control points
 			//todo this is not handled very well yet
-			if( e.pageX < 0 || e.pageX > width || e.pageY < 0 || e.pageY > height ) return;
+			if( mouse.x < 0 || mouse.x > width || mouse.y < 0 || mouse.y > height ) return;
 
-			this.updateControlPoint( controlPoint, e.pageX, e.pageY );
+			this.updateControlPoint( controlPoint, mouse.x, mouse.y );
 
 			//update widget through callback function
 			updateWidgetBound();

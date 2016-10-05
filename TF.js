@@ -1,10 +1,12 @@
 'use strict';
 
 let volumes = {
-	bonsai:	'res/tiled/bonsai128x128x256.png',
-	head:	'res/tiled/head128x128x256.png',
+	bonsai:	'res/tiled/bonsai256x256x256.png',
+	head:	'res/tiled/head256x128x256.png',
 	heart:	'res/tiled/heart128x128x256.png',
-	torso:	'res/tiled/torso128x128x256.png'
+	torso:	'res/tiled/torso128x128x256.png',
+	foot:	'res/tiled/foot256x256x256.png',
+	teapot:	'res/tiled/teapot256x256x256.png'
 };
 
 let volumePath = volumes.torso;
@@ -38,6 +40,7 @@ let tiles = slices;
 
 let updateTF = true;
 
+let container = window;
 let tf_panel;
 
 let tf_img;
@@ -45,8 +48,8 @@ let tf_img;
 // make canvases fullscreen
 function resizeCanvas() {
 
-	let canvas_width = window.innerWidth;
-	let canvas_height = window.innerHeight;
+	let canvas_width =  container.innerWidth || container.offsetWidth;
+	let canvas_height = container.innerHeight || container.offsetHeight;
 
 	canvas.width = canvas_width;
 	canvas.height = canvas_height;
@@ -72,7 +75,7 @@ function resizeCanvas() {
 }
 
 //adjust canvas dimensions and re-render on resize
-window.addEventListener( 'resize', resizeCanvas, false );
+//window.addEventListener( 'resize', resizeCanvas, false );
 
 ////////////////////////////////////////////////////////////////////////////////
 // CAMERA SETUP
@@ -639,6 +642,8 @@ function init( canvas ) {
 	}
 
 	freeResources( canvas );
+
+	container = document.querySelector( '.renderWrapper' );
 	resizeCanvas();
 
 	gl.viewport( 0, 0, canvas.width, canvas.height );
@@ -646,7 +651,7 @@ function init( canvas ) {
 	gl.clear( gl.COLOR_BUFFER_BIT );
 
 	let volume_async_load = $.Deferred();
-	UI.loading();
+	UI.loading( container );
 
 	create2DBuffers.call( canvas );
 	create3DBuffers.call( canvas );
@@ -911,7 +916,15 @@ var Controls = function() {
 	this.alphaCorrection = alphaCorrection;
 };
 
-var gui = new dat.GUI();
+let guiContainer = document.createElement( 'div' );
+guiContainer.style.position = 'absolute';
+guiContainer.style.top = 0;
+guiContainer.style.right = 0;
+container.appendChild( guiContainer );
+
+var gui = new dat.GUI( { autoPlace: false } );
+guiContainer.appendChild( gui.domElement );
+
 var controls = new Controls();
 
 // different volume selected from dropdown

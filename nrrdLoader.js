@@ -289,7 +289,7 @@ var NRRDLoader = {
 			if( headerObject.type ) {
 				_rawData = scan( headerObject.type, _data_length ); // the data without header
 			} else {
-				console.err( 'no type found in NRRD header' );
+				console.error( 'no type found in NRRD header' );
 			}
 		}
 		// .. let's use the underlying array buffer
