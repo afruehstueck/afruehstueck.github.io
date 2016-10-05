@@ -304,6 +304,8 @@ function onMouseUpEvent( event ) {
 
 function onMouseMoveEvent( event ) {
     if( ! ( leftMouseDown  || rightMouseDown ) ) return;
+	event.preventDefault();
+	event.stopPropagation();
 
     mousePos = getNormalizedMousePos( event.target, event );
 

@@ -2,12 +2,26 @@
  * @author afruehstueck
  */
 
+/**
+ * convenience function (added to Math) for restricting range of a value
+ * @param value			input value to be clamped
+ * @param min			minimum output value
+ * @param max			maximum output value
+ * @returns {number}	clamped value
+ */
+Math.clamp = function( value, min, max ) { return Math.min( Math.max( min, value ), max ); };
 
 /**
- * add convenience function to Math for restricting range of a value
+ * interpolate between array elements in arrays a and b
+ * t is percentage of a in interpolation
  */
-Math.clamp = function( val, min, max ) { return Math.min( Math.max( min, val ), max ); };
+Math.interpolate = function( a, b, t ) {
+	return a.map( ( _, i )  => a[ i ] * ( 1 - t ) + b[ i ] * t );
+}
 
+/**
+ * class containing UI-related functionality
+ */
 class UI {
 	static getRelativePosition( x, y, elem ) {
 		return {
@@ -16,12 +30,26 @@ class UI {
 		};
 	}
 
-	/**
-	 * interpolate between array elements in arrays a and b
-	 * t is percentage of a in interpolation
-	 */
-	static interpolate( a, b, t ) {
-		return a.map( ( _, i )  => a[ i ] * ( 1 - t ) + b[ i ] * t );
+	/* display spinning loading icon */
+	static loading() {
+		let loading = document.getElementById( 'loading' );
+		if( !loading ) {
+			loading = document.createElement( 'div' );
+			loading.id = 'loading';
+			document.body.appendChild( loading );
+
+			let spinner = document.createElement( 'div' );
+			loading.appendChild( spinner );
+		}
+		loading.style.visibility = 'visible';
+	}
+
+	/* hide spinning loading icon */
+	static finishedLoading() {
+		let loading = document.getElementById( 'loading' );
+		if( loading ) {
+			loading.style.visibility = 'hidden';
+		}
 	}
 }
 
@@ -30,7 +58,7 @@ class UI {
  */
 class Panel {
 	constructor( options = {} ) {
-		var dom = document.createElement( 'div' );
+		let dom = document.createElement( 'div' );
 		dom.className = 'panel';
 		document.body.appendChild( dom );
 		this.dom = dom;
@@ -54,7 +82,10 @@ class Panel {
  * helper class for creating SVG elements
  */
 class SVG {
-
+	/**
+	 * set x- and y position for SVG elements
+	 * also writes x- and y position to element.data.*
+	 */
 	static set( x, y ) {
 		if( x ) {
 			this.setAttribute( ( this.tagName === 'circle' ) ? 'cx' : 'x', x );
@@ -66,48 +97,80 @@ class SVG {
 		}
 	}
 
-	static setColor( color ) {
+	/**
+	 * sets fill color of SVG element
+	 */
+	static setFillColor( color ) {
 		this.setAttribute( 'fill', color );
 	}
 
+	/**
+	 * sets line color of SVG element
+	 */
 	static setLineColor( color ) {
 		this.setAttribute( 'stroke', color );
 	}
 
-	static createCircle( parent, cx, cy, fill = 'none', r = 7, stroke = '#aaa', strokeWidth = '2px' ) {
+	/**
+	 * create an SVG circle
+	 * @param parent		DOM element the SVG will be appended to
+	 * @param cx			x-coordinate of circle
+	 * @param cy			y-coordinate of circle
+	 * @param fillColor		fill color of circle
+	 * @param r				radius of circle
+	 * @param strokeColor	stroke color of circle
+	 * @param strokeWidth	width of stroke of circle
+	 * @returns {Element}	returns created circle SVG element, appended to parent
+	 */
+	static createCircle( parent, cx, cy, fillColor = 'none', r = 7, strokeColor = '#aaa', strokeWidth = '2px' ) {
 		let circle = document.createElementNS( SVG.svgNS, 'circle' );
 
 		circle.setAttribute( 'class', 'circle' );
 		circle.setAttribute( 'cx', cx );
 		circle.setAttribute( 'cy', cy );
 		circle.setAttribute( 'r', r );
-		circle.setAttribute( 'fill', fill );
-		circle.setAttribute( 'stroke', stroke );
+		circle.setAttribute( 'fill', fillColor );
+		circle.setAttribute( 'stroke', strokeColor );
 		circle.setAttribute( 'stroke-width', strokeWidth );
 
+		//write x, y and r to a data object in order to make these parameters easily accessible from outside
 		circle.data = {};
 		circle.data.x = cx;
 		circle.data.y = cy;
 		circle.data.r = r;
 
 		circle.set = this.set;
-		circle.setColor = this.setColor;
+		circle.setFillColor = this.setFillColor;
 		circle.setLineColor = this.setLineColor;
 
-		circle.parent = parent;
-		circle.parent.appendChild( circle );
+		if( parent ) {
+			circle.parent = parent;
+			circle.parent.appendChild( circle );
+		}
 		return circle;
 	}
 
-	static createRect( parent, x, y, fill = 'black', w = 12, h = 12, stroke = '#aaa', strokeWidth = '3px' ) {
+	/**
+	 * create an SVG rectangle
+	 * @param parent		DOM element the SVG will be appended to
+	 * @param x				x-coordinate of rectangle
+	 * @param y				y-coordinate of rectangle
+	 * @param fillColor		fill color of rectangle
+	 * @param w				width of rectangle
+	 * @param h				height of rectangle
+	 * @param strokeColor	stroke color of rectangle
+	 * @param strokeWidth	stroke width of rectangle
+	 * @returns {Element}	returns created rectangle SVG element, appended to parent
+	 */
+	static createRect( parent, x, y, fillColor = 'black', w = 12, h = 12, strokeColor = '#aaa', strokeWidth = '2px' ) {
 		let rect = document.createElementNS( SVG.svgNS, 'rect' );
 		rect.setAttribute( 'class', 'rect' );
 		rect.setAttribute( 'x', x );
 		rect.setAttribute( 'y', y );
 		rect.setAttribute( 'width', w );
 		rect.setAttribute( 'height', h );
-		rect.setAttribute( 'fill', fill );
-		rect.setAttribute( 'stroke', stroke );
+		rect.setAttribute( 'fill', fillColor );
+		rect.setAttribute( 'stroke', strokeColor );
 		rect.setAttribute( 'stroke-width', strokeWidth );
 
 		rect.data = {};
@@ -117,27 +180,44 @@ class SVG {
 		rect.data.height = h;
 
 		rect.set = this.set;
-		rect.setColor = this.setColor;
+		rect.setFillColor = this.setFillColor;
 		rect.setLineColor = this.setLineColor;
 
-		rect.parent = parent;
-		rect.parent.appendChild( rect );
+		if( parent ) {
+			rect.parent = parent;
+			rect.parent.appendChild( rect );
+		}
 		return rect;
 	}
 
-	/*
+	/**
+	 *  create an SVG Polyline
+	 *
 	 * accepts an array of point objects where attrX and and attrY denotes the key to the x and y components within the point object
-	 * (e.g. points = [ { value: 0.6, alpha: 0.2 }, { value: 0.9, alpha: 0.5 } ] where attrX = 'value' and attrY = 'alpha'
+	 * (e.g. points = [ { value: 0.6, alpha: 0.2 }, { value: 0.9, alpha: 0.5 } ] where attrX = 'value' and attrY = 'alpha' OR
+	 * (e.g. points = [ { x: 0.6, y: 0.2 }, { x: 0.9, y: 0.5 } ] where attrX = 'x' and attrY = 'y'
 	 * width and height allow the point values to be scaled to the range of the parent element
+	 *
+	 * @param parent		DOM element the SVG will be appended to
+	 * @param points		array of objects containing point information
+	 * @param scaleWidth	optional scale factor by which the x-location will be multiplied
+	 * @param scaleHeight	optional scale factor by which the y-location will be multiplied
+	 * @param attrX			name of x-Attribute in point object array
+	 * @param attrY			name of y-Attribute in point object array
+	 * @param invertY		invert Y values for normalized y-values (use 1 - y instead of y)
+	 * @param fillColor		fill color of polyline (fills convex areas in polyline
+	 * @param strokeColor	stroke color of polyline
+	 * @param strokeWidth	stroke width of polyline
+	 * @returns {Element}	returns created polyline SVG element, appended to parent
 	 */
-	static createPolyline( parent, points, scaleWidth = 1, scaleHeight = 1, attrX = 'x', attrY = 'y', invertY = true, fill = 'none', stroke = '#eee', strokeWidth = '3px' ) {
+	static createPolyline( parent, points, scaleWidth = 1, scaleHeight = 1, attrX = 'x', attrY = 'y', invertY = true, fillColor = 'none', strokeColor = '#eee', strokeWidth = '3px' ) {
 		let polyline = document.createElementNS( SVG.svgNS, 'polyline' );
 		polyline.setAttribute( 'class', 'line' );
 		if( points ) {
 			polyline.setAttribute( 'points', pointsToString( points, scaleWidth, scaleHeight ) );
 		}
-		polyline.setAttribute( 'fill', fill );
-		polyline.setAttribute( 'stroke', stroke );
+		polyline.setAttribute( 'fill', fillColor );
+		polyline.setAttribute( 'stroke', strokeColor );
 		polyline.setAttribute( 'stroke-width', strokeWidth );
 
 		polyline.data = {};
@@ -157,11 +237,13 @@ class SVG {
 		}
 
 		polyline.setPoints = setPoints;
-		polyline.setColor = this.setColor;
+		polyline.setFillColor = this.setFillColor;
 		polyline.setLineColor = this.setLineColor;
 
-		polyline.parent = parent;
-		polyline.parent.appendChild( polyline );
+		if( parent ) {
+			polyline.parent = parent;
+			polyline.parent.appendChild( polyline );
+		}
 		return polyline;
 	}
 
@@ -187,7 +269,7 @@ class SVG {
 		}
 
 		line.setPoints = setPoints;
-		line.setColor = this.setColor;
+		line.setFillColor = this.setFillColor;
 		line.setLineColor = this.setLineColor;
 
 		line.parent = parent;
@@ -1110,10 +1192,9 @@ class TF_widget {
 				rightColor = Color.parseColor( neighbors.right.color );
 
 			let pct = ( value - neighbors.left.value ) / ( neighbors.right.value - neighbors.left.value );
-			let rgb = UI.interpolate( [ leftColor.r, leftColor.g, leftColor.b ], [ rightColor.r, rightColor.g, rightColor.b ], pct );
+			let rgb = Math.interpolate( [ leftColor.r, leftColor.g, leftColor.b ], [ rightColor.r, rightColor.g, rightColor.b ], pct );
 
 			console.log( rgb[ 0 ] + ' ' + rgb[ 1 ] + ' ' + rgb[ 2 ] );
-			//let color = Color.RGBtoHEX( Color.HSVtoRGB( hsv[ 0 ], hsv[ 1 ], hsv[ 2 ] ) );
 			let color = Color.RGBtoHEX( rgb[ 0 ], rgb[ 1 ], rgb[ 2 ] );
 			console.log( 'left: ' + Color.RGBtoHEX( leftColor ) + ' right: ' + Color.RGBtoHEX( rightColor ) + '% :' + pct + ' col: ' + color );
 
@@ -1199,7 +1280,7 @@ class TF_widget {
 			parent.cp_widget.showAt( e.pageX, e.pageY, handle );
 			parent.cp_widget.color.registerCallback( handle, function( col ) {
 				let colHex = Color.RGBtoHEX( col.rgb );
-				handle.setColor( colHex )
+				handle.setFillColor( colHex );
 				controlPoint.color = colHex;
 				drawWidgetBound();
 			} );
@@ -1651,7 +1732,7 @@ class ContextMenu {
 	}
 
 	/**
-	 * accepts four parameters or an object containing four params
+	 * accepts four parameters or one object containing four params
 	 */
 	addItem( name, callback, folder = null, colors = null ) {
 		if( typeof name === 'object' ) {
@@ -1699,7 +1780,6 @@ class ContextMenu {
 		itemsSubContainer.class = 'submenu';
 		itemsSubContainer.id = name + 'SubMenu';
 		folder.appendChild( itemsSubContainer );
-		//<ul class="subMenu" id="colorSubMenu">
 
 		this.itemsContainer.appendChild( folder );
 		this.folders.set( name, itemsSubContainer );
