@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Transfer Function Panel: Documentation</title>
+    <script src="scripts/jquery-1.11.0.min.js"></script>
+    <script src="scripts/gl-matrix-min_latest.js"></script>
+    <script src="scripts/stats.min.js"></script>
+    <script src="scripts/dat.gui.min.js"></script>
+    <script src="scripts/pako.min.js"></script>
+    <link rel="stylesheet" href="main.css"/>
+    <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:400|Ubuntu+Mono' rel='stylesheet' type='text/css'>
+</head>
+<body style="padding-left: 20px">
+<div class="wrapper" style="position: relative; width: 80%; height: 600px; left: auto; top: 40px">
+</div>
+<script src="transfer_function.js"></script>
+<script>
+    let wrapper = document.querySelector( '.wrapper' );
+
+    let sourceImage = new Image();
+    sourceImage.onload = function () {
+        var dataCanvas = document.createElement( 'canvas' );
+        dataCanvas.width = sourceImage.width;
+        dataCanvas.height = sourceImage.height;
+        var tmpContext = dataCanvas.getContext( '2d' ); // Get canvas 2d context
+        tmpContext.drawImage( sourceImage, 0, 0 ); // Draw the texture
+        wrapper.data = tmpContext.getImageData( 0, 0, sourceImage.width, sourceImage.height ).data;
+
+        let tf_panel = new TF_panel( wrapper );
+        tf_panel.updateHistogram = true;
+        tf_panel.draw();
+    };
+
+    sourceImage.src = 'res/tiled/torso128x128x256.png';
+</script>
+</body>
+</html>
