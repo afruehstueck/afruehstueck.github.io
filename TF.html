@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Transfer Function Panel: Documentation</title>
+    <script src="scripts/jquery-1.11.0.min.js"></script>
+    <script src="scripts/gl-matrix-min_latest.js"></script>
+    <script src="scripts/stats.min.js"></script>
+    <script src="scripts/dat.gui.min.js"></script>
+    <script src="scripts/pako.min.js"></script>
+    <link rel="stylesheet" href="main.css"/>
+    <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:400|Ubuntu+Mono' rel='stylesheet' type='text/css'>
+</head>
+<body>
+<div class="renderWrapper">
+    <canvas class="renderCanvas webgl" tabindex="1" data-gltype="webgl"></canvas>
+</div>
+<div id="log" class="overlay"></div>
+<script src="camera.js"></script>
+<script src="nrrdLoader.js"></script>
+<script src="transfer_function.js"></script>
+<script src="TF.js"></script>
+</body>
+</html>
