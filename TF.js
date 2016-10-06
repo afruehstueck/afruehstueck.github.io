@@ -936,64 +936,14 @@ function onVolumeChanged( value ) {
 
 function initVolume( value ) {
 	init( canvas );
-
-	f_volume.remove( volume_downsample_x );
-	f_volume.remove( volume_downsample_y );
-	f_volume.remove( volume_downsample_z );
-	controls.dimension_x = volumeDimensions.x;
-	controls.dimension_y = volumeDimensions.y;
-	controls.dimension_z = volumeDimensions.z;
-	volume_downsample_x = f_volume.add( controls, 'dimension_x',
-		{   [ datasetDimensions.x + ' (original)' ]: datasetDimensions.x,
-			[ datasetDimensions.x / 2 ]: datasetDimensions.x / 2,
-			[ datasetDimensions.x / 4 ]: datasetDimensions.x / 4,
-			[ datasetDimensions.x / 8 ]: datasetDimensions.x / 8 } ).listen();
-	volume_downsample_y = f_volume.add( controls, 'dimension_y',
-		{   [ datasetDimensions.y + ' (original)' ]: datasetDimensions.y,
-			[ datasetDimensions.y / 2 ]: datasetDimensions.y / 2,
-			[ datasetDimensions.y / 4 ]: datasetDimensions.y / 4,
-			[datasetDimensions.y / 8 ]: datasetDimensions.y / 8 } ).listen();
-	volume_downsample_z = f_volume.add( controls, 'dimension_z',
-		{   [ datasetDimensions.z + ' (original)' ]: datasetDimensions.z,
-			[ datasetDimensions.z / 2 ]: datasetDimensions.z / 2,
-			[ datasetDimensions.z / 4 ]: datasetDimensions.z / 4,
-			[ datasetDimensions.z / 8 ]: datasetDimensions.z / 8 } ).listen();
 }
 
 var f_volume = gui.addFolder( 'Volume' );
 
 var volume_select = f_volume.add( controls, 'volume', volumes );
 
-var volume_downsample_x = f_volume.add( controls, 'dimension_x',
-	{   [ datasetDimensions.x + ' (original)' ]: datasetDimensions.x,
-		[ datasetDimensions.x / 2 ]: datasetDimensions.x / 2,
-		[ datasetDimensions.x / 4 ]: datasetDimensions.x / 4,
-		[ datasetDimensions.x / 8 ]: datasetDimensions.x / 8 } ).listen();
-var volume_downsample_y = f_volume.add( controls, 'dimension_y',
-	{   [ datasetDimensions.y + ' (original)' ]: datasetDimensions.y,
-		[ datasetDimensions.y / 2 ]: datasetDimensions.y / 2,
-		[ datasetDimensions.y / 4 ]: datasetDimensions.y / 4,
-		[datasetDimensions.y / 8 ]: datasetDimensions.y / 8 } ).listen();
-var volume_downsample_z = f_volume.add( controls, 'dimension_z',
-	{   [ datasetDimensions.z + ' (original)' ]: datasetDimensions.z,
-		[ datasetDimensions.z / 2 ]: datasetDimensions.z / 2,
-		[ datasetDimensions.z / 4 ]: datasetDimensions.z / 4,
-		[ datasetDimensions.z / 8 ]: datasetDimensions.z / 8 } ).listen();
-
 var volume_samplingRate = f_volume.add( controls, 'samplingRate', 1., 1000. ).step( 1. );
 var volume_alphaCorrection = f_volume.add( controls, 'alphaCorrection', 0., 1. ).step( 0.001 );
-
-volume_downsample_x.onChange( function( value ) {
-	volumeDimensions.x = value;
-});
-
-volume_downsample_y.onChange( function( value ) {
-	volumeDimensions.y = value;
-});
-
-volume_downsample_z.onChange( function( value ) {
-	volumeDimensions.z = value;
-});
 
 volume_samplingRate.onChange( function( value ) {
 	samplingRate = value;
@@ -1003,9 +953,6 @@ volume_alphaCorrection.onChange( function( value ) {
 });
 
 volume_select.onFinishChange( onVolumeChanged );
-volume_downsample_x.onFinishChange( initVolume );
-volume_downsample_y.onFinishChange( initVolume );
-volume_downsample_z.onFinishChange( initVolume );
 volume_samplingRate.onFinishChange( requestRendering );
 volume_alphaCorrection.onFinishChange( requestRendering );
 

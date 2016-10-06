@@ -689,10 +689,13 @@ class TF_panel {
 		//show tooltips on hover over tf panel
 		svgContext.addEventListener( 'mousemove', function( e ) {
 			if( !this.statistics ) return;
-			let binWidth = this.canvas.width / this.statistics.numBins;
-			let bin = Math.floor( e.pageX / binWidth );
 
-			let xHover = e.pageX;
+			let mouse = UI.getRelativePosition( e.clientX, e.clientY, self.panel.dom );
+
+			let binWidth = this.canvas.width / this.statistics.numBins;
+			let bin = Math.floor( mouse.x / binWidth );
+
+			let xHover = mouse.x;
 			let yHover = this.canvas.height - this.canvas.height * this.histogram.scale( this.statistics.histogram[ bin ] ) / this.histogram.scale( this.statistics.maxBinValue );
 			if( yHover === Infinity ) yHover = this.canvas.height;
 
@@ -1110,7 +1113,7 @@ class TF_widget {
 			let offsetX = anchor.data.x - mouse.x;
 			let offsetY = anchor.data.y - mouse.y;
 			if ( e.ctrlKey && anchor.moveLock == 'N' ) {
-				anchor.moveLock = ( offsetX > offsetY ) ? 'H' : 'V';
+				anchor.moveLock = ( Math.abs( offsetX ) > Math.abs( offsetY ) ) ? 'H' : 'V';
 			}
 
 			if( anchor.moveLock === 'H' ) offsetY = 0;
@@ -1169,7 +1172,7 @@ class TF_widget {
 		let self = this;
 
 		function onMouseDown( e ) {
-			console.log( 'mousedown');
+			console.log( 'mousedown' );
 			if ( !e.ctrlKey ) {
 				return;
 			}

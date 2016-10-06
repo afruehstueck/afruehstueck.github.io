@@ -52,7 +52,7 @@ var volumePath;
 //volumePath = 'res/test/smallercube256x256x256.png';
 
 
-volumePath = 'res/bonsai128x128x256.png';
+volumePath = 'res/tiled/bonsai128x128x256.png';
 //volumePath = 'res/bonsai256x256x256.png';
 //volumePath = 'res/foot256x256x256.png';
 //volumePath = 'res/male128x128x256.png';
