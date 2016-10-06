@@ -519,9 +519,10 @@ class TF_panel {
 		 * width:			number 				width of histogram panel
 		 * height: 			number
 		 */
+		options.parent = options.parent || document.body;
 		options.panel = options.panel || {};
-		options.panel.width = options.panel.width || 500;
-		options.panel.height = options.panel.height || 100;
+		options.panel.width = options.panel.width || 600;
+		options.panel.height = options.panel.height || 120;
 
 		/** histogram calculation options
 		 * numBins:			number				denotes the number of bins for the histogram calculation
@@ -611,48 +612,15 @@ class TF_panel {
 		console.log( JSON.stringify( this.options ) );
 	}
 
-	constructor( parent, options = {} ) {
+	constructor( options = {} ) {
 		let self = this;
-		this.parent = parent;
-
-		options = `{"panel":			{	"width":			600,
-											"height":			140	},
-					"statistics":		{	"numBins":			140	},
-					"histogram":		{	"backgroundColor":	"#000000",
-											"fillColor":		"#333333",
-											"lineColor":		"#666666",
-											"style":			"polygon",
-											"overlayUnscaled":	true },
-					"gradientPresets":	{	"defaultPresets":	true,
-											"presets":			[ 	{"name":	"Magma",	"colors":	["#000004","#3b0f70","#8c2981","#de4968","#fea16e","#fcfdbf"]},
-																	{"name":	"Inferno",	"colors":	["#000004","#420a68","#932667","#dd513a","#fbbc21","#fcffa4"]},
-																	{"name":	"Plasma",	"colors":	["#0d0887","#6a00a8","#b12a90","#e16462","#fca835","#f0f921"]},
-																	{"name":	"Viridis",	"colors":	["#440154","#414487","#2a788e","#22a884","#7cd250","#fde725"]},
-																	{"name":	"Greyscale","colors":	["#000000","#888888","#ffffff"]}	]	},
-					"widgets":			[	{"controlPoints":	[	{"value":0.5793333333333334,"alpha":0.18833333333333335,"color":"#440154"},
-																	{"value":0.6393333333333334,"alpha":0.28833333333333333,"color":"#414487"},
-																	{"value":0.6993333333333334,"alpha":0.3883333333333333,"color":"#2a788e"},
-																	{"value":0.7593333333333333,"alpha":0.4883333333333333,"color":"#22a884"},
-																	{"value":0.8193333333333334,"alpha":0.5883333333333334,"color":"#7cd250"},
-																	{"value":0.8793333333333333,"alpha":0.6883333333333334,"color":"#fde725"}	]	},
-											{"controlPoints":	[	{"value":0.15399999999999997,"alpha":0.11499999999999999,"color":"#000004"},
-																	{"value":0.214,"alpha":0.21499999999999997,"color":"#420a68"},
-																	{"value":0.27399999999999997,"alpha":0.31499999999999995,"color":"#932667"},
-																	{"value":0.334,"alpha":0.41500000000000004,"color":"#dd513a"},
-																	{"value":0.3939999999999999,"alpha":0.515,"color":"#fbbc21"},
-																	{"value":0.454,"alpha":0.615,"color":"#fcffa4"}	]	}	],
-					"colorpicker":		{	"svPicker":			{	"size":128,
-																	"cursorRadius":3	},
-											"hPicker":			{	"width":25,
-																	"height":128,
-																	"pad":4,
-																	"cursorHeight":4}	}	}`;
 
 		this.options = this.parseOptions( options );
+		this.parent = options.parent;
 
 		this.callbacks = [];
 
-		let collapsiblePanel = new Panel( { container: parent.parentElement } );
+		let collapsiblePanel = new Panel( { container: options.container || parent.parentElement } );
 		collapsiblePanel.dom.id = 'tf-collapsible';
 		collapsiblePanel.dom.style.position = 'absolute';
 		collapsiblePanel.dom.style.top = 0;
@@ -671,7 +639,7 @@ class TF_panel {
 		collapsiblePanel.dom.appendChild( collapsibleText );
 
 		//parent dom element of TF panel
-		let panel = new Panel( { container: parent.parentElement } );
+		let panel = new Panel( { container: options.container || parent.parentElement } );
 
 		collapsiblePanel.dom.onclick = panel.toggle.bind( panel );
 
@@ -769,7 +737,8 @@ class TF_panel {
 				folder: folderName,
 				colors: colors,
 				callback: function( e ) {
-					self.addWidget( { location: e.clientX / self.panel.width, colors: colors } );
+					let mouse = UI.getRelativePosition( e.clientX, e.clientY, self.panel.dom );
+					self.addWidget( { location: mouse.x / self.panel.width, colors: colors } );
 				}
 			};
 		}

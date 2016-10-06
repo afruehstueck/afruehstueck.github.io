@@ -17,9 +17,67 @@
 <div class="renderWrapper" style="position: relative; width: 80%; height: 600px; left: auto; top: 40px">
     <canvas class="renderCanvas webgl" tabindex="1" data-gltype="webgl"></canvas>
 </div>
+
+<h2 style="margin-top: 100px">Transfer Function Editor with custom settings</h2>
+<div class="customTF" style="position: relative; width: 80%; height: 600px; left: auto; top: 40px">
+</div>
 <script src="camera.js"></script>
 <script src="nrrdLoader.js"></script>
 <script src="transfer_function.js"></script>
 <script src="TF.js"></script>
+<script>
+    var wrapper = document.querySelector( '.customTF' );
+
+    var sourceImage = new Image();
+    sourceImage.onload = function () {
+        var dataCanvas = document.createElement( 'canvas' );
+        dataCanvas.width = sourceImage.width;
+        dataCanvas.height = sourceImage.height;
+        var tmpContext = dataCanvas.getContext( '2d' ); // Get canvas 2d context
+        tmpContext.drawImage( sourceImage, 0, 0 ); // Draw the texture
+        wrapper.data = tmpContext.getImageData( 0, 0, sourceImage.width, sourceImage.height ).data;
+
+        options = { 'panel':			{	'width':			900,
+											'height':			200	},
+					'statistics':		{	'numBins':			100	},
+					'histogram':		{	'backgroundColor':	'#dddddd',
+											'fillColor':		'#bcbcbc',
+											'lineColor':		'#111111',
+											'style':			'bars',
+											'overlayUnscaled':	false },
+					'gradientPresets':	{	'defaultPresets':	false,
+											'presets':			[ 	{'name':	'Magma',	'colors':	['#000004','#3b0f70','#8c2981','#de4968','#fea16e','#fcfdbf']},
+																	{'name':	'Inferno',	'colors':	['#000004','#420a68','#932667','#dd513a','#fbbc21','#fcffa4']},
+																	{'name':	'Plasma',	'colors':	['#0d0887','#6a00a8','#b12a90','#e16462','#fca835','#f0f921']},
+																	{'name':	'Viridis',	'colors':	['#440154','#414487','#2a788e','#22a884','#7cd250','#fde725']},
+																	{'name':	'Greyscale','colors':	['#000000','#888888','#ffffff']}	]	},
+					'widgets':			[	{'controlPoints':	[	{'value':   0.579,  'alpha':    0.188,  'color':    '#440154'},
+																	{'value':   0.639,  'alpha':    0.288,  'color':    '#414487'},
+																	{'value':   0.699,  'alpha':    0.388,  'color':    '#2a788e'},
+																	{'value':   0.759,  'alpha':    0.488,  'color':    '#22a884'},
+																	{'value':   0.819,  'alpha':    0.588,  'color':    '#7cd250'},
+																	{'value':   0.879,  'alpha':    0.688,  'color':    '#fde725'}	]	},
+											{'controlPoints':	[	{'value':   0.153,  'alpha':    0.114,  'color':    '#000004'},
+																	{'value':   0.214,  'alpha':    0.214,  'color':    '#420a68'},
+																	{'value':   0.273,  'alpha':    0.314,  'color':    '#932667'},
+																	{'value':   0.334,  'alpha':    0.415,  'color':    '#dd513a'},
+																	{'value':   0.393,  'alpha':    0.515,  'color':    '#fbbc21'},
+																	{'value':   0.454,  'alpha':    0.615,  'color':    '#fcffa4'}	]	}	],
+					'colorpicker':		{	'svPicker':			{	'size':         150,
+																	'cursorRadius': 3	},
+											'hPicker':			{	'width':        30,
+																	'height':       150,
+																	'pad':          4,
+																	'cursorHeight': 4   }	},
+                    'parent':             wrapper,
+                    'container':          wrapper };
+
+        var tf_panel = new TF_panel( options );
+        tf_panel.updateHistogram = true;
+        tf_panel.draw();
+    };
+
+    sourceImage.src = 'res/tiled/bonsai64x64x256.png';
+</script>
 </body>
 </html>

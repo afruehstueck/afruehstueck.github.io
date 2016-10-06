@@ -634,7 +634,7 @@ function init( canvas ) {
 	let gl = canvas.context;
 
 	if( !tf_panel ) {
-		tf_panel = new TF_panel( canvas );
+		tf_panel = new TF_panel( { parent: canvas, container: canvas.parentElement } );
 		tf_panel.registerCallback( function () {
 			updateTF = true;
 			requestRendering();
