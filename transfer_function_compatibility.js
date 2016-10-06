@@ -620,7 +620,7 @@ var TF_panel = function( parent, options ) {
 	//small indicator for histogram tracing
 	this.histogramHover = SVG.createCircle( svgContext, 0, 0, 'none', 4, '#666' );
 	this.histogramHover.setAttribute( 'visibility', 'hidden' );
-	this.histogramHover.classList.add( 'tooltip' );
+	this.histogramHover.className = 'tooltip';
 
 	//tooltip for displaying value of histogram trace
 	this.histogramTooltip = document.createElement( 'div' );
