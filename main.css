@@ -6,6 +6,14 @@ body {
     margin: 0em;
 }
 
+.emph {
+    padding: 4px;
+    font-family: "Ubuntu Mono";
+    background-color: #eeeeee;
+    border-radius: 3px;
+    border: 1px solid #dddddd;
+}
+
 #log {
     background-color: lightgrey;
     border-radius: 5px;
