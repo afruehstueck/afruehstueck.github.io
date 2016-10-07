@@ -753,7 +753,7 @@ class TF_panel {
 
 		panelContextMenu.addItems( menuObjects );
 		function showContextMenu( e ) {
-			self.panelContextMenu.showAt( e.clientX, e.clientY );
+			self.panelContextMenu.showAt( e.pageX, e.pageY );
 
 			document.addEventListener( 'mousedown', self.panelContextMenu.hidePanel, { once: true } );
 
@@ -1148,7 +1148,7 @@ class TF_widget {
 		}
 
 		function showContextMenu( e ) {
-			self.widgetContextMenu.showAt( e.clientX, e.clientY );
+			self.widgetContextMenu.showAt( e.pageX, e.pageY );
 
 			document.addEventListener( 'mousedown', self.widgetContextMenu.hidePanel, { once: true } );
 
@@ -1469,7 +1469,6 @@ class CP_widget {
 
 	showAt( x, y, parent = null ) {
 		if( parent ) this.parent = parent;
-
 		this.panel.dom.style.top = y + 'px';
 		this.panel.dom.style.left = x + 'px';
 	}

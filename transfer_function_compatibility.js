@@ -1223,7 +1223,7 @@ TF_widget.prototype.createAnchor = function() {
 TF_widget.prototype.createOutline = function() {
 	var parent = this.parent;
 	var outline = SVG.createPolyline( this.parent.svgContext, null, this.canvas.width, this.canvas.height, 'value', 'alpha' );
-	outline.classList.add( 'handle' );
+	outline.class = 'handle';
 	this.outline = outline;
 
 	var self = this;
