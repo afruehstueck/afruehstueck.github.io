@@ -512,10 +512,13 @@ class TF_panel {
 			let context = tfCanvas.getContext( '2d' );
 
 			for( let widget of this.widgets ) {
-				let controlPoints = widget.controlPoints.sortPoints();
-				let start = controlPoints[ 0 ].value;
-				let end = controlPoints[ controlPoints.length - 1 ].value;
-				
+				//find minima and maxima (without sorting points)
+				let start = 1, end = 0;
+
+				for( let controlPoint of widget.controlPoints ) {
+					if( controlPoint.value < start ) start = controlPoint.value;
+					if( controlPoint.value > end ) end = controlPoint.value;
+				}
 				let width = end - start;
 
 				let gradient = context.createLinearGradient( start * tfCanvas.width, 0, end * tfCanvas.width, 0 ); //horizontal gradient
