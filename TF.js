@@ -634,7 +634,7 @@ function init( canvas ) {
 	let gl = canvas.context;
 
 	if( !tf_panel ) {
-		tf_panel = new TF_panel( { parent: canvas, container: canvas.parentElement } );
+		tf_panel = new TF_panel( { parent: canvas, container: canvas.parentElement, panel: { isCollapsible: true } } );
 		tf_panel.registerCallback( function () {
 			updateTF = true;
 			requestRendering();
@@ -761,7 +761,14 @@ function init( canvas ) {
 		gl.enableVertexAttribArray( canvas.programs[ 'raytrace' ].texCoord );
 		//updateRaytraceUniforms( programs[ 'raytrace' ] );
 
-		tf_panel.updateHistogram = true;
+		/** histogram calculation options
+		 * numBins:			number				denotes the number of bins for the histogram calculation
+		 */
+		let histogramOptions = {};
+		histogramOptions.numBins = ( tf_panel.panel.width / 5 );
+
+		let histogram = Statistics.calcHistogram( canvas.data, histogramOptions );
+		tf_panel.setHistogram( histogram );
 		tf_panel.draw();
 		requestRendering();
 	} );
@@ -769,8 +776,9 @@ function init( canvas ) {
 
 function updateTransferFunctionTextures( canvas ) {
 	tf_img = tf_panel.TFtoIMG();
+	//tf_panel.getTF();
 	canvas.transferTexture = createTextureFromImage.call( canvas, tf_img, false );
-	console.log( 'updated transfer function texture' );
+	//console.log( 'updated transfer function texture' );
 }
 
 function requestRendering() {
@@ -1033,3 +1041,17 @@ function onMouseMoveEvent( event ) {
 	requestRendering();
 	return false;
 }
+
+document.addEventListener( 'keydown', (event) => {
+	if ( event.key === '=' || event.key === '+' ) { //Plus key
+		// not alert when only Control key is pressed.
+		camera.zoom( -0.1 );
+	}
+
+	if (event.key == '-' ) { //Minus key
+		camera.zoom( 0.1 );
+	}
+
+	camera.update();
+	requestRendering();
+} );

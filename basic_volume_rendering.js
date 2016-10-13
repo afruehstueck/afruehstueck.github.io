@@ -1288,3 +1288,17 @@ function onMouseMoveEvent( event ) {
 	requestRendering();
 	return false;
 }
+
+document.addEventListener( 'keydown', (event) => {
+	if ( event.key === '=' || event.key === '+' ) { //Plus key
+		// not alert when only Control key is pressed.
+		camera.zoom( -0.1 );
+	}
+
+	if (event.key == '-' ) { //Minus key
+		camera.zoom( 0.1 );
+	}
+
+	camera.update();
+	requestRendering();
+} );

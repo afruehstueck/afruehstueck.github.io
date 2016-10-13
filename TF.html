@@ -9,6 +9,7 @@
     <script src="scripts/dat.gui.min.js"></script>
     <script src="scripts/pako.min.js"></script>
     <link rel="stylesheet" href="main.css"/>
+    <link rel="stylesheet" href="UI/ui.css"/>
     <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:400|Ubuntu+Mono' rel='stylesheet' type='text/css'>
 </head>
 <body style="margin-left: 20px">
@@ -24,9 +25,10 @@
 <h2 style="margin-top: 50px">How to use</h2>
 <p><i>Click and Drag</i> circular controlpoints of transfer function widget to <b>adjust position and transparency</b>.</p>
 <p><i>Double-click</i> circular controlpoints of transfer function widget to <b>pick or adjust a color value</b>. The color value can be specified using either the hue slider and the saturation-/value picker or by entering RGB values in the input fields.</p>
-<p><i>Click and Drag</i> rectangular anchor of transfer function widget to <b>move transfer function widget</b>. Hold the <span class='emph'>Ctrl</span> key while dragging to lock dragging direction to either horizontal or vertical dragging.</p>
-<p>Hold the <span class='emph'>Ctrl</span> key and <i>click on the line</i> connecting the controlpoints to <b>add a controlpoint</b>.</p>
-<p>Hold the <span class='emph'>Ctrl</span> key and <i>click on any controlpoint</i> to </b>delete</b> it.</p>
+<p><i>Click and Drag</i> rectangular anchor of transfer function widget to <b>move transfer function widget</b>. Hold the <span class='emph'>Shift</span> key while dragging to lock dragging direction to either horizontal or vertical dragging.</p>
+<p>Hold the <span class='emph'>Shift</span> key and <i>click on the line</i> connecting the controlpoints to <b>add a controlpoint</b>.</p>
+<p>Hold the <span class='emph'>Shift</span> key and <i>click on any controlpoint</i> to </b>delete</b> it.</p>
+<p><i>Click and Drag</i> the vertical edges of transfer function widget to horizontally scale the widget.</p>
 <p>Right-click the rectangular anchor of a transfer function widget to bring up the context menu. You can <b>delete a widget</b> from this context menu.</p>
 <p>Right-click any place in the transfer function editor to <b>add a new transfer function widget</b> and <i>choose from a number of presets</i>.</p>
 
@@ -34,7 +36,9 @@
 <div class="customTF" style="position: relative; height: 200px"></div>
 <script src="camera.js"></script>
 <script src="nrrdLoader.js"></script>
-<script src="transfer_function.js"></script>
+<script src="UI/ui.js"></script>
+<script src="UI/CP_widget.js"></script>
+<script src="UI/TF_panel.js"></script>
 <script src="TF.js"></script>
 <script>
     var wrapper = document.querySelector( '.customTF' );
@@ -46,11 +50,15 @@
         dataCanvas.height = sourceImage.height;
         var tmpContext = dataCanvas.getContext( '2d' ); // Get canvas 2d context
         tmpContext.drawImage( sourceImage, 0, 0 ); // Draw the texture
-        wrapper.data = tmpContext.getImageData( 0, 0, sourceImage.width, sourceImage.height ).data;
+
+        let data = tmpContext.getImageData( 0, 0, sourceImage.width, sourceImage.height ).data;
+        let histogramOptions = {};
+        histogramOptions.numBins = ( dataCanvas.width / 10 );
+
+        let histogram = Statistics.calcHistogram( data, histogramOptions );
 
         options = { 'panel':			{	'width':			1000,
 											'height':			200	},
-					'statistics':		{	'numBins':			100	},
 					'histogram':		{	'backgroundColor':	'#dddddd',
 											'fillColor':		'#bcbcbc',
 											'lineColor':		'#111111',
@@ -79,72 +87,70 @@
 											'hPicker':			{	'width':        30,
 																	'height':       150,
 																	'pad':          4,
-																	'cursorHeight': 4   }	},
-                    'parent':             wrapper,
-                    'container':          wrapper };
+																	'cursorHeight': 4   }	} };
+
+        options.parent = wrapper;
+        options.container = wrapper;
 
         var tf_panel = new TF_panel( options );
-        tf_panel.updateHistogram = true;
+        tf_panel.setHistogram( histogram );
         tf_panel.draw();
     };
 
     sourceImage.src = 'res/tiled/bonsai64x64x256.png';
 </script>
-<textarea style='position: relative; width: 1000px; height: 500px; top: 10px; font-family: "Ubuntu Mono"; display: none'>
-'panel':			{
-    'width':			900,
-    'height':			200
+<!--<textarea style='position: relative; width: 1000px; height: 500px; top: 10px; font-family: "Ubuntu Mono"'>
+"panel":			{
+    "width":			900,
+    "height":			200
 },
-'statistics':		{
-    'numBins':			100
+"histogram":		{
+    "backgroundColor":	"#dddddd",
+    "fillColor":		"#bcbcbc",
+    "lineColor":		"#111111",
+    "style":			"bars",
+    "overlayUnscaled":	false
 },
-'histogram':		{
-    'backgroundColor':	'#dddddd',
-    'fillColor':		'#bcbcbc',
-    'lineColor':		'#111111',
-    'style':			'bars',
-    'overlayUnscaled':	false
-},
-'gradientPresets':	{
-    'defaultPresets':	false,
-    'presets':		[
-                        {'name':	'Magma',        'colors':	['#000004','#3b0f70','#8c2981','#de4968','#fea16e','#fcfdbf']},
-                        {'name':	'Inferno',	    'colors':	['#000004','#420a68','#932667','#dd513a','#fbbc21','#fcffa4']},
-                        {'name':	'Plasma',	    'colors':	['#0d0887','#6a00a8','#b12a90','#e16462','#fca835','#f0f921']},
-                        {'name':	'Viridis',      'colors':	['#440154','#414487','#2a788e','#22a884','#7cd250','#fde725']},
-                        {'name':	'Greyscale',    'colors':	['#000000','#888888','#ffffff']}
+"gradientPresets":	{
+    "defaultPresets":	false,
+    "presets":		[
+                        {"name":	"Magma",        "colors":	["#000004","#3b0f70","#8c2981","#de4968","#fea16e","#fcfdbf"]},
+                        {"name":	"Inferno",	    "colors":	["#000004","#420a68","#932667","#dd513a","#fbbc21","#fcffa4"]},
+                        {"name":	"Plasma",	    "colors":	["#0d0887","#6a00a8","#b12a90","#e16462","#fca835","#f0f921"]},
+                        {"name":	"Viridis",      "colors":	["#440154","#414487","#2a788e","#22a884","#7cd250","#fde725"]},
+                        {"name":	"Greyscale",    "colors":	["#000000","#888888","#ffffff"]}
                     ]
 },
-'widgets':			[
-                        {'controlPoints':	[
-                                                {'value':   0.579,  'alpha':    0.188,  'color':    '#440154'},
-                                                {'value':   0.639,  'alpha':    0.288,  'color':    '#414487'},
-                                                {'value':   0.699,  'alpha':    0.388,  'color':    '#2a788e'},
-                                                {'value':   0.759,  'alpha':    0.488,  'color':    '#22a884'},
-                                                {'value':   0.819,  'alpha':    0.588,  'color':    '#7cd250'},
-                                                {'value':   0.879,  'alpha':    0.688,  'color':    '#fde725'}
+"widgets":			[
+                        {"controlPoints":	[
+                                                {"value":   0.579,  "alpha":    0.188,  "color":    "#440154"},
+                                                {"value":   0.639,  "alpha":    0.288,  "color":    "#414487"},
+                                                {"value":   0.699,  "alpha":    0.388,  "color":    "#2a788e"},
+                                                {"value":   0.759,  "alpha":    0.488,  "color":    "#22a884"},
+                                                {"value":   0.819,  "alpha":    0.588,  "color":    "#7cd250"},
+                                                {"value":   0.879,  "alpha":    0.688,  "color":    "#fde725"}
                                             ]},
-                        {'controlPoints':	[
-                                                {'value':   0.153,  'alpha':    0.114,  'color':    '#000004'},
-                                                {'value':   0.214,  'alpha':    0.214,  'color':    '#420a68'},
-                                                {'value':   0.273,  'alpha':    0.314,  'color':    '#932667'},
-                                                {'value':   0.334,  'alpha':    0.415,  'color':    '#dd513a'},
-                                                {'value':   0.393,  'alpha':    0.515,  'color':    '#fbbc21'},
-                                                {'value':   0.454,  'alpha':    0.615,  'color':    '#fcffa4'}	]}
+                        {"controlPoints":	[
+                                                {"value":   0.153,  "alpha":    0.114,  "color":    "#000004"},
+                                                {"value":   0.214,  "alpha":    0.214,  "color":    "#420a68"},
+                                                {"value":   0.273,  "alpha":    0.314,  "color":    "#932667"},
+                                                {"value":   0.334,  "alpha":    0.415,  "color":    "#dd513a"},
+                                                {"value":   0.393,  "alpha":    0.515,  "color":    "#fbbc21"},
+                                                {"value":   0.454,  "alpha":    0.615,  "color":    "#fcffa4"}	]}
                     ],
-'colorpicker':		{
-    'svPicker':			{
-        'size':         150,
-        'cursorRadius': 3
+"colorpicker":		{
+    "svPicker":			{
+        "size":         150,
+        "cursorRadius": 3
     },
-    'hPicker':			{
-        'width':        30,
-        'height':       150,
-        'pad':          4,
-        'cursorHeight': 4
+    "hPicker":			{
+        "width":        30,
+        "height":       150,
+        "pad":          4,
+        "cursorHeight": 4
     }
 }
 
-</textarea>
+</textarea>-->
 </body>
 </html>
