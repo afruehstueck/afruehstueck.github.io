@@ -22,7 +22,7 @@
     <canvas class="renderCanvas webgl" tabindex="1" data-gltype="webgl"></canvas>
 </div>
 <p style="position: relative; width: 80%; margin: 0 auto; top: 20px"><i>Play around with the parameters of the volume rendering by adjusting the transfer function in the transfer function editor, picking a volume from the upper-right menu and modifying sampling rate and alpha correction.</i></p>
-<div style=" position: relative; width: 1000px; padding: 0; margin: 0 auto; top: 50px; border: 1px solid black; background-image:
+<div style=" position: relative; width: 1000px; padding: 0; margin: 0 auto; top: 50px; border: 1px solid #aaa; background-image:
       -moz-linear-gradient(45deg, #eee 25%, transparent 25%),
       -moz-linear-gradient(-45deg, #eee 25%, transparent 25%),
       -moz-linear-gradient(45deg, transparent 75%, #eee 75%),
@@ -38,7 +38,7 @@
     -webkit-background-size:20px 21px; /* override value for shitty webkit */
 
     background-position:0 0, 10px 0, 10px -10px, 0px 10px;">
-    <img class="debug" width="1000" height="1000" style="display: block; height: 100px; width: 1000px; padding: 0; margin: 0"/>
+    <img class="debug" width="1000" height="50" style="display: block; height: 50px; width: 1000px; padding: 0; margin: 0"/>
     <!--<img class="debug_x" style="display: block; height: 100px; width: 1000px; padding: 0; margin: 0"/>-->
 </div>
 <h2 style="margin-top: 50px">How to use</h2>
@@ -95,7 +95,16 @@
 																	{'name':	'Viridis',	'colors':	['#440154','#414487','#2a788e','#22a884','#7cd250','#fde725']},
 																	{'name':	'Greyscale','colors':	['#000000','#888888','#ffffff']}	]	},
                     'widget':			{	'globalOpacity':	0.75,
-                                            'gradientAlpha':	false },
+                                            'gradientAlpha':	false,
+                                            'lineColor':        '#444',
+                                            'lineWidth':        4,
+                                            'handle': {
+                                                'radius':       9,
+                                                'lineWidth':    3,
+                                                'lineColor':    '#444',
+                                                'size':         16,
+                                                'color':        '#eee'
+                                            }},
                     'widgets':			[	{'controlPoints':	[	{'value':   0.579,  'alpha':    0.188,  'color':    '#440154'},
 																	{'value':   0.639,  'alpha':    0.288,  'color':    '#414487'},
 																	{'value':   0.699,  'alpha':    0.388,  'color':    '#2a788e'},

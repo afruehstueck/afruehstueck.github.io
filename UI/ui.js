@@ -205,7 +205,7 @@ class SVG {
 	 * @param strokeWidth	width of stroke of circle
 	 * @returns {Element}	returns created circle SVG element, appended to parent
 	 */
-	static createCircle( parent, cx, cy, fillColor = 'none', r = 7, strokeColor = '#aaa', strokeWidth = '2px' ) {
+	static createCircle( parent, cx, cy, fillColor = 'none', r = 7, strokeColor = '#aaa', strokeWidth = 2 ) {
 		let circle = document.createElementNS( SVG.svgNS, 'circle' );
 
 		circle.setAttribute( 'class', 'circle' );
@@ -245,7 +245,7 @@ class SVG {
 	 * @param strokeWidth	stroke width of rectangle
 	 * @returns {Element}	returns created rectangle SVG element, appended to parent
 	 */
-	static createRect( parent, x, y, fillColor = 'black', w = 12, h = 12, strokeColor = '#aaa', strokeWidth = '2px' ) {
+	static createRect( parent, x, y, fillColor = 'black', w = 12, h = 12, strokeColor = '#aaa', strokeWidth = 2 ) {
 		let rect = document.createElementNS( SVG.svgNS, 'rect' );
 		rect.setAttribute( 'class', 'rect' );
 		rect.setAttribute( 'x', x );
@@ -293,7 +293,7 @@ class SVG {
 	 * @param strokeWidth	stroke width of polyline
 	 * @returns {Element}	returns created polyline SVG element, appended to parent
 	 */
-	static createPolyline( parent, points, scaleWidth = 1, scaleHeight = 1, attrX = 'x', attrY = 'y', invertY = true, fillColor = 'none', strokeColor = '#eee', strokeWidth = '3px' ) {
+	static createPolyline( parent, points, scaleWidth = 1, scaleHeight = 1, attrX = 'x', attrY = 'y', invertY = true, strokeColor = '#eee', strokeWidth = 3, fillColor = 'none' ) {
 		let polyline = document.createElementNS( SVG.svgNS, 'polyline' );
 		polyline.setAttribute( 'class', 'line' );
 		if( points ) {
@@ -331,13 +331,13 @@ class SVG {
 	}
 
 
-	static createLine( parent, points, scaleWidth = 1, scaleHeight = 1, invertY = true, stroke = '#eee', strokeWidth = '3px' ) {
+	static createLine( parent, points, scaleWidth = 1, scaleHeight = 1, invertY = true, strokeColor = '#eee', strokeWidth = 3 ) {
 		let line = document.createElementNS( SVG.svgNS, 'line' );
 		line.setAttribute( 'class', 'line' );
 		if( points ) {
 			line.setPoints( points );
 		}
-		line.setAttribute( 'stroke', stroke );
+		line.setAttribute( 'stroke', strokeColor );
 		line.setAttribute( 'stroke-width', strokeWidth );
 
 		line.data = {};
@@ -361,8 +361,8 @@ class SVG {
 	}
 
 
-	static createVLine( parent, point, scaleWidth = 1, scaleHeight = 1, invertY = true, stroke = '#eee', strokeWidth = '3px' ) {
-		let line = SVG.createLine( parent, null, scaleWidth, scaleHeight, invertY, stroke, strokeWidth );
+	static createVLine( parent, point, scaleWidth = 1, scaleHeight = 1, invertY = true, strokeColor = '#eee', strokeWidth = 3 ) {
+		let line = SVG.createLine( parent, null, scaleWidth, scaleHeight, invertY, strokeColor, strokeWidth );
 
 		function setPoint( point ) {
 			this.setPoints( [ { x: point.x, y: 0 }, { x: point.x, y: point.y } ] );

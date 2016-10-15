@@ -67,9 +67,19 @@ class TF_panel {
 		/** global widget options:
 		 * globalOpacity:	number
 		 * gradientAlpha:	boolean
+		 * lineColor:		color
+		 * lineWidth:		number
 		 */
 		options.widget = options.widget || {};
 		options.widget.globalOpacity = options.widget.globalOpacity || 1.;
+		options.widget.lineColor = options.widget.lineColor || '#ddd';
+		options.widget.lineWidth = options.widget.lineWidth || 3;
+		options.widget.handle = options.widget.handle || {};
+		options.widget.handle.radius = options.widget.handle.radius || 7;
+		options.widget.handle.size = options.widget.handle.size || 12;
+		options.widget.handle.lineWidth = options.widget.handle.lineWidth || 2;
+		options.widget.handle.lineColor = options.widget.handle.lineColor || '#ddd';
+		options.widget.handle.color = options.widget.handle.color || '#000';
 		if( options.widget.gradientAlpha === undefined ) options.widget.gradientAlpha = true;
 
 		/** array of widget options:
@@ -338,8 +348,29 @@ class TF_panel {
 		let self = this;
 		widget.registerCallback( this.fireChange.bind( self ) );
 		widget.destroyCallback = this.deleteWidget.bind( self );
+		widget.bringToFront = this.bringToFront.bind( self );
+		widget.sendToBack = this.sendToBack.bind( self );
+
 		this.widgets.push( widget );
 
+		this.draw();
+	}
+
+	bringToFront( widget ) {
+		let index = this.widgets.findIndex( elem => elem === widget );
+		//this.widgets.splice( index, 1 );
+
+		this.panel.dom.insertBefore( widget.canvas, this.panel.svgContext );
+		this.widgets.splice( this.widgets.length - 1, 0, this.widgets.splice( index, 1 )[ 0 ] );
+		this.draw();
+	}
+
+	sendToBack( widget ) {
+		let index = this.widgets.findIndex( elem => elem === widget );
+		//this.widgets.splice( index, 1 );
+
+		this.panel.dom.insertBefore( widget.canvas, this.widgets[ 0 ].canvas );
+		this.widgets.splice( 0, 0, this.widgets.splice( index, 1 )[ 0 ] );
 		this.draw();
 	}
 
@@ -492,7 +523,7 @@ class TF_panel {
 	}
 
 	updateTF() {
-		let eps = 1e-6;
+		let eps = 1e-4;
 		let values = [];
 		//find all values from all widgets along x-axis
 		for( let widget of this.widgets ) {
@@ -500,8 +531,9 @@ class TF_panel {
 			let start = controlPoints[ 0 ].value;
 			let end = controlPoints[ controlPoints.length - 1 ].value;
 
-			values.push( start - eps );
-			values.push( end + eps );
+			//add additional controlpoints with very small offset to simulate vertical borders of tf widget
+			values.push( ( start < end ) ? start - eps : start + eps );
+			values.push( ( start < end ) ? end + eps : end - eps );
 
 			for( let controlPoint of controlPoints ) {
 				values.push( controlPoint.value );
@@ -584,13 +616,14 @@ class TF_panel {
 
 		img.src = tfCanvas.toDataURL();
 
-		/* //plot individual widgets one after another to canvas instead of using calculated points
-
-		let tfCanvas = document.createElement( 'canvas' );
+		 //plot individual widgets one after another to canvas instead of using calculated points
+/*
+		img = document.querySelector( '.debug_x' );
+		tfCanvas = document.createElement( 'canvas' );
 		tfCanvas.height = img.clientHeight;
 		tfCanvas.width = img.clientWidth;
 
-		let context = tfCanvas.getContext( '2d' );
+		context = tfCanvas.getContext( '2d' );
 
 		for( let widget of this.widgets ) {
 			//find minima and maxima (without sorting points)
@@ -615,7 +648,7 @@ class TF_panel {
 		}
 
 		img.src = tfCanvas.toDataURL();
-		*/
+*/
 	}
 }
 
@@ -649,10 +682,12 @@ class TF_widget {
 		let widgetContextMenu = new ContextMenu( { container: container } );
 		let menuItems = [
 			{ name: 'Delete widget', 	callback: this.destructor.bind( self ) },
-			/*{ name: 'Duplicate widget',	callback: function( e ) { console.log( 'click b' ) } },
-			{ name: 'Bring to front',	callback: function( e ) { console.log( 'click b' ) } },
-			{ name: 'Send to back',		callback: function( e ) { console.log( 'click b' ) } },
-			{ name: 'Store as preset',	callback: function( e ) { console.log( 'click c' ) } },*/
+			{ name: 'Bring to front',	callback: function() {
+				self.bringToFront( self );
+			} },
+			{ name: 'Send to back',		callback: function() { self.sendToBack( self ); } }
+			/*	{ name: 'Duplicate widget',	callback: function( e ) { console.log( 'click b' ) } },
+				{ name: 'Store as preset',	callback: function( e ) { console.log( 'click c' ) } },*/
 		];
 		widgetContextMenu.addItems( menuItems );
 		this.widgetContextMenu = widgetContextMenu;
@@ -729,7 +764,7 @@ class TF_widget {
 	createAnchor() {
 		let parent = this.parent;
 		let container = this.container;
-		let anchor = SVG.createRect( this.parent.svgContext, 0, 0 );
+		let anchor = SVG.createRect( this.parent.svgContext, 0, 0, this.options.handle.color, this.options.handle.size, this.options.handle.size, this.options.handle.lineColor, this.options.handle.lineWidth );
 		anchor.classList.add( 'handle' );
 		this.anchor = anchor;
 
@@ -754,17 +789,17 @@ class TF_widget {
 			parent.dom.classList.add( 'drag' );
 			let offsetX = anchor.data.x - mouse.x;
 			let offsetY = anchor.data.y - mouse.y;
+
 			if ( e.shiftKey && anchor.moveLock == 'N' ) {
 				anchor.moveLock = ( Math.abs( offsetX ) > Math.abs( offsetY ) ) ? 'H' : 'V';
 			}
-
-			if( anchor.moveLock === 'H' ) offsetY = 0;
-			if( anchor.moveLock === 'V' ) offsetX = 0;
-
 			let setX = ( anchor.moveLock !== 'V' ) ? mouse.x : null;
 			let setY = ( anchor.moveLock !== 'H' ) ? mouse.y : null;
 
 			anchor.set( setX, setY );
+
+			if( anchor.moveLock === 'H' ) offsetY = 0;
+			if( anchor.moveLock === 'V' ) offsetX = 0;
 
 			for( let controlPoint of this.controlPoints ) {
 				this.updateControlPoint( controlPoint, { x: controlPoint.handle.data.x - offsetX, y: controlPoint.handle.data.y - offsetY } );
@@ -813,7 +848,7 @@ class TF_widget {
 		let self = this;
 
 		let parent = this.parent;
-		let outline = SVG.createPolyline( this.parent.svgContext, null, this.canvas.width, this.canvas.height, 'value', 'alpha' );
+		let outline = SVG.createPolyline( this.parent.svgContext, null, this.canvas.width, this.canvas.height, 'value', 'alpha', true, this.options.lineColor, this.options.lineWidth );
 		outline.classList.add( 'handle' );
 		this.outline = outline;
 
@@ -862,10 +897,10 @@ class TF_widget {
 		let self = this;
 		let parent = this.parent;
 
-		let handleRight = SVG.createVLine( this.parent.svgContext, null, this.canvas.width, this.canvas.height );
+		let handleRight = SVG.createVLine( this.parent.svgContext, null, this.canvas.width, this.canvas.height, true, this.options.lineColor, this.options.lineWidth );
 		handleRight.classList.add( 'handle' );
 		handleRight.handleType = 'right';
-		let handleLeft = SVG.createVLine( this.parent.svgContext, null, this.canvas.width, this.canvas.height );
+		let handleLeft = SVG.createVLine( this.parent.svgContext, null, this.canvas.width, this.canvas.height, true, this.options.lineColor, this.options.lineWidth );
 		handleLeft.classList.add( 'handle' );
 		handleLeft.handleType = 'left';
 		this.handles = {};
@@ -956,7 +991,7 @@ class TF_widget {
 
 		let controlPoint = { value: value, alpha: alpha, color: Color.parseColor( color ) };
 
-		let handle = SVG.createCircle( parent.svgContext, value * this.canvas.width, this.canvas.height - alpha * this.canvas.height, Color.RGBtoHEX( controlPoint.color ) );
+		let handle = SVG.createCircle( parent.svgContext, value * this.canvas.width, this.canvas.height - alpha * this.canvas.height, Color.RGBtoHEX( controlPoint.color ), this.options.handle.radius, this.options.handle.lineColor, this.options.handle.lineWidth );
 		handle.classList.add( 'handle' );
 
 		let width = parent.width,
@@ -1088,15 +1123,13 @@ class TF_widget {
 	 */
 	findNeighborControlPoints( value ) {
 		let right = null, left = null;
+		let leftValue = Number.MIN_VALUE, rightValue = Number.MAX_VALUE;
 		for( let controlPoint of this.controlPoints ) {
-			right = controlPoint;
-			if( controlPoint.value > value ) {
-				break;
-			}
-			left = right;
+			if( controlPoint.value < value && controlPoint.value > leftValue ) leftValue = controlPoint.value;
+			if( controlPoint.value > value && controlPoint.value < rightValue ) rightValue = controlPoint.value;
 		}
-		//set right to null if value is right of widget
-		if( left === right ) right = null;
+		if( leftValue > Number.MIN_VALUE ) left = this.findControlPoint( leftValue );
+		if( rightValue < Number.MAX_VALUE ) right = this.findControlPoint( rightValue );
 		return { left: left, right: right };
 	}
 	/**
@@ -1114,6 +1147,13 @@ class TF_widget {
 		let neighbors = this.findNeighborControlPoints( anchorValue ),
 			left = neighbors.left,
 			right = neighbors.right;
+
+		if( !left ) {
+			left = { alpha: 0, value: anchorValue };
+		}
+		if( !right ) {
+			right = { alpha: 0, value: anchorValue };
+		}
 
 		let anchorAlpha = ( left.alpha + ( right.alpha - left.alpha ) * ( anchorValue - left.value ) / ( right.value - left.value ) ) / 2;
 		let w = this.anchor.data.width,
@@ -1156,11 +1196,7 @@ class TF_widget {
 		let end = controlPoints[ controlPoints.length - 1 ].value;
 		let gradientStart = Math.min( start, end );
 		let gradientEnd = Math.max( start, end );
-		/*if( start > end ) {
-			let tmp = end;
-			end = start;
-			start = tmp;
-		}*/
+
 		let context = canvas.getContext( '2d' );
 
 		context.clearRect( 0, 0, canvas.width, canvas.height );
@@ -1176,11 +1212,8 @@ class TF_widget {
 			//add gradient stop
 			let stopPos = Math.clamp( controlPoint.value - gradientStart, 0, 1 ) / widgetWidth;
 
-			//let rgbColor = Color.parseColor( controlPoint.color );
-
-			let useAlpha = this.options.gradientAlpha;
 			//create color string with or without alpha value depending on settings
-			let rgbaColorString = 'rgba( ' + controlPoint.color.r + ', ' + controlPoint.color.g + ', ' + controlPoint.color.b + ', ' + ( useAlpha ? controlPoint.alpha : '1' ) + ')';
+			let rgbaColorString = 'rgba( ' + controlPoint.color.r + ', ' + controlPoint.color.g + ', ' + controlPoint.color.b + ', ' + ( this.options.gradientAlpha ? controlPoint.alpha : '1' ) + ')';
 
 			gradient.addColorStop( stopPos, rgbaColorString );
 		}
@@ -1192,10 +1225,6 @@ class TF_widget {
 
 		context.fillStyle = gradient;
 		context.fill();
-
-		/*context.strokeStyle = '#eee';
-		context.lineWidth = 1;
-		context.stroke();*/
 
 		this.fireChange();
 		//propagate change to callbacks
