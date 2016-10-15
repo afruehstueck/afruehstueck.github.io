@@ -775,10 +775,40 @@ function init( canvas ) {
 }
 
 function updateTransferFunctionTextures( canvas ) {
-	tf_img = tf_panel.TFtoIMG();
-	//tf_panel.getTF();
+
+	var tf_img = document.createElement( 'img' );
+	tf_img.width = 256;
+	tf_img.height = 30;
+	tf_panel.plotTFResults( tf_img );
+
+	var debug_img = document.querySelector( '.debug' );
+	tf_panel.plotTFResults( debug_img );
+
+
+	//let tfValues = tf_panel.getTF();
+
+	/** show TF values to image texture **/
+	/*var img = document.querySelector( '.debug' );
+	let tfCanvas = document.createElement( 'canvas' );
+	tfCanvas.height = img.clientHeight;
+	tfCanvas.width = img.clientWidth;
+
+	let context = tfCanvas.getContext( '2d' );
+
+	let gradient = context.createLinearGradient( 0, 0, tfCanvas.width, 0 ); //horizontal gradient
+
+	for( let [ value, rgba ] of tfValues ) {
+		let rgbaColorString = 'rgba( ' + rgba.r + ', ' + rgba.g + ', ' + rgba.b + ', ' + rgba.a + ')';
+		gradient.addColorStop( Math.clamp( value, 0, 1 ), rgbaColorString );
+	}
+
+	context.fillStyle = gradient;
+	context.fillRect( 0, 0, tfCanvas.width, tfCanvas.height )
+
+	img.src = tfCanvas.toDataURL();*/
+	/**************************/
+
 	canvas.transferTexture = createTextureFromImage.call( canvas, tf_img, false );
-	//console.log( 'updated transfer function texture' );
 }
 
 function requestRendering() {

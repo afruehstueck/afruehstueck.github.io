@@ -16,7 +16,11 @@ Math.clamp = function( value, min, max ) { return Math.min( Math.max( min, value
  * t is percentage of a in interpolation
  */
 Math.interpolate = function( a, b, t ) {
-	return a.map( ( _, i )  => a[ i ] * ( 1 - t ) + b[ i ] * t );
+	if( Array.isArray( a ) && Array.isArray( b ) && a.length === b.length ) {
+		return a.map( ( _, i ) => a[ i ] * ( 1 - t ) + b[ i ] * t );
+	} else {
+		return a * ( 1 - t ) + b * t;
+	}
 };
 
 class Statistics {

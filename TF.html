@@ -22,6 +22,25 @@
     <canvas class="renderCanvas webgl" tabindex="1" data-gltype="webgl"></canvas>
 </div>
 <p style="position: relative; width: 80%; margin: 0 auto; top: 20px"><i>Play around with the parameters of the volume rendering by adjusting the transfer function in the transfer function editor, picking a volume from the upper-right menu and modifying sampling rate and alpha correction.</i></p>
+<div style=" position: relative; width: 1000px; padding: 0; margin: 0 auto; top: 50px; border: 1px solid black; background-image:
+      -moz-linear-gradient(45deg, #eee 25%, transparent 25%),
+      -moz-linear-gradient(-45deg, #eee 25%, transparent 25%),
+      -moz-linear-gradient(45deg, transparent 75%, #eee 75%),
+      -moz-linear-gradient(-45deg, transparent 75%, #eee 75%);
+    background-image:
+      -webkit-gradient(linear, 0 100%, 100% 0, color-stop(.25, #eee), color-stop(.25, transparent)),
+      -webkit-gradient(linear, 0 0, 100% 100%, color-stop(.25, #eee), color-stop(.25, transparent)),
+      -webkit-gradient(linear, 0 100%, 100% 0, color-stop(.75, transparent), color-stop(.75, #eee)),
+      -webkit-gradient(linear, 0 0, 100% 100%, color-stop(.75, transparent), color-stop(.75, #eee));
+
+    -moz-background-size:20px 20px;
+    background-size:20px 20px;
+    -webkit-background-size:20px 21px; /* override value for shitty webkit */
+
+    background-position:0 0, 10px 0, 10px -10px, 0px 10px;">
+    <img class="debug" width="1000" height="1000" style="display: block; height: 100px; width: 1000px; padding: 0; margin: 0"/>
+    <!--<img class="debug_x" style="display: block; height: 100px; width: 1000px; padding: 0; margin: 0"/>-->
+</div>
 <h2 style="margin-top: 50px">How to use</h2>
 <p><i>Click and Drag</i> circular controlpoints of transfer function widget to <b>adjust position and transparency</b>.</p>
 <p><i>Double-click</i> circular controlpoints of transfer function widget to <b>pick or adjust a color value</b>. The color value can be specified using either the hue slider and the saturation-/value picker or by entering RGB values in the input fields.</p>
@@ -58,9 +77,14 @@
         let histogram = Statistics.calcHistogram( data, histogramOptions );
 
         options = { 'panel':			{	'width':			1000,
-											'height':			200	},
-					'histogram':		{	'backgroundColor':	'#dddddd',
-											'fillColor':		'#bcbcbc',
+											'height':			200,
+                                            'background':	    'linear-gradient(to top, rgb(212,228,239) 30%, rgb(134,174,204) 100%)',
+                                            'border':	        '3px solid rgb(134,174,204)',
+                                            'isCollapsible':    false,
+                                            'showTFResult':     true,
+                                            'resultBackground': 'rgb(212,228,239)',
+                                            'resultHeight':     30 },
+					'histogram':		{	'fillColor':		'#bcbcbc',
 											'lineColor':		'#111111',
 											'style':			'bars',
 											'overlayUnscaled':	false },
@@ -70,7 +94,9 @@
 																	{'name':	'Plasma',	'colors':	['#0d0887','#6a00a8','#b12a90','#e16462','#fca835','#f0f921']},
 																	{'name':	'Viridis',	'colors':	['#440154','#414487','#2a788e','#22a884','#7cd250','#fde725']},
 																	{'name':	'Greyscale','colors':	['#000000','#888888','#ffffff']}	]	},
-					'widgets':			[	{'controlPoints':	[	{'value':   0.579,  'alpha':    0.188,  'color':    '#440154'},
+                    'widget':			{	'globalOpacity':	0.75,
+                                            'gradientAlpha':	false },
+                    'widgets':			[	{'controlPoints':	[	{'value':   0.579,  'alpha':    0.188,  'color':    '#440154'},
 																	{'value':   0.639,  'alpha':    0.288,  'color':    '#414487'},
 																	{'value':   0.699,  'alpha':    0.388,  'color':    '#2a788e'},
 																	{'value':   0.759,  'alpha':    0.488,  'color':    '#22a884'},

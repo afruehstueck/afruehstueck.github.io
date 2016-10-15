@@ -12,18 +12,26 @@ class TF_panel {
 			options = JSON.parse( options );
 		}
 		/** panel appearance options
+		 * background:		CSS background 		background for the panel
+		 * border:			CSS border			border for the panel
 		 * width:			number 				width of histogram panel
 		 * height: 			number
 		 * isCollapsible	boolean				describes whether collapsible sidebar should be used
+		 * showTFResult		boolean				describes whether a bottom bar should show the result of the alpha blended transfer function widgets
 		 */
 		options.parent = options.parent || document.body;
 		options.panel = options.panel || {};
 		options.panel.width = options.panel.width || 600;
 		options.panel.height = options.panel.height || 120;
-		options.panel.isCollapsible = options.panel.isCollapsible || false;
-
+		options.panel.background = options.panel.background || '#000000';
+		options.panel.border = options.panel.border || 'none';
+		if( options.panel.isCollapsible === undefined ) options.panel.isCollapsible = false;
+		if( options.panel.showTFResult === undefined ) options.panel.showTFResult = false;
+		if( options.panel.showTFResult ) {
+			options.panel.resultHeight = options.panel.resultHeight || 20;
+			options.panel.resultBackground = options.panel.resultBackground || '#000000';
+		}
 			/** histogram style options
-		 * backgroundColor:	color				background color for the histogram background
 		 * fillColor:		color				fill color for the histogram drawing
 		 * lineColor:		color				line color for the histogram drawing
 		 * style:			'polygon' or 'bars'	whether the histogram should be plotted as a polyline or vertical rectangular bars
@@ -31,7 +39,6 @@ class TF_panel {
 		 * overlayUnscaled:	boolean				whether the histogram (scaled by the 'scale' function should be overlayed with an unscaled version
 		 */
 		options.histogram = options.histogram || {};
-		options.histogram.backgroundColor = options.histogram.backgroundColor || '#000000';
 		options.histogram.fillColor = options.histogram.fillColor || '#333333';
 		options.histogram.lineColor = options.histogram.lineColor || '#666666';
 		options.histogram.style = options.histogram.style || 'polygon';
@@ -57,18 +64,25 @@ class TF_panel {
 			options.gradientPresets.presets = options.gradientPresets.presets.concat( defaultPresets );
 		}
 
+		/** global widget options:
+		 * globalOpacity:	number
+		 * gradientAlpha:	boolean
+		 */
+		options.widget = options.widget || {};
+		options.widget.globalOpacity = options.widget.globalOpacity || 1.;
+		if( options.widget.gradientAlpha === undefined ) options.widget.gradientAlpha = true;
+
 		/** array of widget options:
 		 * location:		number
 		 * controlPoints:	array of { value: number, alpha: number, color: color }
-		 * opacity:			number
 		 * colors:			array of color values
 		 */
 		options.widgets = options.widgets || [];
+
 		for( let index = 0; index < options.widgets.length; index++ ) {
 			options.widgets[ index ] = options.widgets[ index ] || {};
 			options.widgets[ index ].location = options.widgets[ index ].location || null;
 			options.widgets[ index ].controlPoints = options.widgets[ index ].controlPoints || [];
-			options.widgets[ index ].opacity = options.widgets[ index ].opacity || 0.6;
 		}
 
 		/** colorpicker options
@@ -79,7 +93,7 @@ class TF_panel {
 		 * options.hPicker.*:			hue picker rectangle
 		 * width:			number		width of hue picker
 		 * cursorHeight:	number		height of hue picker cursor
-		 * pad:			number		padding between sv picker and hue picker
+		 * pad:				number		padding between sv picker and hue picker
 		 */
 		options.colorpicker = options.colorpicker || {};
 
@@ -109,6 +123,8 @@ class TF_panel {
 
 		this.options = this.parseOptions( options );
 		this.parent = options.parent || document.body;
+
+		this.tf_values = new Map();
 
 		this.callbacks = [];
 
@@ -140,9 +156,28 @@ class TF_panel {
 			collapsiblePanel.dom.onclick = panel.toggle.bind( panel );
 		}
 
+		if( this.options.panel.showTFResult ) {
+			this.tfResult = new Panel( { container: container } );
+			this.tfResult.dom.style.position = 'absolute';
+			this.tfResult.dom.style.background = options.panel.resultBackground;
+			this.tfResult.dom.style.border = options.panel.border;
+			this.tfResult.moveTo( this.options.panel.isCollapsible ? 24 : 0, this.options.panel.height );
+
+
+			let img = document.createElement( 'img' );
+			img.classList.add( 'tf-result' );
+			img.style.width = this.options.panel.width + 'px';
+			img.style.height = this.options.panel.resultHeight + 'px';
+			img.style.display = 'block';
+			this.tfResult.dom.appendChild( img );
+			this.tfResult.img = img;
+		}
+
 		panel.dom.id = 'tf-panel';
 		panel.dom.classList.add( 'overlay' );
 		panel.dom.style.left = this.options.panel.isCollapsible ? '24px' : '0px';
+		panel.dom.style.background = options.panel.background;
+		panel.dom.style.border = options.panel.border;
 		this.panel = panel;
 		panel.width = this.options.panel.width;
 		panel.height = this.options.panel.height;
@@ -151,11 +186,10 @@ class TF_panel {
 		let canvas = document.createElement( 'canvas' );
 		canvas.width = panel.width;
 		canvas.height = panel.height;
+		canvas.style.display = 'block';
 		canvas.id = 'histogram-canvas';
 		this.panel.dom.appendChild( canvas );
 		this.canvas = canvas;
-		this.canvas.getContext( '2d' ).fillStyle = options.backgroundColor;
-		this.canvas.getContext( '2d' ).fillRect( 0, 0, canvas.width, canvas.height );
 
 		this.options.gradientPresets.container = this.panel.dom;
 		this.panelContextMenu = this.addContextMenu( this.options.gradientPresets );
@@ -294,7 +328,12 @@ class TF_panel {
 		return panelContextMenu;
 	}
 
-	addWidget( options ) {
+	addWidget( options = {} ) {
+		//copy global widget options to widget's options
+		for (var attrname in this.options.widget ) {
+			options[ attrname ] = this.options.widget[ attrname ];
+		};
+
 		let widget = new TF_widget( this.panel, this.panel.dom, options );
 		let self = this;
 		widget.registerCallback( this.fireChange.bind( self ) );
@@ -323,6 +362,8 @@ class TF_panel {
 	}
 
 	fireChange() {
+		this.updateTF();
+
 		for( let callback of this.callbacks ) {
 			callback();
 		}
@@ -382,9 +423,6 @@ class TF_panel {
 	drawHistogram( options = {} ) {
 		let canvas = this.canvas;
 		let context = canvas.getContext( '2d' );
-		context.clearRect( 0, 0, canvas.width, canvas.height );
-		context.fillStyle = options.backgroundColor;
-		context.fillRect( 0, 0, canvas.width, canvas.height );
 		context.fillStyle = options.fillColor;
 		context.strokeStyle = options.lineColor;
 
@@ -450,91 +488,134 @@ class TF_panel {
 	}
 
 	getTF() {
-		let outputPoints = [];
-		outputPoints.sortPoints = function() {
-			this.sort( ( a, b ) => ( a.value > b.value ) );
-		};
+		return this.tf_values;
+	}
 
-		function interpolate( pointA, pointB, t ) {
-			let colorA = Color.parseColor( pointA.color );
-			let colorB = Color.parseColor( pointB.color );
-			let colorT = Color.RGBtoHEX( Math.interpolate( colorA.r, colorB.r, t ), Math.interpolate( colorA.g, colorB.g, t ), Math.interpolate( colorA.b, colorB.b, t ) );
-			return {	value: Math.interpolate( pointA.value, pointB.value, t ),
-						alpha: Math.interpolate( pointA.alpha, pointB.alpha, t ),
-						color: colorT };
-		}
-
-		function blendColorValue( a, b, t ) {
-			return Math.sqrt( ( 1 - t ) * a * a + t * b * b );
-		}
-
-		function blendColor( colorA, colorB, t ) {
-			Color.RGBtoHEX( blendColorValue( colorA.r, colorB.r, t ), blendColorValue( colorA.g, colorB.g, t ), blendColorValue( colorA.b, colorB.b, t ) );
-		}
-
-		outputPoints.findPoints = function( value ) {
-			let right = {}, left = {};
-			for( let controlPoint of this.controlPoints ) {
-				right = controlPoint;
-				if( controlPoint.value > value ) {
-					break;
-				}
-				left = right;
-			}
-
-			if( left && left.alpha === 0 ) left = {};
-			if( right && right.alpha === 0 ) right = {};
-			return { left: left, right: right };
-		};
-
+	updateTF() {
+		let eps = 1e-6;
+		let values = [];
+		//find all values from all widgets along x-axis
 		for( let widget of this.widgets ) {
 			let controlPoints = widget.controlPoints;
 			let start = controlPoints[ 0 ].value;
 			let end = controlPoints[ controlPoints.length - 1 ].value;
-			let eps = 1e-6;
-			//add first and last 'edge' as separate control points
-			controlPoints.push( { value: start - eps, alpha: 0, color: '#000' } );
-			controlPoints.push( { value: end + eps, alpha: 0, color: '#000' } );
-			controlPoints.sort();
+
+			values.push( start - eps );
+			values.push( end + eps );
 
 			for( let controlPoint of controlPoints ) {
-				outputPoints.push( controlPoint );
+				values.push( controlPoint.value );
 			}
+		}
+
+		//sort values by size
+		values.sort( ( a, b ) => ( a - b ) );
+
+		var rgbaSum = function( color1, color2 ) {
+			var a = color1.a + color2.a * ( 1 - color1.a );
+			return {
+				r: ( a === 0 ) ? 0 : ( color1.r * color1.a  + color2.r * color2.a * ( 1 - color1.a ) ) / a,
+				g: ( a === 0 ) ? 0 : ( color1.g * color1.a  + color2.g * color2.a * ( 1 - color1.a ) ) / a,
+				b: ( a === 0 ) ? 0 : ( color1.b * color1.a  + color2.b * color2.a * ( 1 - color1.a ) ) / a,
+				a: a
+			}
+		};
+
+		this.tf_values.clear();
+		for( let value of values ) {
+			let colorsAtValue = [];
+			for( let widget of this.widgets ) {
+				let rgba = {};
+				let point = widget.findControlPoint( value );
+				if( point ) {
+					//let hex = point.color;
+					rgba = Object.assign( point.color );
+					rgba.a = point.alpha;
+				} else {
+					let neighbors = widget.findNeighborControlPoints( value );
+
+					if( neighbors.left === null || neighbors.right === null ) {
+						//value is not in range of current widget, return empty color
+						rgba = { r: 0, g: 0, b: 0, a: 0 };
+					} else {
+						//interpolate new color and alpha at current value
+						let pct = ( value - neighbors.left.value ) / ( neighbors.right.value - neighbors.left.value );
+						let rgb = Math.interpolate( [ neighbors.left.color.r, neighbors.left.color.g, neighbors.left.color.b ], [ neighbors.right.color.r, neighbors.right.color.g, neighbors.right.color.b ], pct );
+						let a = Math.interpolate( neighbors.left.alpha, neighbors.right.alpha, pct );
+
+						rgba = { r: rgb[ 0 ], g: rgb[ 1 ], b: rgb[ 2 ], a: a };
+					}
+				}
+				colorsAtValue.push( rgba );
+			}
+
+			var blendedColor = { r: 0, g: 0, b: 0, a: 0 };
+			for( let color of colorsAtValue ) {
+				blendedColor = rgbaSum( color, blendedColor );
+			}
+			blendedColor.r = Math.round( blendedColor.r );
+			blendedColor.g = Math.round( blendedColor.g );
+			blendedColor.b = Math.round( blendedColor.b );
+
+			this.tf_values.set( value, blendedColor );
+		}
+
+		if( this.options.panel.showTFResult ) {
+			this.plotTFResults( this.tfResult.img );
 		}
 	}
 
-	TFtoIMG() {
-			var img = document.createElement( 'img' );
-			let tfCanvas = document.createElement( 'canvas' );
-			tfCanvas.height = 30;
-			tfCanvas.width = 256;
+	plotTFResults( img ) {
+		let tfCanvas = document.createElement( 'canvas' );
+		tfCanvas.height = img.height || img.clientHeight;
+		tfCanvas.width = img.width || img.clientWidth;
 
-			let context = tfCanvas.getContext( '2d' );
+		let context = tfCanvas.getContext( '2d' );
 
-			for( let widget of this.widgets ) {
-				//find minima and maxima (without sorting points)
-				let start = 1, end = 0;
+		let gradient = context.createLinearGradient( 0, 0, tfCanvas.width, 0 ); //horizontal gradient
 
-				for( let controlPoint of widget.controlPoints ) {
-					if( controlPoint.value < start ) start = controlPoint.value;
-					if( controlPoint.value > end ) end = controlPoint.value;
-				}
-				let width = end - start;
+		for( let [ value, rgba ] of this.tf_values ) {
+			let rgbaColorString = 'rgba( ' + rgba.r + ', ' + rgba.g + ', ' + rgba.b + ', ' + rgba.a + ')';
+			gradient.addColorStop( Math.clamp( value, 0, 1 ), rgbaColorString );
+		}
 
-				let gradient = context.createLinearGradient( start * tfCanvas.width, 0, end * tfCanvas.width, 0 ); //horizontal gradient
+		context.fillStyle = gradient;
+		context.fillRect( 0, 0, tfCanvas.width, tfCanvas.height );
 
-				for( let controlPoint of widget.controlPoints ) {
-					let rgbColor = Color.parseColor( controlPoint.color );
-					let rgbaColorString = 'rgba( ' + rgbColor.r + ', ' + rgbColor.g + ', ' + rgbColor.b + ', ' + controlPoint.alpha + ')';
-					gradient.addColorStop( ( controlPoint.value - start ) / width, rgbaColorString );
-				}
+		img.src = tfCanvas.toDataURL();
 
-				context.fillStyle = gradient;
-				context.fillRect( start * tfCanvas.width, 0, ( end - start ) * tfCanvas.width, tfCanvas.height )
+		/* //plot individual widgets one after another to canvas instead of using calculated points
+
+		let tfCanvas = document.createElement( 'canvas' );
+		tfCanvas.height = img.clientHeight;
+		tfCanvas.width = img.clientWidth;
+
+		let context = tfCanvas.getContext( '2d' );
+
+		for( let widget of this.widgets ) {
+			//find minima and maxima (without sorting points)
+			let start = 1, end = 0;
+
+			for( let controlPoint of widget.controlPoints ) {
+				if( controlPoint.value < start ) start = controlPoint.value;
+				if( controlPoint.value > end ) end = controlPoint.value;
+			}
+			let width = end - start;
+
+			let gradient = context.createLinearGradient( start * tfCanvas.width, 0, end * tfCanvas.width, 0 ); //horizontal gradient
+
+			for( let controlPoint of widget.controlPoints ) {
+				//let rgbColor = Color.parseColor( controlPoint.color );
+				let rgbaColorString = 'rgba( ' + controlPoint.color.r + ', ' + controlPoint.color.g + ', ' + controlPoint.color.b + ', ' + controlPoint.alpha + ')';
+				gradient.addColorStop( ( controlPoint.value - start ) / width, rgbaColorString );
 			}
 
-			img.src = tfCanvas.toDataURL();
-			return img;
+			context.fillStyle = gradient;
+			context.fillRect( start * tfCanvas.width, 0, ( end - start ) * tfCanvas.width, tfCanvas.height )
+		}
+
+		img.src = tfCanvas.toDataURL();
+		*/
 	}
 }
 
@@ -550,7 +631,7 @@ class TF_widget {
 
 		options.location = options.location || null;
 		options.controlPoints = options.controlPoints || [];
-		options.opacity = options.opacity || 0.8;
+		options.globalOpacity = options.globalOpacity || 1.;
 		this.options = options;
 
 		//create canvas for gradient background
@@ -560,7 +641,7 @@ class TF_widget {
 		canvas.width = parent.width;
 		canvas.height = parent.height;
 		canvas.className = 'tf-widget-canvas overlay';
-		canvas.style.opacity = options.opacity;
+		canvas.style.opacity = options.globalOpacity;
 		//insert canvases below UI svg context
 		container.insertBefore( canvas, parent.svgContext );
 
@@ -579,8 +660,9 @@ class TF_widget {
 		this.controlPoints = [];//options.controlPoints;
 
 		this.controlPoints.sortPoints = function() {
-			this.sort( ( a, b ) => ( a.value > b.value ) );
-		}
+			this.sort( ( a, b ) => ( a.value - b.value ) );
+		};
+
 		this.controlPoints.addPoint = function( point ) {
 			this.push( point );
 			this.sortPoints();
@@ -664,7 +746,10 @@ class TF_widget {
 
 			//restrict area of movement for control points
 			//todo this is not handled very well yet
-			if( mouse.x < 0 || mouse.x > this.canvas.width || mouse.y < 0 || mouse.y > this.canvas.height ) return;
+			//if( mouse.x < 0 || mouse.x > this.canvas.width || mouse.y < 0 || mouse.y > this.canvas.height ) return;
+
+			mouse.x = Math.clamp( mouse.x, 0, this.canvas.width );
+			mouse.y = Math.clamp( mouse.y, 0, this.canvas.height );
 
 			parent.dom.classList.add( 'drag' );
 			let offsetX = anchor.data.x - mouse.x;
@@ -869,9 +954,9 @@ class TF_widget {
 			value = value.value;
 		}
 
-		let controlPoint = { value: value, alpha: alpha, color: color };
+		let controlPoint = { value: value, alpha: alpha, color: Color.parseColor( color ) };
 
-		let handle = SVG.createCircle( parent.svgContext, value * this.canvas.width, this.canvas.height - alpha * this.canvas.height, controlPoint.color );
+		let handle = SVG.createCircle( parent.svgContext, value * this.canvas.width, this.canvas.height - alpha * this.canvas.height, Color.RGBtoHEX( controlPoint.color ) );
 		handle.classList.add( 'handle' );
 
 		let width = parent.width,
@@ -888,7 +973,9 @@ class TF_widget {
 
 			//restrict area of movement for control points
 			//todo this is not handled very well yet
-			if( mouse.x < 0 || mouse.x > width || mouse.y < 0 || mouse.y > height ) return;
+			//if( mouse.x < 0 || mouse.x > width || mouse.y < 0 || mouse.y > height ) return;
+			mouse.x = Math.clamp( mouse.x, 0, width );
+			mouse.y = Math.clamp( mouse.y, 0, height );
 
 			this.updateControlPoint( controlPoint, { x: mouse.x, y: mouse.y } );
 
@@ -925,7 +1012,7 @@ class TF_widget {
 			parent.cp_widget.color.registerCallback( handle, function( col ) {
 				let colHex = Color.RGBtoHEX( col.rgb );
 				handle.setFillColor( colHex );
-				controlPoint.color = colHex;
+				controlPoint.color = col.rgb;
 				drawWidgetBound();
 			} );
 			parent.cp_widget.color.set( controlPoint.color, handle );
@@ -1000,7 +1087,7 @@ class TF_widget {
 	 * find the two controlPoints that the specified value lies inbetween
 	 */
 	findNeighborControlPoints( value ) {
-		let right = {}, left = {};
+		let right = null, left = null;
 		for( let controlPoint of this.controlPoints ) {
 			right = controlPoint;
 			if( controlPoint.value > value ) {
@@ -1008,6 +1095,8 @@ class TF_widget {
 			}
 			left = right;
 		}
+		//set right to null if value is right of widget
+		if( left === right ) right = null;
 		return { left: left, right: right };
 	}
 	/**
@@ -1040,10 +1129,10 @@ class TF_widget {
 		if ( sort ) controlPoints.sortPoints();
 
 		this.updateHandles();
+		this.updateAnchor();
+
 		//redraw
 		this.drawWidget();
-		
-		this.updateAnchor();
 	}
 
 	updateHandles() {
@@ -1086,7 +1175,14 @@ class TF_widget {
 			context.lineTo( controlPoint.value * canvas.width, canvas.height - controlPoint.alpha * canvas.height );
 			//add gradient stop
 			let stopPos = Math.clamp( controlPoint.value - gradientStart, 0, 1 ) / widgetWidth;
-			gradient.addColorStop( stopPos, controlPoint.color );
+
+			//let rgbColor = Color.parseColor( controlPoint.color );
+
+			let useAlpha = this.options.gradientAlpha;
+			//create color string with or without alpha value depending on settings
+			let rgbaColorString = 'rgba( ' + controlPoint.color.r + ', ' + controlPoint.color.g + ', ' + controlPoint.color.b + ', ' + ( useAlpha ? controlPoint.alpha : '1' ) + ')';
+
+			gradient.addColorStop( stopPos, rgbaColorString );
 		}
 
 		context.lineTo( end * canvas.width, canvas.height );
@@ -1097,9 +1193,9 @@ class TF_widget {
 		context.fillStyle = gradient;
 		context.fill();
 
-		context.strokeStyle = '#eee';
+		/*context.strokeStyle = '#eee';
 		context.lineWidth = 1;
-		context.stroke();
+		context.stroke();*/
 
 		this.fireChange();
 		//propagate change to callbacks

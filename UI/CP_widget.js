@@ -157,6 +157,9 @@ class Color {
 	 * @returns {{r, g, b}} converted color value as RGB object { r: red, g: green, b: blue }
 	 */
 	static HEXtoRGB( hex ) {
+		if( !typeof hex === 'string' ) {
+			console.error( 'HEXtoRGB: argument is not type of string' );
+		}
 		// Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
 		let shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
 		hex = hex.replace(shorthandRegex, function(m, r, g, b) {
