@@ -2,6 +2,8 @@
  * @author afruehstueck
  */
 
+'use strict';
+
 /**
  * TF_panel is the base class for the transfer function panel
  * contains the container DIV (panel), the histogram canvas, one or multiple TF_widgets, the SVG context for UI elements
@@ -18,6 +20,8 @@ class TF_panel {
 		 * height: 			number
 		 * isCollapsible	boolean				describes whether collapsible sidebar should be used
 		 * showTFResult		boolean				describes whether a bottom bar should show the result of the alpha blended transfer function widgets
+		 * resultHeight		number				height of result bar
+		 * resultBackground	CSS					background of result bar
 		 */
 		options.parent = options.parent || document.body;
 		options.panel = options.panel || {};
@@ -65,29 +69,36 @@ class TF_panel {
 		}
 
 		/** global widget options:
-		 * globalOpacity:	number
-		 * gradientAlpha:	boolean
-		 * lineColor:		color
-		 * lineWidth:		number
+		 * globalOpacity:	number	1
+		 * gradientAlpha:	boolean	true
+		 * lineColor:		color	#ddd
+		 * lineWidth:		number	3
+		 * handle.radius	number	7
+		 * handle.size		number	12
+		 * handle.lineWidth	number	2
+		 * handle.lineColor number	#ddd
+		 * handle.color 	number	#000
 		 */
 		options.widget = options.widget || {};
 		options.widget.globalOpacity = options.widget.globalOpacity || 1.;
 		options.widget.lineColor = options.widget.lineColor || '#ddd';
 		options.widget.lineWidth = options.widget.lineWidth || 3;
+		if( options.widget.gradientAlpha === undefined ) options.widget.gradientAlpha = true;
+
 		options.widget.handle = options.widget.handle || {};
 		options.widget.handle.radius = options.widget.handle.radius || 7;
 		options.widget.handle.size = options.widget.handle.size || 12;
 		options.widget.handle.lineWidth = options.widget.handle.lineWidth || 2;
 		options.widget.handle.lineColor = options.widget.handle.lineColor || '#ddd';
+
 		options.widget.handle.color = options.widget.handle.color || '#000';
-		if( options.widget.gradientAlpha === undefined ) options.widget.gradientAlpha = true;
+		options.widgets = options.widgets || [];
 
 		/** array of widget options:
 		 * location:		number
-		 * controlPoints:	array of { value: number, alpha: number, color: color }
 		 * colors:			array of color values
+		 * controlPoints:	array of { value: number, alpha: number, color: color }
 		 */
-		options.widgets = options.widgets || [];
 
 		for( let index = 0; index < options.widgets.length; index++ ) {
 			options.widgets[ index ] = options.widgets[ index ] || {};
@@ -134,7 +145,8 @@ class TF_panel {
 		this.options = this.parseOptions( options );
 		this.parent = options.parent || document.body;
 
-		this.tf_values = new Map();
+		//this.tf_values = new Map();
+		this.tf_values = [];
 
 		this.callbacks = [];
 
@@ -553,7 +565,7 @@ class TF_panel {
 			}
 		};
 
-		this.tf_values.clear();
+		this.tf_values = [];
 		for( let value of values ) {
 			let colorsAtValue = [];
 			for( let widget of this.widgets ) {
@@ -589,7 +601,7 @@ class TF_panel {
 			blendedColor.g = Math.round( blendedColor.g );
 			blendedColor.b = Math.round( blendedColor.b );
 
-			this.tf_values.set( value, blendedColor );
+			this.tf_values.push( [ value, blendedColor ] );
 		}
 
 		if( this.options.panel.showTFResult ) {
@@ -606,7 +618,9 @@ class TF_panel {
 
 		let gradient = context.createLinearGradient( 0, 0, tfCanvas.width, 0 ); //horizontal gradient
 
-		for( let [ value, rgba ] of this.tf_values ) {
+		for( let item of this.tf_values ) {
+			let value = item[ 0 ];
+			let rgba = item[ 1 ];
 			let rgbaColorString = 'rgba( ' + rgba.r + ', ' + rgba.g + ', ' + rgba.b + ', ' + rgba.a + ')';
 			gradient.addColorStop( Math.clamp( value, 0, 1 ), rgbaColorString );
 		}
@@ -681,11 +695,9 @@ class TF_widget {
 		//create context menus for rightclick interaction
 		let widgetContextMenu = new ContextMenu( { container: container } );
 		let menuItems = [
-			{ name: 'Delete widget', 	callback: this.destructor.bind( self ) },
-			{ name: 'Bring to front',	callback: function() {
-				self.bringToFront( self );
-			} },
-			{ name: 'Send to back',		callback: function() { self.sendToBack( self ); } }
+			{ name: 'Bring to front',	callback: function() { self.bringToFront( self ); } },
+			{ name: 'Send to back',		callback: function() { self.sendToBack( self ); } },
+			{ name: 'Delete widget', 	callback: this.destructor.bind( self ) }
 			/*	{ name: 'Duplicate widget',	callback: function( e ) { console.log( 'click b' ) } },
 				{ name: 'Store as preset',	callback: function( e ) { console.log( 'click c' ) } },*/
 		];
@@ -787,8 +799,12 @@ class TF_widget {
 			mouse.y = Math.clamp( mouse.y, 0, this.canvas.height );
 
 			parent.dom.classList.add( 'drag' );
+
 			let offsetX = anchor.data.x - mouse.x;
 			let offsetY = anchor.data.y - mouse.y;
+
+			if( mouse.x === 0 || mouse.x === this.canvas.width ) offsetX = 0;
+			if( mouse.y === 0 || mouse.y === this.canvas.height ) offsetY = 0;
 
 			if ( e.shiftKey && anchor.moveLock == 'N' ) {
 				anchor.moveLock = ( Math.abs( offsetX ) > Math.abs( offsetY ) ) ? 'H' : 'V';

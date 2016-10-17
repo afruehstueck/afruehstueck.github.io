@@ -781,9 +781,23 @@ function updateTransferFunctionTextures( canvas ) {
 	tf_img.height = 30;
 	tf_panel.plotTFResults( tf_img );
 
-	var debug_img = document.querySelector( '.debug' );
-	tf_panel.plotTFResults( debug_img );
+	var output_img = document.querySelector( '.tf_output' );
+	tf_panel.plotTFResults( output_img );
+	var output_values = document.querySelector( '.tf_values' );
+	let tf_string = '';
+	let gradient_string = '';
+	for ( let item of tf_panel.getTF() ) {
+		if( tf_string.length > 0 ) tf_string += ', ';
+		tf_string += '[' + item[ 0 ].toFixed( 3 ) + ', {r:' + item[ 1 ].r + ', g:' + item[ 1 ].g + ', b:' + item[ 1 ].b + ', a:' + item[ 1 ].a.toFixed( 3 ) + '}]';
+		if( gradient_string.length > 0 ) gradient_string += ', ';
+		gradient_string += Color.RGBtoHEX( item[ 1 ].r, item[ 1 ].g, item[ 1 ].b ) + ' ' + Math.round( item[ 0 ] * 100 ) + '% ';
+	}
+	output_values.innerText = tf_string;
 
+	let headline = document.querySelector( 'h1' );
+
+	headline.style.backgroundImage = 'linear-gradient(to right, ' + gradient_string + ')';
+	//headline.style.backgroundImage = '-webkit-linear-gradient(to right, ' + gradient_string + ')';
 
 	//let tfValues = tf_panel.getTF();
 

@@ -2,6 +2,8 @@
  * @author afruehstueck
  */
 
+'use strict';
+
 /**
  * convenience function (added to Math) for restricting range of a value
  * @param value			input value to be clamped

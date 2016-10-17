@@ -10,19 +10,34 @@
     <script src="scripts/pako.min.js"></script>
     <link rel="stylesheet" href="main.css"/>
     <link rel="stylesheet" href="UI/ui.css"/>
-    <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:400|Ubuntu+Mono' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700|Ubuntu+Mono' rel='stylesheet' type='text/css'>
 </head>
 <body style="margin-left: 20px">
-<h1>A Transfer Function Editor for Browsers</h1>
+<h1 class="headline">A Transfer Function Editor for Browsers</h1>
 <!--A transfer function is used to assign color and alpha values for every voxel in the volume. A 1D transfer function is essentially a map that calculates an RGBA value for a specific density value.-->
+
+<h2 style="margin-top: 50px">How to use</h2>
+<p><i>Click and Drag</i> circular controlpoints of transfer function widget to <b>adjust position and transparency</b>.</p>
+<p><i>Double-click</i> circular controlpoints of transfer function widget to <b>pick or adjust a color value</b>. The color value can be specified using either the hue slider and the saturation-/value picker or by entering RGB values in the input fields.</p>
+<p><i>Click and Drag</i> rectangular anchor of transfer function widget to <b>move transfer function widget</b>. Hold the <span class='emph code'>Shift</span> key while dragging to lock dragging direction to either horizontal or vertical dragging.</p>
+<p>Hold the <span class='emph code'>Shift</span> key and <i>click on the line</i> connecting the controlpoints to <b>add a controlpoint</b>.</p>
+<p>Hold the <span class='emph code'>Shift</span> key and <i>click on any controlpoint</i> to </body>delete</b> it.</p>
+<p><i>Click and Drag</i> the vertical edges of transfer function widget to horizontally scale the widget.</p>
+<p>Right-click the rectangular anchor of a transfer function widget to bring up the context menu. You can <b>delete the widget</b> from this context menu, or change the layer ordering of the widgets.</p>
+<p>Right-click any place in the transfer function editor to <b>add a new transfer function widget</b> and <i>choose from a number of presets</i>.</p>
+
 <h2>Demo and Documentation</h2>
-<span class='emph'><span style="color: #999">&#9888;</span> This demo uses WebGL. Consider using <a href="https://www.google.com/chrome/">Google Chrome</a> or <a href="https://www.mozilla.org/en-US/firefox/">Mozilla Firefox</a> if you have trouble viewing this demo.</span>
+<span class='emph code'><span style="color: #999">&#9888;</span> This demo uses WebGL. Consider using <a href="https://www.google.com/chrome/">Google Chrome</a> or <a href="https://www.mozilla.org/en-US/firefox/">Mozilla Firefox</a> if you have trouble viewing this demo.</span>
 
 <div class="renderWrapper" style="position: relative; width: 80%; height: 600px; margin: 0 auto; top: 20px">
     <canvas class="renderCanvas webgl" tabindex="1" data-gltype="webgl"></canvas>
 </div>
 <p style="position: relative; width: 80%; margin: 0 auto; top: 20px"><i>Play around with the parameters of the volume rendering by adjusting the transfer function in the transfer function editor, picking a volume from the upper-right menu and modifying sampling rate and alpha correction.</i></p>
-<div style=" position: relative; width: 1000px; padding: 0; margin: 0 auto; top: 50px; border: 1px solid #aaa; background-image:
+<h2 style="margin-top: 50px">Resulting transfer function</h2>
+<span class='code'>tf_panel.getTF()</span> returns an array of [ value, { r, g, b, a } ] items.
+<br>
+<p>The transfer function generated from these values looks like this:</p>
+<div style="position: relative; width: 1000px; padding: 0; margin: 0 auto; border: 1px solid #aaa; background-image:
       -moz-linear-gradient(45deg, #eee 25%, transparent 25%),
       -moz-linear-gradient(-45deg, #eee 25%, transparent 25%),
       -moz-linear-gradient(45deg, transparent 75%, #eee 75%),
@@ -38,21 +53,22 @@
     -webkit-background-size:20px 21px; /* override value for shitty webkit */
 
     background-position:0 0, 10px 0, 10px -10px, 0px 10px;">
-    <img class="debug" width="1000" height="50" style="display: block; height: 50px; width: 1000px; padding: 0; margin: 0"/>
+    <img class="tf_output" width="1000" height="50" style="display: block; height: 50px; width: 1000px; padding: 0; margin: 0"/>
     <!--<img class="debug_x" style="display: block; height: 100px; width: 1000px; padding: 0; margin: 0"/>-->
 </div>
-<h2 style="margin-top: 50px">How to use</h2>
-<p><i>Click and Drag</i> circular controlpoints of transfer function widget to <b>adjust position and transparency</b>.</p>
-<p><i>Double-click</i> circular controlpoints of transfer function widget to <b>pick or adjust a color value</b>. The color value can be specified using either the hue slider and the saturation-/value picker or by entering RGB values in the input fields.</p>
-<p><i>Click and Drag</i> rectangular anchor of transfer function widget to <b>move transfer function widget</b>. Hold the <span class='emph'>Shift</span> key while dragging to lock dragging direction to either horizontal or vertical dragging.</p>
-<p>Hold the <span class='emph'>Shift</span> key and <i>click on the line</i> connecting the controlpoints to <b>add a controlpoint</b>.</p>
-<p>Hold the <span class='emph'>Shift</span> key and <i>click on any controlpoint</i> to </b>delete</b> it.</p>
-<p><i>Click and Drag</i> the vertical edges of transfer function widget to horizontally scale the widget.</p>
-<p>Right-click the rectangular anchor of a transfer function widget to bring up the context menu. You can <b>delete a widget</b> from this context menu.</p>
-<p>Right-click any place in the transfer function editor to <b>add a new transfer function widget</b> and <i>choose from a number of presets</i>.</p>
-
-<h2>Transfer Function Editor is customizable</h2>
-<div class="customTF" style="position: relative; height: 200px"></div>
+<script>
+    function showValues() {
+        document.querySelector( '.tf_values' ).style.display = 'block';
+        document.querySelector( '.showtfvalues' ).style.display = 'none';
+    }
+</script>
+<button class='showtfvalues' onclick="showValues()" style="display: block; position: relative; width: 1000px; margin: 10px auto;">Show values</button>
+<textarea class="tf_values code" style="display: none; position: relative; width: 1000px; min-height: 60px; padding: 0; margin: 10px auto; font-size:13px;"></textarea>
+<br>
+<h2>Options</h2>
+<p>The Transfer Function Editor's look and feel is customizable using multiple options passed when the editor is instantiated. All options are substituted by default values if not specified.</p>
+<p>The options are passed as a JSON object and can be queried from the editor using <span class="code">tf_panel.getOptions()</span></p>
+<div class="customTF" style="display: block; position: relative; width: 1000px; height: 200px; margin: 10px auto;"></div>
 <script src="camera.js"></script>
 <script src="nrrdLoader.js"></script>
 <script src="UI/ui.js"></script>
@@ -82,7 +98,7 @@
                                             'border':	        '3px solid rgb(134,174,204)',
                                             'isCollapsible':    false,
                                             'showTFResult':     true,
-                                            'resultBackground': 'rgb(212,228,239)',
+                                            'resultBackground': 'rgb(0,0,0)',
                                             'resultHeight':     30 },
 					'histogram':		{	'fillColor':		'#bcbcbc',
 											'lineColor':		'#111111',
@@ -134,6 +150,127 @@
 
     sourceImage.src = 'res/tiled/bonsai64x64x256.png';
 </script>
+<ul class="code" style="position: relative; top: 50px">
+    <li>
+        <DT>panel {</DT>                 <DD>options for the appearance of the main transfer function editor</DD>
+        <ul>
+            <dl>
+                <DT>width</DT>           <DD><span class="gr">[ number ]</span> total width of transfer function editor <i>(default: 600)</i></DD>
+                <DT>height</DT>          <DD><span class="gr">[ number ]</span> total height of transfer function editor  <i>(default: 120)</i></DD>
+                <DT>background</DT>      <DD><span class="gr">[ css ]</span> css background attribute  <i>(default: #000000)</i></DD>
+                <DT>border</DT>          <DD><span class="gr">[ css ]</span> border attribute <i>(default: none)</i></DD>
+                <DT>isCollapsible</DT>   <DD><span class="gr">[ boolean ]</span> creates vertical button on left of panel to collapse/expand panel <i>(default: false)</i></DD>
+                <DT>showTFResult</DT>    <DD><span class="gr">[ boolean ]</span> specifies whether a bottom bar should show the result of the alpha blended transfer function widgets  <i>(default: false)</i></DD>
+                <DT>resultHeight</DT>    <DD><span class="gr">[ number ]</span> height of result bar <i>(default: 20)</i></DD>
+                <DT>resultBackground</DT><DD><span class="gr">[ css ]</span> specifies css background attribute for result bar <i>(default: #000000)</i></DD>
+            </dl>
+        </ul>
+        }
+    </li>
+    <br>
+    <li>
+        <DT>histogram {</DT>             <DD>options for the histogram displayed in the back of the editor (optional)</DD>
+        <ul>
+            <dl>
+                <DT>fillColor</DT>       <DD><span class="gr">[ color ]</span> fill color for the histogram SVG <i>(default: #333333)</i></DD>
+                <DT>lineColor</DT>       <DD><span class="gr">[ color ]</span> line color for the histogram SVG <i>(default: #666666)</i></DD>
+                <DT>style</DT>           <DD><span class="gr">[ 'polygon' or 'bars' ]</span> specifies whether the histogram should be plotted as a polyline or vertical rectangular bars <i>(default: 'polygon')</i></DD>
+                <DT>scale</DT>           <DD><span class="gr">[ function ]</span> (mathematical) function by which the histogram values should be scaled (e.g. logarithmic, ...) <i>(default: Math.log)</i></DD>
+                <DT>overlayUnscaled</DT> <DD><span class="gr">[ boolean ]</span> whether the histogram (scaled by the 'scale' function) should be overlayed with an unscaled version <i>(default: true)</i></DD>
+            </dl>
+        </ul>
+        }
+    </li>
+    <br>
+    <li>
+        <DT>gradientPresets {</DT>      <DD>options for the gradient presets available when adding a new widget</DD>
+        <ul>
+            <dl>
+                <DT>defaultPresets</DT>  <DD><span class="gr">[ boolean ]</span> specifies whether the default presets should be loaded and appended to the custom presets. If presets array is empty, default presets will be loaded anyway. <i>(default: true)</i></DD>
+                <DT>presets</DT>         <DD><span class="gr">[ array ]</span> array of { name, colorArray } objects describing gradient presets. format: <span class="code">[ { name: string, colors: array[ hexString ] } ]</span></DD>
+            </dl>
+        </ul>
+        }
+    </li>
+    <br>
+    <li>
+        <DT>widget {</DT>               <DD>options for the appearance of transfer function widgets</DD>
+        <ul>
+            <dl>
+                <DT>globalOpacity</DT>         <DD><span class="gr">[ number ]</span> opacity value of transfer function widget <i>(default: 1)</i></DD>
+                <DT>gradientAlpha</DT>         <DD><span class="gr">[ boolean ]</span> use the current alpha value in the color representation of the widget's gradient <i>(default: true)</i></DD>
+                <DT>lineColor</DT>             <DD><span class="gr">[ color ]</span> color value of the SVG outlines <i>(default: #dddddd)</i></DD>
+                <DT>lineWidth</DT>             <DD><span class="gr">[ number ]</span> width of the SVG outlines <i>(default: 3)</i></DD>
+            </dl>
+            <li>
+
+                handle {
+                <ul>
+                    <dl>
+                        <DT>radius</DT>       <DD><span class="gr">[ number ]</span> radius of circular SVG handles <i>(default: 7)</i></DD>
+                        <DT>size</DT>         <DD><span class="gr">[ number ]</span> width/height of rectangluar SVG handles <i>(default: 12)</i></DD>
+                        <DT>lineWidth</DT>    <DD><span class="gr">[ number ]</span> line width for SVG handles <i>(default: 2)</i></DD>
+                        <DT>lineColor</DT>    <DD><span class="gr">[ color ]</span> line color for SVG handles <i>(default: #dddddd)</i></DD>
+                        <DT>color</DT>        <DD><span class="gr">[ color ]</span> fill color for SVG handles <i>(default: #000000)</i></DD>
+                    </dl>
+                </ul>
+                }
+            </li>
+        </ul>
+        }
+    </li>
+    <br>
+    <li>
+        <DT>widgets [</DT>          <DD>(optional) array of widgets specified either through location/colors or array of controlPoints</DD>
+        <ul>
+            <li>{
+                <ul>
+                    <dl>
+                        <DT>location</DT>       <DD><span class="gr">[ object ]</span> x, y, left, right</DD>
+                        <DT>colors</DT>         <DD><span class="gr">[ array ]</span> array of hexString color values</DD>
+                        <DT>controlPoints</DT>  <DD><span class="gr">[ array ]</span> array of controlPoint objects. format: <span class="code">[ { value: number, alpha: number, color: hexString } ] </span></DD>
+                    </dl>
+                </ul>
+                }
+            </li>
+        </ul>
+        ]
+    </li>
+    <br>
+    <li>
+        <DT>colorPicker {</DT>      <DD>options for colorPicker widget</DD>
+        <ul>
+            <li>
+                <DT>svPicker {</DT> <DD>options for rectangular saturation/value picker</DD>
+                <ul>
+                    <dl>
+                        <DT>size</DT>           <DD><span class="gr">[ number ]</span> width/height of rectangle <i>(default: 128)</i></DD>
+                        <DT>cursorRadius</DT>   <DD><span class="gr">[ number ]</span> radius for mouse pointer in saturation/value picker <i>(default: 3)</i></DD>
+                    </dl>
+                </ul>
+                }
+            </li>
+            <li>
+                <DT>hPicker {</DT> <DD>options for vertical hue picker</DD>
+                <ul>
+                    <dl>
+                        <DT>width</DT>          <DD><span class="gr">[ number ]</span> width of rectangle <i>(default: svPicker.size/5)</i></DD>
+                        <DT>height</DT>         <DD><span class="gr">[ number ]</span> height of rectangle <i>(default: svPicker.size)</i></DD>
+                        <DT>pad</DT>            <DD><span class="gr">[ number ]</span> padding between svPicker and hPicker <i>(default: 4)</i></DD>
+                        <DT>cursorHeight</DT>   <DD><span class="gr">[ number ]</span> height of mouse pointer in hPicker <i>(default: 4)</i></DD>
+                    </dl>
+                </ul>
+                }
+            </li>
+        </ul>
+        }
+    </li>
+</ul>
+
+
+
+
+
 <!--<textarea style='position: relative; width: 1000px; height: 500px; top: 10px; font-family: "Ubuntu Mono"'>
 "panel":			{
     "width":			900,

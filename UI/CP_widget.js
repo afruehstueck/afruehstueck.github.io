@@ -2,6 +2,8 @@
  * @author afruehstueck
  */
 
+'use strict';
+
 /**
  * Color operates in two color spaces: HSV and RGB
  * HSV colors are in a { hue ∈ [ 0, 1 ], saturation ∈ [ 0, 1 ], value ∈ [ 0, 1 ] } domain
