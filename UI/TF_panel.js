@@ -909,6 +909,9 @@ class TF_widget {
 		} );
 	}
 
+	/**
+	 * vertical draggable SVG lines at start and endpoint of widget
+	 */
 	createVerticalHandles() {
 		let self = this;
 		let parent = this.parent;

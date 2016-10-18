@@ -792,6 +792,7 @@ function updateTransferFunctionTextures( canvas ) {
 		if( gradient_string.length > 0 ) gradient_string += ', ';
 		gradient_string += Color.RGBtoHEX( item[ 1 ].r, item[ 1 ].g, item[ 1 ].b ) + ' ' + Math.round( item[ 0 ] * 100 ) + '% ';
 	}
+	//tf_string = JSON.stringify( JSON.parse( tf_string ), null, 2 )
 	output_values.innerText = tf_string;
 
 	let headline = document.querySelector( 'h1' );

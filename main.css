@@ -57,7 +57,7 @@ dl {
 }
 dt {
     float: left;
-    width: 8%;
+    width: 10%;
     /* adjust the width; make sure the total of both is 100% */
     padding: 0;
     margin: 0
@@ -66,7 +66,7 @@ dd {
     font-family: 'Roboto Condensed';
     color: #000000;
     float: left;
-    width: 92%;
+    width: 90%;
     /* adjust the width; make sure the total of both is 100% */
     padding: 0;
     margin: 0
