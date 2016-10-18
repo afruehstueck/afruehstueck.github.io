@@ -20,16 +20,16 @@
 <p><i>Click and Drag</i> circular controlpoints of transfer function widget to <b>adjust position and transparency</b>.</p>
 <p><i>Double-click</i> circular controlpoints of transfer function widget to <b>pick or adjust a color value</b>. The color value can be specified using either the hue slider and the saturation-/value picker or by entering RGB values in the input fields.</p>
 <p><i>Click and Drag</i> rectangular anchor of transfer function widget to <b>move transfer function widget</b>. Hold the <span class='emph code'>Shift</span> key while dragging to lock dragging direction to either horizontal or vertical dragging.</p>
-<p>Hold the <span class='emph code'>Shift</span> key and <i>click on the line</i> connecting the controlpoints to <b>add a controlpoint</b>.</p>
-<p>Hold the <span class='emph code'>Shift</span> key and <i>click on any controlpoint</i> to </body>delete</b> it.</p>
-<p><i>Click and Drag</i> the vertical edges of transfer function widget to horizontally scale the widget.</p>
+<p>To <b>add a controlpoint</b>, either <i>double-click</i> or hold the <span class='emph code'>Shift</span> key and <i>click on the line</i> connecting the controlpoints.</p>
+<p>Hold the <span class='emph code'>Shift</span> key and <i>click on the handle</i> to </body>delete a controlpoint</b>, or bring up the context menu with a right click.</p>
+<p><i>Click and Drag</i> the vertical edges of transfer function widget to <b>horizontally scale the widget</b>.</p>
 <p>Right-click the rectangular anchor of a transfer function widget to bring up the context menu. You can <b>delete the widget</b> from this context menu, or change the layer ordering of the widgets.</p>
 <p>Right-click any place in the transfer function editor to <b>add a new transfer function widget</b> and <i>choose from a number of presets</i>.</p>
 
 <h2>Demo and Documentation</h2>
 <span class='emph code'><span style="color: #999">&#9888;</span> This demo uses WebGL. Consider using <a href="https://www.google.com/chrome/">Google Chrome</a> or <a href="https://www.mozilla.org/en-US/firefox/">Mozilla Firefox</a> if you have trouble viewing this demo.</span>
 
-<div class="renderWrapper" style="position: relative; width: 80%; height: 600px; margin: 0 auto; top: 20px">
+<div class="renderWrapper" style="position: relative; width: 90%; height: 700px; margin: 0 auto; top: 20px">
     <canvas class="renderCanvas webgl" tabindex="1" data-gltype="webgl"></canvas>
 </div>
 <p style="position: relative; width: 80%; margin: 0 auto; top: 20px"><i>Play around with the parameters of the volume rendering by adjusting the transfer function in the transfer function editor, picking a volume from the upper-right menu and modifying sampling rate and alpha correction.</i></p>
@@ -155,8 +155,8 @@
         <DT><b>panel {</b></DT>          <DD>options for the appearance of the main transfer function editor</DD>
         <ul>
             <dl>
-                <DT>width</DT>           <DD><span class="gr">[ number ]</span> total width of transfer function editor <i>(default: 600)</i></DD>
-                <DT>height</DT>          <DD><span class="gr">[ number ]</span> total height of transfer function editor  <i>(default: 120)</i></DD>
+                <DT>width</DT>           <DD><span class="gr">[ number ]</span> total width of transfer function editor <i>(default: 650)</i></DD>
+                <DT>height</DT>          <DD><span class="gr">[ number ]</span> total height of transfer function editor  <i>(default: 150)</i></DD>
                 <DT>background</DT>      <DD><span class="gr">[ css ]</span> css background attribute  <i>(default: #000000)</i></DD>
                 <DT>border</DT>          <DD><span class="gr">[ css ]</span> border attribute <i>(default: none)</i></DD>
                 <DT>isCollapsible</DT>   <DD><span class="gr">[ boolean ]</span> creates vertical button on left of panel to collapse/expand panel <i>(default: false)</i></DD>

@@ -765,7 +765,7 @@ function init( canvas ) {
 		 * numBins:			number				denotes the number of bins for the histogram calculation
 		 */
 		let histogramOptions = {};
-		histogramOptions.numBins = ( tf_panel.panel.width / 5 );
+		histogramOptions.numBins = ( tf_panel.panel.width / 10 );
 
 		let histogram = Statistics.calcHistogram( canvas.data, histogramOptions );
 		tf_panel.setHistogram( histogram );
@@ -792,7 +792,6 @@ function updateTransferFunctionTextures( canvas ) {
 		if( gradient_string.length > 0 ) gradient_string += ', ';
 		gradient_string += Color.RGBtoHEX( item[ 1 ].r, item[ 1 ].g, item[ 1 ].b ) + ' ' + Math.round( item[ 0 ] * 100 ) + '% ';
 	}
-	//tf_string = JSON.stringify( JSON.parse( tf_string ), null, 2 )
 	output_values.innerText = tf_string;
 
 	let headline = document.querySelector( 'h1' );
@@ -828,7 +827,7 @@ function updateTransferFunctionTextures( canvas ) {
 
 function requestRendering() {
 	if( canvas.isRendering ) {
-		console.log( 'skipping rendering' );
+		//console.log( 'skipping rendering' );
 		return;
 	}
 	canvas.isRendering = window.requestAnimationFrame( function() {

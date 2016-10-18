@@ -164,7 +164,12 @@
     border-radius: 6px;
     position: absolute;
     z-index: 10;
-    pointer-events: none;
+}
+
+.unselectable {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
 }
 
 /* Show the tooltip text when you mouse over the tooltip container */

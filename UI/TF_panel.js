@@ -25,8 +25,8 @@ class TF_panel {
 		 */
 		options.parent = options.parent || document.body;
 		options.panel = options.panel || {};
-		options.panel.width = options.panel.width || 600;
-		options.panel.height = options.panel.height || 120;
+		options.panel.width = options.panel.width || 650;
+		options.panel.height = options.panel.height || 150;
 		options.panel.background = options.panel.background || '#000000';
 		options.panel.border = options.panel.border || 'none';
 		if( options.panel.isCollapsible === undefined ) options.panel.isCollapsible = false;
@@ -156,6 +156,7 @@ class TF_panel {
 		if( this.options.panel.isCollapsible ) {
 			collapsiblePanel = new Panel( { container: container } );
 			collapsiblePanel.dom.id = 'tf-collapsible';
+			collapsiblePanel.dom.classList.add( 'unselectable' );
 			collapsiblePanel.dom.style.position = 'absolute';
 			collapsiblePanel.moveTo( 0, 0 );
 			collapsiblePanel.dom.style.transform = 'translateX(-100%)';
@@ -197,6 +198,7 @@ class TF_panel {
 
 		panel.dom.id = 'tf-panel';
 		panel.dom.classList.add( 'overlay' );
+		panel.dom.classList.add( 'unselectable' );
 		panel.dom.style.left = this.options.panel.isCollapsible ? '24px' : '0px';
 		panel.dom.style.background = options.panel.background;
 		panel.dom.style.border = options.panel.border;
@@ -223,7 +225,7 @@ class TF_panel {
 		svgContext.setAttribute( 'width', panel.width );
 		svgContext.setAttribute( 'height', panel.height );
 		svgContext.setAttribute( 'id', 'tf-svg' );
-		svgContext.setAttribute( 'class', 'overlay' );
+		svgContext.setAttribute( 'class', 'overlay unselectable' );
 		svgContext.setAttribute( 'z-index', 100 );
 		this.panel.svgContext = svgContext;
 		this.panel.dom.appendChild( svgContext );
@@ -340,7 +342,7 @@ class TF_panel {
 
 			self.panelContextMenu.showAt( mouse.x, mouse.y );
 
-			document.addEventListener( 'mousedown', self.panelContextMenu.hidePanel, { once: true } );
+			document.addEventListener( 'mousedown', self.panelContextMenu.hideMenu, { once: true } );
 
 			//disable default context menu
 			e.preventDefault();
@@ -426,7 +428,7 @@ class TF_panel {
 		//tooltip for displaying value of histogram trace
 		if( !this.histogramTooltip ) {
 			this.histogramTooltip = document.createElement( 'div' );
-			this.histogramTooltip.className = 'tooltip';
+			this.histogramTooltip.className = 'tooltip unselectable';
 			this.panel.dom.insertBefore( this.histogramTooltip, this.panel.svgContext );
 			//this.panel.dom.appendChild( this.histogramTooltip );
 		}
@@ -466,6 +468,8 @@ class TF_panel {
 	drawHistogram( options = {} ) {
 		let canvas = this.canvas;
 		let context = canvas.getContext( '2d' );
+
+		context.clearRect( 0, 0, canvas.width, canvas.height );
 		context.fillStyle = options.fillColor;
 		context.strokeStyle = options.lineColor;
 
@@ -847,7 +851,7 @@ class TF_widget {
 
 			self.widgetContextMenu.showAt( mouse.x, mouse.y );
 
-			document.addEventListener( 'mousedown', self.widgetContextMenu.hidePanel, { once: true } );
+			document.addEventListener( 'mousedown', self.widgetContextMenu.hideMenu, { once: true } );
 
 			//disable default context menu
 			e.preventDefault();
@@ -869,13 +873,9 @@ class TF_widget {
 		this.outline = outline;
 
 		/**
-		 * Mouse events for outline of widget
+		 * Add control point on shift+click or double-click on outline
 		 */
-		function onOutlineMouseDown( e ) {
-			console.log( 'mousedown' );
-			if ( !e.shiftKey ) {
-				return;
-			}
+		function onOutlineClick( e ) {
 			let mouse = UI.getRelativePosition( e.clientX, e.clientY, parent.dom );
 
 			let value = mouse.x / parent.width;
@@ -896,7 +896,14 @@ class TF_widget {
 			self.addControlPoint( value, alpha, color );
 		}
 
+		function onOutlineMouseDown( e ) {
+			if ( e.shiftKey ) {
+				onOutlineClick( e );
+			}
+		}
+
 		outline.addEventListener( 'mousedown', onOutlineMouseDown );
+		outline.addEventListener( 'dblclick', onOutlineClick );
 
 		//change cursor on hover+shift-hold to indicate addPoint function
 		outline.addEventListener( 'mousemove', function( e ) {
@@ -1010,6 +1017,7 @@ class TF_widget {
 
 		let controlPoint = { value: value, alpha: alpha, color: Color.parseColor( color ) };
 
+		// circular handle for controlpoint
 		let handle = SVG.createCircle( parent.svgContext, value * this.canvas.width, this.canvas.height - alpha * this.canvas.height, Color.RGBtoHEX( controlPoint.color ), this.options.handle.radius, this.options.handle.lineColor, this.options.handle.lineWidth );
 		handle.classList.add( 'handle' );
 
@@ -1020,6 +1028,10 @@ class TF_widget {
 		let updateWidgetBound = this.updateWidget.bind( self );
 		let drawWidgetBound = this.drawWidget.bind( self );
 		let moveHandleBound = moveHandle.bind( self );
+
+		/**
+		 * Handle mouse events
+		 */
 
 		/* moves control point handles on mousemove while mouse down */
 		function moveHandle( e ) {
@@ -1066,7 +1078,8 @@ class TF_widget {
 			parent.cp_widget.color.registerCallback( handle, function( col ) {
 				let colHex = Color.RGBtoHEX( col.rgb );
 				handle.setFillColor( colHex );
-				controlPoint.color = col.rgb;
+				//slightly messy: create new color object instead of reusing (will cause errors when color is changed)
+				controlPoint.color = Color.RGB( col.rgb.r, col.rgb.g, col.rgb.b );
 				drawWidgetBound();
 			} );
 			parent.cp_widget.color.set( controlPoint.color, handle );
@@ -1075,7 +1088,7 @@ class TF_widget {
 			document.addEventListener( 'mousedown', parent.cp_widget.hidePanel, { once: true } );
 		} );
 
-		//modify cursor on hover and shift-hold to indicate deletePoint function
+		//modify cursor on hover and shift-hold to indicate deletePoint functionality
 		handle.addEventListener( 'mousemove', function( e ) {
 			if ( e.shiftKey ) this.classList.add( 'deleteCursor' );
 		} );
@@ -1084,6 +1097,26 @@ class TF_widget {
 		handle.addEventListener( 'mouseleave', function() {
 			this.classList.remove( 'deleteCursor' );
 		} );
+
+		function showContextMenu( e ) {
+			let mouse = UI.getRelativePosition( e.clientX, e.clientY, container );
+
+			let handleContextMenu = new ContextMenu( { container: container } );
+			let menuItems = [
+				{ name: 'Remove point', 	callback: function() {
+					self.deleteControlPoint( controlPoint );
+					updateWidgetBound();
+				} }
+			];
+			handleContextMenu.addItems( menuItems );
+			handleContextMenu.showAt( mouse.x, mouse.y );
+
+			document.addEventListener( 'mousedown', handleContextMenu.destroyMenu, { once: true } );
+
+			//disable default context menu
+			e.preventDefault();
+		}
+		handle.addEventListener( 'contextmenu', showContextMenu );
 
 		controlPoint.handle = handle;
 		this.controlPoints.addPoint( controlPoint );
@@ -1253,6 +1286,7 @@ class TF_widget {
 class ContextMenu {
 	constructor( options = {} ) {
 		let container = options.container || document.body;
+		this.container = container;
 		let panel = new Panel( { container: container } );
 		panel.dom.classList.add( 'menu', 'popup' );
 
@@ -1265,9 +1299,14 @@ class ContextMenu {
 		this.folders = new Map();
 
 		this.panel = panel;
-		this.hidePanel = this.hide.bind( this );
+		this.hideMenu = this.hide.bind( this );
+		this.destroyMenu = this.destructor.bind( this );
 
 		this.caller = null;
+	}
+
+	destructor() {
+		this.container.removeChild( this.panel.dom );
 	}
 
 	addItems( items ) {
