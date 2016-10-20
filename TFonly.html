@@ -23,7 +23,8 @@
 <!--<script src="transfer_function_compatibility.js"></script>-->
 <script>
     var wrapper = document.querySelector( '.wrapper' );
-
+    var tf_panel;
+    
     var sourceImage = new Image();
     sourceImage.onload = function () {
         var dataCanvas = document.createElement( 'canvas' );
@@ -33,7 +34,7 @@
         tmpContext.drawImage( sourceImage, 0, 0 ); // Draw the texture
         wrapper.data = tmpContext.getImageData( 0, 0, sourceImage.width, sourceImage.height ).data;
 
-        var tf_panel = new TF_panel( { container: wrapper } );
+        tf_panel = new TF_panel( { container: wrapper } );
         tf_panel.updateHistogram = true;
         tf_panel.draw();
     };
