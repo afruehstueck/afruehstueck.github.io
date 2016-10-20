@@ -696,19 +696,7 @@ class TF_widget {
 		//insert canvases below UI svg context
 		container.insertBefore( canvas, parent.svgContext );
 
-		//create context menus for rightclick interaction
-		let widgetContextMenu = new ContextMenu( { container: container } );
-		let menuItems = [
-			{ name: 'Bring to front',	callback: function() { self.bringToFront( self ); } },
-			{ name: 'Send to back',		callback: function() { self.sendToBack( self ); } },
-			{ name: 'Delete widget', 	callback: this.destructor.bind( self ) }
-			/*	{ name: 'Duplicate widget',	callback: function( e ) { console.log( 'click b' ) } },
-				{ name: 'Store as preset',	callback: function( e ) { console.log( 'click c' ) } },*/
-		];
-		widgetContextMenu.addItems( menuItems );
-		this.widgetContextMenu = widgetContextMenu;
-
-		this.controlPoints = [];//options.controlPoints;
+		this.controlPoints = [];
 
 		this.controlPoints.sortPoints = function() {
 			this.sort( ( a, b ) => ( a.value - b.value ) );
@@ -849,9 +837,18 @@ class TF_widget {
 		function showContextMenu( e ) {
 			let mouse = UI.getRelativePosition( e.clientX, e.clientY, container );
 
-			self.widgetContextMenu.showAt( mouse.x, mouse.y );
+			//create context menus for rightclick interaction
+			let widgetContextMenu = new ContextMenu( { container: container } );
+			let menuItems = [
+				{ name: 'Bring to front',	callback: function() { self.bringToFront( self ); } },
+				{ name: 'Send to back',		callback: function() { self.sendToBack( self ); } },
+				{ name: 'Delete widget', 	callback: self.destructor.bind( self ) }
+			];
+			widgetContextMenu.addItems( menuItems );
 
-			document.addEventListener( 'mousedown', self.widgetContextMenu.hideMenu, { once: true } );
+			widgetContextMenu.showAt( mouse.x, mouse.y );
+
+			document.addEventListener( 'mousedown', widgetContextMenu.destroyMenu, { once: true } );
 
 			//disable default context menu
 			e.preventDefault();
@@ -1103,7 +1100,7 @@ class TF_widget {
 
 			let handleContextMenu = new ContextMenu( { container: container } );
 			let menuItems = [
-				{ name: 'Remove point', 	callback: function() {
+				{ name: 'Remove point', callback: function() {
 					self.deleteControlPoint( controlPoint );
 					updateWidgetBound();
 				} }
