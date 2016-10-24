@@ -243,6 +243,7 @@ var CP_widget = function( options ) {
 	if( options === undefined ) options = null;
 
 	var container = options.container || document.body;
+	this.container = container;
 	var panel = new Panel( { container: container } );
 	var parent = null;
 	this.color = new Color();
@@ -271,6 +272,9 @@ CP_widget.prototype.hide = function() {
 };
 
 CP_widget.prototype.showAt = function( x, y, parent ) {
+	x = Math.clamp( x, 0, this.container.clientWidth - this.panel.dom.clientWidth - 10 );
+	y = Math.clamp( y, 0, this.container.clientHeight - this.panel.dom.clientHeight - 10 );
+
 	if( parent ) this.parent = parent;
 	this.panel.moveTo( x, y );
 };
