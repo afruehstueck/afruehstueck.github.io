@@ -15,7 +15,6 @@ var TF_panel = function( options ) {
 	this.options = this.parseOptions( options );
 	this.parent = options.parent || document.body;
 
-	//this.tf_values = new Map();
 	this.tf_values = [];
 
 	this.callbacks = [];
@@ -67,7 +66,8 @@ var TF_panel = function( options ) {
 	}
 
 	panel.dom.id = 'tf-panel';
-	panel.dom.className += ' overlay unselectable';
+	panel.addClass( 'overlay' );
+	panel.addClass( 'unselectable' );
 	panel.dom.style.left = this.options.panel.isCollapsible ? '24px' : '0px';
 	panel.dom.style.background = options.panel.background;
 	panel.dom.style.border = options.panel.border;
@@ -250,6 +250,27 @@ TF_panel.prototype.exportOptions = function() {
 	console.log( JSON.stringify( this.options ) );
 };
 
+TF_panel.prototype.resize = function( width, height ) {
+	console.log( width + 'x' + height );
+	this.panel.width = width;
+	this.panel.height = height;
+
+	this.canvas.width = width;
+	this.canvas.height = height;
+
+	this.panel.svgContext.setAttribute( 'width', width );
+	this.panel.svgContext.setAttribute( 'height', height );
+
+	this.drawHistogram( this.options.histogram );
+
+	for( var index = 0; index < this.widgets.length; index++ ) {
+		var widget = this.widgets[ index ];
+		widget.resize( width, height );
+	}
+
+	//this.draw();
+};
+
 /**
  *
  */
@@ -290,7 +311,8 @@ TF_panel.prototype.addContextMenu = function( options ) {
 
 		self.panelContextMenu.showAt( mouse.x, mouse.y );
 
-		document.addEventListener( 'mousedown', self.panelContextMenu.hideMenu, { once: true } );
+		//document.addEventListener( 'mousedown', self.panelContextMenu.hideMenu, { once: true } );
+		document.addEventListener( 'mousedown', self.panelContextMenu.hideMenu );
 
 		//disable default context menu
 		e.preventDefault();
@@ -319,8 +341,17 @@ TF_panel.prototype.addWidget = function( options ) {
 	this.draw();
 };
 
+/*TF_panel.prototype.findWidget = function( widget ) {
+	for ( var i = 0; i < this.widgets.length; i++ ) {
+		if ( this.widgets[ i ] == widget ) {
+			return widget;
+		}
+	}
+};*/
+
 TF_panel.prototype.bringToFront = function( widget ) {
-	var index = this.widgets.findIndex( function( elem ) { return elem === widget; } );
+	//var index = this.widgets.findIndex( function( elem ) { return elem === widget; } );
+	var index = this.widgets.indexOf( widget );
 	//this.widgets.splice( index, 1 );
 
 	this.panel.dom.insertBefore( widget.canvas, this.panel.svgContext );
@@ -329,7 +360,8 @@ TF_panel.prototype.bringToFront = function( widget ) {
 };
 
 TF_panel.prototype.sendToBack = function( widget ) {
-	var index = this.widgets.findIndex( function( elem ) { return elem === widget; } );
+	//var index = this.widgets.findIndex( function( elem ) { return elem === widget; } );
+	var index = this.widgets.indexOf( widget );
 	//this.widgets.splice( index, 1 );
 
 	this.panel.dom.insertBefore( widget.canvas, this.widgets[ 0 ].canvas );
@@ -338,7 +370,8 @@ TF_panel.prototype.sendToBack = function( widget ) {
 };
 
 TF_panel.prototype.deleteWidget = function( widget ) {
-	var index = this.widgets.findIndex( function( elem ) { return elem === widget; } );
+	//var index = this.widgets.findIndex( function( elem ) { return elem === widget; } );
+	var index = this.widgets.indexOf( widget );
 	this.widgets.splice( index, 1 );
 
 	this.draw();
@@ -533,7 +566,8 @@ TF_panel.prototype.updateTF = function() {
 			var point = widget.findControlPoint( value );
 			if( point ) {
 				//var hex = point.color;
-				rgba = Object.assign( point.color );
+				//rgba = Object.assign( point.color );
+				rgba = { r: point.color.r, g: point.color.g, b: point.color.b };
 				rgba.a = point.alpha;
 			} else {
 				var neighbors = widget.findNeighborControlPoints( value );
@@ -689,6 +723,22 @@ var TF_widget = function ( parent, container, options ) {
 	this.createAnchor();
 };
 
+TF_widget.prototype.resize = function( width, height ) {
+	this.canvas.width = width;
+	this.canvas.height = height;
+
+	this.outline.resize( width, height );
+	this.handles.left.resize( width, height );
+	this.handles.right.resize( width, height );
+
+	for( var index = 0; index < this.controlPoints.length; index++ ) {
+		var controlPoint = this.controlPoints[ index ];
+		this.updateControlPoint( controlPoint );
+	}
+
+	this.updateWidget();
+};
+
 TF_widget.prototype.getOptions = function() {
 	var options = {};
 	options.controlPoints = [];
@@ -730,7 +780,7 @@ TF_widget.prototype.createAnchor = function() {
 	var parent = this.parent;
 	var container = this.container;
 	var anchor = SVG.createRect( this.parent.svgContext, 0, 0, this.options.handle.color, this.options.handle.size, this.options.handle.size, this.options.handle.lineColor, this.options.handle.lineWidth );
-	anchor.class = 'handle';
+	anchor.addClass( 'handle' );
 	this.anchor = anchor;
 
 	var self = this;
@@ -751,7 +801,7 @@ TF_widget.prototype.createAnchor = function() {
 		mouse.x = Math.clamp( mouse.x, 0, this.canvas.width );
 		mouse.y = Math.clamp( mouse.y, 0, this.canvas.height );
 
-		parent.dom.className += ' drag';
+		parent.addClass( 'move' );
 
 		var offsetX = anchor.data.x - mouse.x;
 		var offsetY = anchor.data.y - mouse.y;
@@ -783,7 +833,7 @@ TF_widget.prototype.createAnchor = function() {
 
 	function onMouseUp() {
 		this.anchor.moveLock = 'N';
-		parent.dom.classList.remove( 'drag' );
+		parent.removeClass( 'move' );
 		document.removeEventListener( 'mousemove', moveAnchorBound );
 	}
 
@@ -793,7 +843,8 @@ TF_widget.prototype.createAnchor = function() {
 		}
 		document.addEventListener( 'mousemove', moveAnchorBound );
 		//remove mouse move event on mouseup (one-time event)
-		document.addEventListener( 'mouseup', onMouseUp.bind( self ), { once: true } );
+		//document.addEventListener( 'mouseup', onMouseUp.bind( self ), { once: true } );
+		document.addEventListener( 'mouseup', onMouseUp.bind( self ) );
 	}
 
 	function showContextMenu( e ) {
@@ -810,7 +861,8 @@ TF_widget.prototype.createAnchor = function() {
 
 		widgetContextMenu.showAt( mouse.x, mouse.y );
 
-		document.addEventListener( 'mousedown', widgetContextMenu.destroyMenu, { once: true } );
+		//document.addEventListener( 'mousedown', widgetContextMenu.destroyMenu, { once: true } );
+		document.addEventListener( 'mousedown', widgetContextMenu.destroyMenu );
 
 		//disable default context menu
 		e.preventDefault();
@@ -828,7 +880,7 @@ TF_widget.prototype.createOutline = function() {
 
 	var parent = this.parent;
 	var outline = SVG.createPolyline( this.parent.svgContext, null, this.canvas.width, this.canvas.height, 'value', 'alpha', true, this.options.lineColor, this.options.lineWidth );
-	outline.class = 'handle';
+	outline.addClass( 'handle' );
 	this.outline = outline;
 
 	/**
@@ -867,20 +919,13 @@ TF_widget.prototype.createOutline = function() {
 	//change cursor on hover+shift-hold to indicate addPoint function
 	outline.addEventListener( 'mousemove', function( e ) {
 		if ( e.shiftKey ) {
-			var classes = this.getAttribute( 'class' );
-			if( classes.indexOf( 'addCursor' ) === -1 ) classes += ' addCursor';
-			this.setAttribute( 'class', classes );
-			//this.className += ' addCursor';
+			outline.addClass( 'addCursor' );
 		}
 	} );
 
 	//remove cursor on mouseout
 	outline.addEventListener( 'mouseleave', function() {
-		var classes = this.getAttribute( 'class' );
-		classes.replace( 'addCursor', '' );
-		classes.replace( /  /g,' ' );
-		this.setAttribute( 'class', classes );
-		//this.classList.remove( 'addCursor' );
+		outline.removeClass( 'addCursor' );
 	} );
 };
 
@@ -892,10 +937,10 @@ TF_widget.prototype.createVerticalHandles = function() {
 	var parent = this.parent;
 
 	var handleRight = SVG.createVLine( this.parent.svgContext, null, this.canvas.width, this.canvas.height, true, this.options.lineColor, this.options.lineWidth );
-	handleRight.class = 'handle';
+	handleRight.addClass( 'handle' );
 	handleRight.handleType = 'right';
 	var handleLeft = SVG.createVLine( this.parent.svgContext, null, this.canvas.width, this.canvas.height, true, this.options.lineColor, this.options.lineWidth );
-	handleLeft.class = 'handle';
+	handleLeft.addClass( 'handle' );
 	handleLeft.handleType = 'left';
 	this.handles = {};
 	this.handles.right = handleRight;
@@ -912,7 +957,8 @@ TF_widget.prototype.createVerticalHandles = function() {
 		document.addEventListener( 'mouseup', function() {
 			document.removeEventListener( 'mousemove', boundMouseMoveLeft );
 			updateWidgetBound();
-		}, { once: true }  );
+		//}, { once: true }  );
+		} );
 	}
 
 	function onHandlesMouseDownRight( e ) {
@@ -920,7 +966,8 @@ TF_widget.prototype.createVerticalHandles = function() {
 		document.addEventListener( 'mouseup', function() {
 			document.removeEventListener( 'mousemove', boundMouseMoveRight );
 			updateWidgetBound();
-		}, { once: true }  );
+		//}, { once: true }  );
+		} );
 	}
 
 	/**
@@ -991,7 +1038,7 @@ TF_widget.prototype.addControlPoint = function( value, alpha, color ) {
 
 	// circular handle for controlpoint
 	var handle = SVG.createCircle( parent.svgContext, value * this.canvas.width, this.canvas.height - alpha * this.canvas.height, Color.RGBtoHEX( controlPoint.color ), this.options.handle.radius, this.options.handle.lineColor, this.options.handle.lineWidth );
-	handle.class = 'handle';
+	handle.addClass( 'handle' );
 
 	var width = parent.width,
 		height = parent.height;
@@ -1034,7 +1081,8 @@ TF_widget.prototype.addControlPoint = function( value, alpha, color ) {
 
 		document.addEventListener( 'mousemove', moveHandleBound );
 		//remove mouse move event on mouseup
-		document.addEventListener( 'mouseup', onMouseUp, { once: true } );
+		//document.addEventListener( 'mouseup', onMouseUp, { once: true } );
+		document.addEventListener( 'mouseup', onMouseUp );
 	}
 
 	//add mouse move event when mouse is pressed
@@ -1057,24 +1105,20 @@ TF_widget.prototype.addControlPoint = function( value, alpha, color ) {
 		parent.cp_widget.color.set( controlPoint.color, handle );
 		parent.cp_widget.panel.show();
 
-		document.addEventListener( 'mousedown', parent.cp_widget.hidePanel, { once: true } );
+		//document.addEventListener( 'mousedown', parent.cp_widget.hidePanel, { once: true } );
+		document.addEventListener( 'mousedown', parent.cp_widget.hidePanel );
 	} );
 
 	//modify cursor on hover and shift-hold to indicate deletePoint functionality
 	handle.addEventListener( 'mousemove', function( e ) {
 		if ( e.shiftKey ) {
-			var classes = this.getAttribute( 'class' );
-			if( classes.indexOf( 'deleteCursor' ) === -1 ) classes += ' deleteCursor';
-			this.setAttribute( 'class', classes );
+			handle.addClass( 'deleteCursor' );
 		}
 	} );
 
 	//remove cursor on mouseout
 	handle.addEventListener( 'mouseleave', function() {
-		var classes = this.getAttribute( 'class' );
-		classes.replace( 'deleteCursor', '' );
-		classes.replace( /  /g, ' ' );
-		this.setAttribute( 'class', classes );
+		handle.removeClass( 'deleteCursor' );
 	} );
 
 	function showContextMenu( e ) {
@@ -1090,7 +1134,8 @@ TF_widget.prototype.addControlPoint = function( value, alpha, color ) {
 		handleContextMenu.addItems( menuItems );
 		handleContextMenu.showAt( mouse.x, mouse.y );
 
-		document.addEventListener( 'mousedown', handleContextMenu.destroyMenu, { once: true } );
+		document.addEventListener( 'mousedown', handleContextMenu.destroyMenu );
+		//document.addEventListener( 'mousedown', handleContextMenu.destroyMenu, { once: true } );
 
 		//disable default context menu
 		e.preventDefault();
@@ -1102,9 +1147,14 @@ TF_widget.prototype.addControlPoint = function( value, alpha, color ) {
 };
 
 TF_widget.prototype.updateControlPoint = function( controlPoint, params ) {
-	if( params === undefined ) params = {};
 	if( typeof controlPoint !== 'object' ) {
 		controlPoint = this.findControlPoint( controlPoint );
+	}
+
+	if( params === undefined ) {
+		params = {};
+		params.value = controlPoint.value;
+		params.alpha = controlPoint.alpha;
 	}
 	//update position of svg
 	if( params.x ) {
@@ -1125,7 +1175,7 @@ TF_widget.prototype.updateControlPoint = function( controlPoint, params ) {
 
 	if( params.alpha ) {
 		controlPoint.alpha = params.alpha;
-		if( !params.y ) params.y = ( 1.0 - controlPoint.alpha ) * this.parent.width;
+		if( !params.y ) params.y = ( 1.0 - controlPoint.alpha ) * this.parent.height;
 	}
 
 	controlPoint.handle.set( params.x, params.y );
@@ -1133,8 +1183,14 @@ TF_widget.prototype.updateControlPoint = function( controlPoint, params ) {
 
 TF_widget.prototype.findControlPoint = function( value, remove ) {
 	if( remove === undefined ) remove = false;
-	var index = this.controlPoints.findIndex( function( point ) { return point.value === value; } );
-	if ( index < 0 ) {
+	var index = null;
+	for ( var i = 0; i < this.controlPoints.length; i++ ) {
+		if ( this.controlPoints[ i ].value == value ) {
+			index = i;
+		}
+	}
+	//var index = this.controlPoints.findIndex( function( point ) { return point.value === value; } );
+	if ( index === null ) {
 		return null;
 	}
 	if( remove ) {
@@ -1271,7 +1327,8 @@ var ContextMenu = function( options ) {
 	var container = options.container || document.body;
 	this.container = container;
 	var panel = new Panel( { container: container } );
-	panel.dom.className += ' menu popup';
+	panel.addClass( 'menu' );
+	panel.addClass( 'popup' );
 
 	var itemsContainer = document.createElement( 'ul' );
 	panel.dom.appendChild( itemsContainer );
@@ -1279,7 +1336,7 @@ var ContextMenu = function( options ) {
 
 	this.itemsContainer = itemsContainer;
 
-	this.folders = new Map();
+	this.folders = [];
 
 	this.panel = panel;
 	this.hideMenu = this.hide.bind( this );
@@ -1287,7 +1344,9 @@ var ContextMenu = function( options ) {
 };
 
 ContextMenu.prototype.destructor = function() {
-	this.container.removeChild( this.panel.dom );
+	if( this.container.contains( this.panel.dom ) ) {
+		this.container.removeChild( this.panel.dom );
+	}
 };
 
 ContextMenu.prototype.addItems = function( items ) {
@@ -1316,13 +1375,6 @@ ContextMenu.prototype.addItem = function( name, callback, folder, colors ) {
 		callback( e );
 	};
 
-	if( colors ) {
-		item.style.height = '24px';
-		item.style.width = '200px';
-		item.style.margin = '3px 0px';
-		item.style.background = 'linear-gradient(to right, ' + colors.join() + ')';
-	}
-
 	var link = document.createElement( 'a' );
 	link.href = '#';
 	link.target = '_self';
@@ -1330,9 +1382,49 @@ ContextMenu.prototype.addItem = function( name, callback, folder, colors ) {
 
 	item.appendChild( link );
 
+	if( colors ) {
+		var gradientCanvas = document.createElement( 'canvas' );
+		gradientCanvas.width = 200;
+		gradientCanvas.height = 24;
+
+		item.style.height = gradientCanvas.height + 'px';
+		item.style.width = gradientCanvas.width + 'px';
+		item.style.margin = '3px 0px';
+		//item.style.background = 'linear-gradient(to right, ' + colors.join() + ')';
+
+		gradientCanvas.setAttribute( 'style',
+			'z-index: -10;' +
+			'position: relative;' +
+			'margin: 0;' +
+			'padding: 0;' +
+			'top: -' + gradientCanvas.height + 'px;' +
+			'left: 0;' +
+			'height: ' + gradientCanvas.height + 'px;' +
+			'width: ' + gradientCanvas.width + 'px;' );
+
+		item.appendChild( gradientCanvas );
+		var gradientContext = gradientCanvas.getContext( '2d' );
+
+		var gradient = gradientContext.createLinearGradient( 0, 0, gradientCanvas.width, 0 ); //horizontal gradient
+		for( var index = 0; index < colors.length; index++ ) {
+			gradient.addColorStop( index / colors.length, colors[ index ] );
+		}
+		gradientContext.fillStyle = gradient;
+		gradientContext.fillRect( 0, 0, gradientCanvas.width, gradientCanvas.height );
+	}
+
+
 	var parent = this.itemsContainer;
 
-	if( folder && this.folders.get( folder ) ) parent = this.folders.get( folder );
+	//if( folder && this.folders.find( getFolder ) ) parent = this.folders.find( getFolder )[ 1 ];
+	if( folder ) {
+		for( var index = 0; index < this.folders.length; index++ ) {
+			if( this.folders[ index ][ 0 ] === folder ) {
+				parent = this.folders[ index ][ 1 ];
+				break;
+			}
+		}
+	}
 	parent.appendChild( item );
 };
 
@@ -1353,10 +1445,13 @@ ContextMenu.prototype.addFolder = function( name ) {
 	folder.appendChild( itemsSubContainer );
 
 	this.itemsContainer.appendChild( folder );
-	this.folders.set( name, itemsSubContainer );
+	this.folders.push( [ name, itemsSubContainer ] );
 };
 
 ContextMenu.prototype.showAt = function( x, y ) {
+	x = Math.min( x, this.container.clientWidth - this.panel.dom.clientWidth - 10 );
+	y = Math.min( y, this.container.clientHeight - this.panel.dom.clientHeight - 10 );
+
 	this.panel.moveTo( x, y );
 
 	this.panel.show();

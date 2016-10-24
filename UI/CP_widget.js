@@ -119,10 +119,12 @@ Color.parseColor = function( col ) {
 	//check if color is a string, otherwise do conversion to color object
 	if( typeof col === 'string' ) {
 		//HEX
-		if( col.startsWith( '#' ) ) {
+		//if( col.startsWith( '#' ) ) {
+		if( col.lastIndexOf( '#', 0 ) === 0 ) {
 			return Color.HEXtoRGB( col );
 			//RGB(A) (would discard alpha value)
-		} else if( col.startsWith( 'rgb' ) ) {
+		//} else if( col.startsWith( 'rgb' ) ) {
+		} else if( col.lastIndexOf( 'rgb', 0 ) === 0 ) {
 			var parsedNumbers = col.match( /^\d+|\d+\b|\d+(?=\w)/g ).map( function ( v ) { return +v; } );
 			if( parsedNumbers.length < 3 ) {
 				console.err( 'tried to assign invalid color ' + col );
@@ -273,8 +275,17 @@ CP_widget.prototype.showAt = function( x, y, parent ) {
 	this.panel.moveTo( x, y );
 };
 
+/**
+ * SVPicker is the square region in the color picker that allows for the selection of the saturation/value of the color
+ * it is composed by overlaying a DIV (containing the background color picked from the hue picker) with two gradients:
+ * a horizontal gradient canvas for the transition color->white and a vertical gradient canvas for the transition color->black
+ * in combination, they represent the saturation/value of the color space
+ * @param color
+ * @param options
+ * @returns {Element}
+ */
 CP_widget.prototype.createSVPicker = function( color, options ) {
-	var SVPicker = document.createElement( 'canvas' );
+	var SVPicker = document.createElement( 'div' );
 	SVPicker.className = 'field';
 	SVPicker.width = options.size;
 	SVPicker.height = options.size;
@@ -285,42 +296,48 @@ CP_widget.prototype.createSVPicker = function( color, options ) {
 		'float: left;' +
 		'height: ' + SVPicker.width + 'px;' +
 		'width: ' + SVPicker.height + 'px;' );// +
-	//'background: linear-gradient( to right, #FFF, rgba( 255, 255, 255, 0 ) )';
 	this.panel.dom.appendChild( SVPicker );
-	//var SVPicker = document.createElement( 'canvas' );
-	/*SVPicker.setAttribute('style',
-	 'position:absolute;' +
-	 'float:left;' +
-	 'height: ' + SVPicker.width + 'px;' +
-	 'width: ' + SVPicker.height + 'px;' );*/
-	var SVPickerContext = SVPicker.getContext( '2d' );
 
-	var gradient = SVPickerContext.createLinearGradient( 0, 0, SVPicker.width, 0 ); //horizontal gradient
+	var HGradientCanvas = document.createElement( 'canvas' );
+	HGradientCanvas.width = SVPicker.width;
+	HGradientCanvas.height = SVPicker.height;
+	HGradientCanvas.setAttribute('style',
+		'margin: 0;' +
+		'padding: 0;' +
+		'top: 0;' +
+		'float: left;' +
+		'height: ' + SVPicker.width + 'px;' +
+		'width: ' + SVPicker.height + 'px;' );
+
+	SVPicker.appendChild( HGradientCanvas );
+	var HGradientContext = HGradientCanvas.getContext( '2d' );
+
+	var gradient = HGradientContext.createLinearGradient( 0, 0, SVPicker.width, 0 ); //horizontal gradient
 	gradient.addColorStop( 0, '#FFF' );
 	gradient.addColorStop( 1, 'rgba( 255, 255, 255, 0 )' );
-	SVPickerContext.fillStyle = gradient;
-	SVPickerContext.fillRect( 0, 0, SVPicker.width, SVPicker.height );
+	HGradientContext.fillStyle = gradient;
+	HGradientContext.fillRect( 0, 0, SVPicker.width, SVPicker.height );
 
-	var SVPickerGradientOverlayCanvas = document.createElement( 'canvas' );
-	SVPickerGradientOverlayCanvas.width = SVPicker.width;
-	SVPickerGradientOverlayCanvas.height = SVPicker.height;
-	SVPickerGradientOverlayCanvas.setAttribute('style',
+	var VGradientCanvas = document.createElement( 'canvas' );
+	VGradientCanvas.width = SVPicker.width;
+	VGradientCanvas.height = SVPicker.height;
+	VGradientCanvas.setAttribute('style',
 		'margin: 0;' +
 		'padding: 0;' +
 		'top: 0;' +
 		'float: left;' +
 		'margin-left:' + -SVPicker.width +  'px;' +
 		'height: ' + SVPicker.width + 'px;' +
-		'width: ' + SVPicker.height + 'px;' );// +
-	//'background: linear-gradient( rgba( 0, 0, 0, 0 ), #000 )';
-	this.panel.dom.appendChild( SVPickerGradientOverlayCanvas );
-	var SVPickerGradientOverlayContext = SVPickerGradientOverlayCanvas.getContext( '2d' );
+		'width: ' + SVPicker.height + 'px;' );
 
-	gradient = SVPickerGradientOverlayContext.createLinearGradient( 0, SVPicker.height, 0, 0 ); //vertical gradient
+	SVPicker.appendChild( VGradientCanvas );
+	var VGradientContext = VGradientCanvas.getContext( '2d' );
+
+	gradient = VGradientContext.createLinearGradient( 0, SVPicker.height, 0, 0 ); //vertical gradient
 	gradient.addColorStop( 0,'#000' );
 	gradient.addColorStop( 1, 'rgba( 0, 0, 0, 0 )' );
-	SVPickerGradientOverlayContext.fillStyle = gradient;
-	SVPickerGradientOverlayContext.fillRect( 0, 0, SVPicker.width, SVPicker.height );
+	VGradientContext.fillStyle = gradient;
+	VGradientContext.fillRect( 0, 0, SVPicker.width, SVPicker.height );
 
 	var SVPickerCursor = document.createElement( 'div' );
 	SVPickerCursor.className = 'handle';
@@ -364,7 +381,8 @@ CP_widget.prototype.createSVPicker = function( color, options ) {
 		//remove mousemove function
 		document.removeEventListener( 'mousemove', pickSV );
 		//hide color picker on next click in document
-		document.addEventListener( 'mousedown', cp_widget.hidePanel, { once: true } );
+		//document.addEventListener( 'mousedown', cp_widget.hidePanel, { once: true } );
+		document.addEventListener( 'mousedown', cp_widget.hidePanel );
 	}
 
 	function onMouseDown( e ) {
@@ -376,7 +394,8 @@ CP_widget.prototype.createSVPicker = function( color, options ) {
 		//prevent panel from hiding while mouse is down
 		document.removeEventListener( 'mousedown', cp_widget.hidePanel );
 
-		document.addEventListener( 'mouseup', onMouseUp, { once: true } );
+		//document.addEventListener( 'mouseup', onMouseUp, { once: true } );
+		document.addEventListener( 'mouseup', onMouseUp );
 		return false;
 	}
 
@@ -412,8 +431,7 @@ CP_widget.prototype.createHPicker = function( color, options ) {
 		'margin-left: '+ options.pad + 'px;' +
 		'padding: 0;' +
 		'height: '+ HPicker.height + 'px;' +
-		'width: '+ HPicker.width + 'px;' );// +
-	//'background: linear-gradient(#f00 0, #f0f 17%, #00f 33%, #0ff 50%, #0f0 67%, #ff0 83%, #f00 100%)' );
+		'width: '+ HPicker.width + 'px;' );
 
 	var HPickerCanvas = document.createElement( 'canvas' );
 	HPickerCanvas.setAttribute('style',
@@ -457,8 +475,6 @@ CP_widget.prototype.createHPicker = function( color, options ) {
 		e.stopPropagation();
 
 		var pos = UI.getRelativePosition( null, e.clientY, HPicker );
-
-		//pos.y = Math.round( e.clientY - HPicker.getBoundingClientRect().top );
 		pos.y = Math.clamp( pos.y, 0, HPicker.height );
 
 		var hue = 1 - ( pos.y / HPicker.height );
@@ -477,7 +493,8 @@ CP_widget.prototype.createHPicker = function( color, options ) {
 		//remove mousemove function
 		document.removeEventListener( 'mousemove', pickHue );
 		//hide color picker on next click in document
-		document.addEventListener( 'mousedown', cp_widget.hidePanel, { once: true } );
+		//document.addEventListener( 'mousedown', cp_widget.hidePanel, { once: true } );
+		document.addEventListener( 'mousedown', cp_widget.hidePanel );
 	}
 
 	function onMouseDown( e ) {
@@ -489,9 +506,11 @@ CP_widget.prototype.createHPicker = function( color, options ) {
 		//prevent panel from hiding while mouse is down
 		document.removeEventListener( 'mousedown', cp_widget.hidePanel );
 
-		document.addEventListener( 'mouseup', onMouseUp, { once: true } );
+		//document.addEventListener( 'mouseup', onMouseUp, { once: true } );
+		document.addEventListener( 'mouseup', onMouseUp );
 		return false;
 	}
+
 	HPicker.addEventListener( 'mousedown', onMouseDown );
 
 	HPicker.update = function( color ) {

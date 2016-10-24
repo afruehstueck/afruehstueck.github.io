@@ -37,7 +37,7 @@ Statistics.calcHistogram = function( data, options ) {
 	if( options === undefined ) options = {};
 	var histogram = {};
 
-	histogram.numBins = options.numBins;
+	histogram.numBins = options.numBins || 256;
 
 	//calculate range of data values
 	var min = Infinity;
@@ -159,6 +159,27 @@ Panel.prototype.moveTo = function( x, y ) {
 	this.top = y;
 	this.dom.style.left = x + 'px';
 	this.left = x;
+};
+
+/**
+ * account for class functions
+ * from https://toddmotto.com/hacking-svg-traversing-with-ease-addclass-removeclass-toggleclass-functions/
+ */
+Panel.prototype.hasClass = function ( className ) {
+	return new RegExp( '(\\s|^)' + className + '(\\s|$)' ).test( this.dom.getAttribute( 'class' ) );
+};
+
+Panel.prototype.addClass = function ( className ) {
+	if ( !this.hasClass( className ) ) {
+		this.dom.setAttribute( 'class', this.dom.getAttribute( 'class' ) + ' ' + className );
+	}
+};
+
+Panel.prototype.removeClass = function ( className ) {
+	var removedClass = this.dom.getAttribute( 'class' ).replace( new RegExp( '(\\s|^)' + className + '(\\s|$)', 'g' ), '$2' );
+	if ( this.hasClass( className ) ) {
+		this.dom.setAttribute( 'class', removedClass );
+	}
 };
 
 /**
@@ -341,6 +362,12 @@ SVG.createPolyline = function( parent, points, scaleWidth, scaleHeight, attrX, a
 		this.data.points = points;
 	}
 
+	function resize( width, height ) {
+		scaleWidth = width;
+		scaleHeight = height;
+	}
+
+	polyline.resize = resize;
 	polyline.setPoints = setPoints;
 	polyline.setFillColor = this.setFillColor;
 	polyline.setLineColor = this.setLineColor;
@@ -378,6 +405,13 @@ SVG.createLine = function( parent, points, scaleWidth, scaleHeight, invertY, str
 		this.data.points = points;
 	}
 
+
+	function resize( width, height ) {
+		scaleWidth = width;
+		scaleHeight = height;
+	}
+
+	line.resize = resize;
 	line.setPoints = setPoints;
 	line.setFillColor = this.setFillColor;
 	line.setLineColor = this.setLineColor;
@@ -411,3 +445,23 @@ SVG.createVLine = function( parent, point, scaleWidth, scaleHeight, invertY, str
 
 SVG.svgNS = 'http://www.w3.org/2000/svg';
 
+/**
+ * account for missing SVG class functions
+ * from https://toddmotto.com/hacking-svg-traversing-with-ease-addclass-removeclass-toggleclass-functions/
+ */
+SVGElement.prototype.hasClass = function ( className ) {
+	return new RegExp( '(\\s|^)' + className + '(\\s|$)' ).test( this.getAttribute( 'class' ) );
+};
+
+SVGElement.prototype.addClass = function ( className ) {
+	if ( !this.hasClass( className ) ) {
+		this.setAttribute( 'class', this.getAttribute( 'class' ) + ' ' + className );
+	}
+};
+
+SVGElement.prototype.removeClass = function ( className ) {
+	var removedClass = this.getAttribute( 'class' ).replace( new RegExp( '(\\s|^)' + className + '(\\s|$)', 'g' ), '$2' );
+	if ( this.hasClass( className ) ) {
+		this.setAttribute( 'class', removedClass );
+	}
+};
