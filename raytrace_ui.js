@@ -24,7 +24,6 @@ var Controls = function() {
     this.dimension_z = volumeDimensions.z;
 	this.samplingRate = samplingRate;
 	this.alphaCorrection = alphaCorrection;
-    this.channel = channel;
 	this.color1 = "#000000";
 	this.alpha1 = 0.0;
 	this.stepPos1 = 0.1;
@@ -101,8 +100,6 @@ var f_volume = gui.addFolder( 'Volume' );
 
 var volume_select = f_volume.add( controls, 'volume', volumes );
 
-var volume_channel = f_volume.add( controls, 'channel', { R: 0, G: 1, B: 2, A: 3 } );
-
 var volume_downsample_x = f_volume.add( controls, 'dimension_x',
                                         {   [ datasetDimensions.x + ' (original)' ]: datasetDimensions.x,
                                             [ datasetDimensions.x / 2 ]: datasetDimensions.x / 2,
@@ -122,10 +119,6 @@ var volume_downsample_z = f_volume.add( controls, 'dimension_z',
 
 var volume_samplingRate = f_volume.add( controls, 'samplingRate', 1., 1000. ).step( 1. );
 var volume_alphaCorrection = f_volume.add( controls, 'alphaCorrection', 0., 1. ).step( 0.001 );
-
-volume_channel.onChange( function( value ) {
-	channel = value;
-});
 
 volume_downsample_x.onChange( function( value ) {
     volumeDimensions.x = value;
@@ -150,7 +143,6 @@ volume_select.onFinishChange( onVolumeChanged );
 volume_downsample_x.onFinishChange( initVolume );
 volume_downsample_y.onFinishChange( initVolume );
 volume_downsample_z.onFinishChange( initVolume );
-volume_channel.onFinishChange( initVolume );
 volume_samplingRate.onFinishChange( requestRendering );
 volume_alphaCorrection.onFinishChange( requestRendering );
 

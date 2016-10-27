@@ -18,12 +18,9 @@ uniform float targetIntensity;
 uniform vec2 dataRange;
 
 //todo: make these uniform
-const float eps = 1e-9;
+const float eps = 1e-6;
 uniform float sensitivity;
 uniform float alpha;
-
-//uniform int channel;
-//uniform vec4 mask[ 4 ];
 
 float getDistance( vec3 texCoord ) {
     clamp( texCoord, 0., 1. );
@@ -35,6 +32,7 @@ void main( void ) {
     float currentLayer = layer / numLayers + 0.5 / numLayers;
     vec3 currentPosition = vec3( textureCoordinate.x, textureCoordinate.y, currentLayer );
 
+    vec4 currentSDFValue = texture( distanceFieldTexture, currentPosition );
     float currentDistance = getDistance( currentPosition );
     float oX = 1. / volumeDimensions.x;
     float oY = 1. / volumeDimensions.y;
@@ -55,8 +53,8 @@ void main( void ) {
     float u4pz = getDistance( currentPosition + vec3(  0.,  0.,  oZ ) );
     float u4mz = getDistance( currentPosition + vec3(  0.,  0., -oZ ) );
 
-    /*
-    float narrowBand = length( volumeDimensions / 8. );
+
+    /*float narrowBand = 0.2;
     if( abs( u4 ) > narrowBand &&
         abs( u1 ) > narrowBand &&
         abs( u3 ) > narrowBand &&
@@ -64,7 +62,7 @@ void main( void ) {
         abs( u7 ) > narrowBand &&
         abs( u4pz ) > narrowBand &&
         abs( u4mz ) > narrowBand ) {
-        color = vec4( currentDistance );
+        color = currentSDFValue;
         return;
     }*/
 
@@ -107,10 +105,10 @@ void main( void ) {
     float Dzpy = ( u7pz - u7mz ) / 2.; // tmp
     float Dzmy = ( u1pz - u1mz ) / 2.; // tmp
 
-    /*if( abs( Dx ) < eps && abs( Dy ) < eps && abs ( Dz ) < eps ) {
-        color = encodedDistance;
+    if( abs( Dx ) < eps && abs( Dy ) < eps && abs ( Dz ) < eps ) {
+        color = currentSDFValue;
         return;
-    }*/
+    }
 
     /* todo something's not right with some of the tiles :( check!
     if( Dx == 0. ) {
@@ -146,7 +144,6 @@ void main( void ) {
     np.x = Dxp / ( ( nxp_denom > 0. ) ? nxp_denom : 1. );
     np.y = Dyp / ( ( nyp_denom > 0. ) ? nyp_denom : 1. );
     np.z = Dzp / ( ( nzp_denom > 0. ) ? nzp_denom : 1. );
-
 
     float nxm_dif1 = ( Dymx + Dy ) / 2.;
     float nxm_dif2 = ( Dzmx + Dz ) / 2.;
@@ -203,12 +200,10 @@ void main( void ) {
                                  sqrt( min_Dyp * min_Dyp + min_mDym * min_mDym ),
                                  sqrt( min_Dzp * min_Dzp + min_mDzm * min_mDzm ) );
 
-    float targetValue = targetIntensity / 255.;//
-    //float targetValue = texture( volumeTexture, seedOrigin ).r;
+    float targetValue = targetIntensity / 255.;
 
     vec4 sampleColor = texture( volumeTexture, currentPosition );
     float sourceValue = sampleColor.x;
-    //float sourceValue = dot( sampleColor, mask[ channel ] );
 
     float min = dataRange.x;
     float max = dataRange.y;

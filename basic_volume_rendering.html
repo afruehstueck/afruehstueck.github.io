@@ -5,23 +5,19 @@
     <title>Volume Rendering Playground</title>
     <script src="scripts/jquery-1.11.0.min.js"></script>
     <script src="scripts/gl-matrix-min_latest.js"></script>
-    <script src="scripts/stats.min.js"></script>
     <script src="scripts/dat.gui.min.js"></script>
-    <script src="scripts/pako.min.js"></script>
     <link rel="stylesheet" href="main.css"/>
     <link rel="stylesheet" href="UI/ui.css"/>
-    <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:400|Ubuntu+Mono' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700|Ubuntu+Mono' rel='stylesheet' type='text/css'>
 </head>
 <body>
-<div class="renderWrapper">
-    <canvas class="renderCanvas webgl2" tabindex="1" data-gltype="webgl2"></canvas>
+<div class="renderWrapper" style="position: relative; display: block; width: 100vw; height: 100vh; overflow: hidden;">
+    <canvas class="renderCanvas webgl" tabindex="1" data-gltype="webgl"></canvas>
 </div>
-<div id="log" class="overlay"></div>
 <script src="camera.js"></script>
-<script src="nrrdLoader.js"></script>
 <script src="UI/ui.js"></script>
 <script src="UI/CP_widget.js"></script>
 <script src="UI/TF_panel.js"></script>
-<script src="basic_volume_rendering.js"></script>
+<script src="TF.js"></script>
 </body>
 </html>

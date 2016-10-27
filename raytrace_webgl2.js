@@ -64,20 +64,12 @@ let seedOrigin = {
 
 let seedRadius = 0.05;
 let targetIntensity = 255;
-let channel = 0;
 let alpha = 0.9;
 let sensitivity = 0.5;
 
-let mask = [
-	1., 0., 0., 0.,
-	0., 1., 0., 0.,
-	0., 0., 1., 0.,
-	0., 0., 0., 1.
-];
-
 let iteratePerClick = 1;
 
-let updateTF = true;
+//let updateTF = true;
 
 let tf_panel;
 
@@ -685,6 +677,7 @@ let canvases = document.querySelectorAll( '.renderCanvas' ); //.webgl2
 
 for( let canvas of canvases ) {
     canvas.active = true;
+	canvas.updateTF = true;
 	canvas.isRendering = false;
 
     // OpenGL context
@@ -800,7 +793,9 @@ function init( canvas ) {
 
 		tf_panel = new TF_panel( options );
 		tf_panel.registerCallback( function () {
-			updateTF = true;
+			for( let c of canvases ) {
+				c.updateTF = true;
+			}
 			requestRendering();
 		} );
 	}
@@ -918,8 +913,6 @@ function init( canvas ) {
                 { name: 'seedOrigin',           type: 'vec3',       variable: 'seedOrigin' },
                 { name: 'targetIntensity',      type: 'float',      variable: 'targetIntensity' },
                 { name: 'alpha',                type: 'float',      variable: 'alpha' },
-				{ name: 'channel',              type: 'int',       	variable: 'channel' },
-				{ name: 'mask',              	type: 'vec4v',      variable: 'mask' },
                 { name: 'sensitivity',          type: 'float',      variable: 'sensitivity' },
                 { name: 'dataRange',          	type: 'vec2',	    variable: 'dataRange' },
                 { name: 'distanceFieldTexture', type: 'sampler3D',  variable: 'distanceFieldTexture' },
@@ -933,12 +926,10 @@ function init( canvas ) {
             [   { name: 'projectionMatrix',     type: 'matrix4v',   variable: 'camera.projectionMatrix' },
                 { name: 'modelViewMatrix',      type: 'matrix4v',   variable: 'camera.modelViewMatrix' } ]
         ],
-        [ box_vert,  'shaders_webgl2/raytrace.frag',
+        [ box_vert,  'shaders_webgl2/raytrace_simplified.frag',
             [   { name: 'distanceFieldTexture', type: 'sampler3D',  variable: 'distanceFieldTexture' },
             	{ name: 'transferTexture', 		type: 'sampler2D',  variable: 'transferTexture' },
                 { name: 'tiles',                type: 'vec2',       variable: 'tiles' },
-                { name: 'channel',              type: 'int',       	variable: 'channel' },
-                { name: 'mask',              	type: 'vec4v',      variable: 'mask' },
 				{ name: 'dataRange',          	type: 'vec2',	    variable: 'dataRange' },
 				{ name: 'samplingRate',        	type: 'int',	    variable: 'samplingRate' },
 				{ name: 'alphaCorrection',    	type: 'float',	    variable: 'alphaCorrection' },
@@ -974,7 +965,6 @@ function init( canvas ) {
         canvas.programs = {};
 
 		for( let argument of arguments ) {
-        //for( let i = 0; i < arguments.length; i++ ) {
             if ( argument === undefined ) {
                 continue;
             }
@@ -988,9 +978,8 @@ function init( canvas ) {
         gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
         updateDistanceFieldUniforms.call( canvas, canvas.programs[ 'update_sdf' ] );
 
-        gl.enableVertexAttribArray( canvas.programs[ 'raytrace' ].position );
-        gl.enableVertexAttribArray( canvas.programs[ 'raytrace' ].texCoord );
-        //updateRaytraceUniforms( programs[ 'raytrace' ] );
+        gl.enableVertexAttribArray( canvas.programs[ 'raytrace_simplified' ].position );
+        gl.enableVertexAttribArray( canvas.programs[ 'raytrace_simplified' ].texCoord );
 
 		tf_panel.updateHistogram = true;
 		tf_panel.draw();
@@ -1090,14 +1079,14 @@ function requestRendering() {
 function render() {
     if( $.isEmptyObject( this.programs ) ) return;
 
-	if( updateTF ) {
+	if( this.updateTF ) {
 		updateTransferFunctionTextures( this );
-		updateTF = false;
+		this.updateTF = false;
 	}
     //render backface
     renderBackface.call( this, this.programs[ 'backfaces' ], this.backfaceFrameBuffer );
     //raytrace volume
-    renderRaytrace.call( this, this.programs[ 'raytrace' ], this.volumeFrameBuffer, this.frameBuffers[ iteration % 2 ], this.backfaceFrameBuffer, this.transferTexture );
+    renderRaytrace.call( this, this.programs[ 'raytrace_simplified' ], this.volumeFrameBuffer, this.frameBuffers[ iteration % 2 ], this.backfaceFrameBuffer, this.transferTexture );
 
 	this.isRendering = false;
     //render a texture to fullscreen (for debug purposes)
@@ -1156,8 +1145,6 @@ function updateDistanceField( program, volumeFrameBuffer, sourceFrameBuffer, tar
     gl.useProgram( program );
 
     //todo: this shouldn't be here
-	gl.uniform1i( program.channel, channel );
-	gl.uniform4fv( program.mask, mask );
     gl.uniform2f( program.tiles, tiles.x, tiles.y );
 	gl.uniform2f( program.dataRange, dataRange.min, dataRange.max );
 
@@ -1224,7 +1211,7 @@ function renderBackface( program, frameBuffer ) {
 }
 
 //do raytracing of cube
-function renderRaytrace( program, volumeFrameBuffer, distanceFieldFrameBuffer, backfaceFrameBuffer, textureColor = null ) {
+function renderRaytrace( program, volumeFrameBuffer, distanceFieldFrameBuffer, backfaceFrameBuffer, tfTexture = null ) {
     let gl = this.context;
 
     gl.viewport( 0, 0, this.width, this.height );
@@ -1232,8 +1219,6 @@ function renderRaytrace( program, volumeFrameBuffer, distanceFieldFrameBuffer, b
     gl.useProgram( program );
 
     //todo: this shouldn't be here
-    gl.uniform1i( program.channel, channel );
-    gl.uniform4fv( program.mask, mask );
     gl.uniform2f( program.tiles, tiles.x, tiles.y );
     gl.uniform2f( program.dataRange, dataRange.min, dataRange.max );
     gl.uniform3f( program.volumeDimensions, volumeDimensions.x, volumeDimensions.y, volumeDimensions.z );
@@ -1252,9 +1237,9 @@ function renderRaytrace( program, volumeFrameBuffer, distanceFieldFrameBuffer, b
     gl.bindTexture( distanceFieldFrameBuffer.type, distanceFieldFrameBuffer.texture );
     gl.uniform1i( program.distanceFieldTexture, 2 );
 
-	if( textureColor ) {
+	if( tfTexture ) {
 		gl.activeTexture( gl.TEXTURE3 );
-		gl.bindTexture( gl.TEXTURE_2D, textureColor );
+		gl.bindTexture( gl.TEXTURE_2D, tfTexture );
 		gl.uniform1i( program.transferTexture, 3 );
 	}
 

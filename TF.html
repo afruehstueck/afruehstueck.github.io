@@ -5,9 +5,7 @@
     <title>Transfer Function Panel: Documentation</title>
     <script src="scripts/jquery-1.11.0.min.js"></script>
     <script src="scripts/gl-matrix-min_latest.js"></script>
-    <script src="scripts/stats.min.js"></script>
     <script src="scripts/dat.gui.min.js"></script>
-    <script src="scripts/pako.min.js"></script>
     <link rel="stylesheet" href="main.css"/>
     <link rel="stylesheet" href="UI/ui.css"/>
     <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700|Ubuntu+Mono' rel='stylesheet' type='text/css'>
@@ -30,9 +28,12 @@
 <span class='emph code'><span style="color: #999">&#9888;</span> This demo uses WebGL. Consider using <a href="https://www.google.com/chrome/">Google Chrome</a> or <a href="https://www.mozilla.org/en-US/firefox/">Mozilla Firefox</a> if you have trouble viewing this demo.</span>
 
 <div class="renderWrapper" style="position: relative; width: 90%; height: 700px; margin: 0 auto; top: 20px">
-    <canvas class="renderCanvas webgl" tabindex="1" data-gltype="webgl"></canvas>
+    <canvas class="renderCanvas webgl" tabindex="1" data-gltype="webgl" style="width: 100%"></canvas>
 </div>
-<p style="position: relative; width: 80%; margin: 0 auto; top: 20px"><i>Play around with the parameters of the volume rendering by adjusting the transfer function in the transfer function editor, picking a volume from the upper-right menu and modifying sampling rate and alpha correction.</i></p>
+<p style="position: relative; width: 90%; margin: 0 auto; top: 20px">
+    <i>Play around with the parameters of the volume rendering by adjusting the transfer function in the transfer function editor, picking a volume from the upper-right menu and modifying sampling rate and alpha correction.</i>
+    <a href="basic_volume_rendering.html" target="_blank" class="emph code" style="position: relative; top: 10px; float: right">[ view fullscreen ]</a>
+</p>
 <h2 style="margin-top: 50px">Resulting transfer function</h2>
 <span class='code'>tf_panel.getTF()</span> returns an array of [ value, { r, g, b, a } ] items.
 <br>
