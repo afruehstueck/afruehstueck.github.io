@@ -138,7 +138,7 @@
 		options.parent = options.parent || document.body;
 		options.panel = options.panel || {};
 		options.panel.width = options.panel.width || 650;
-		options.panel.height = options.panel.height || 150;
+		options.panel.height = options.panel.height || 170;
 		options.panel.background = options.panel.background || '#000000';
 		options.panel.border = options.panel.border || 'none';
 		options.panel.colorScheme = options.panel.colorScheme || 'dark';
