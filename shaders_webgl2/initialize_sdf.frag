@@ -47,9 +47,9 @@ void main( void ) {
     vec3 voxelPosition = currentPosition * volumeDimensions;
     vec3 voxelSeedOrigin = seedOrigin * volumeDimensions;
     float voxelLength = length ( voxelPosition - voxelSeedOrigin );
-    float distance = sdSphere( currentPosition, seedOrigin, seedRadius );
-    //float distance = sdSphere( voxelPosition, voxelSeedOrigin, seedRadius );
-    distance *= voxelLength;
+    float distance = sdSphere( currentPosition, seedOrigin, seedRadius ); //in [0, 1]
+    //distance *= voxelLength; //in [0, volumeDimension.n]
+    //distance *= 1000.; //in [0, volumeDimension.n]
 
     color.r = distance;
     color.gba = calcNormal( voxelPosition, voxelSeedOrigin, seedRadius );

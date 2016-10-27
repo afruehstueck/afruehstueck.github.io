@@ -37,6 +37,7 @@ void main( void ) {
     float oX = 1. / volumeDimensions.x;
     float oY = 1. / volumeDimensions.y;
     float oZ = 1. / volumeDimensions.z;
+
     /* calculate all the values
     | u6 | u7 | u8 |
     | u3 | u4 | u5 |
@@ -214,7 +215,7 @@ void main( void ) {
 
     //speed function is composed from speed function D and curvature function H, controlled by alpha value
     //TODO look at curvature H which is probably broken
-    float speedFunction = alpha * D + ( 1. - alpha ) * H;
+    float speedFunction = D;//alpha * D + ( 1. - alpha ) * H;
     //choose gradient magnitude according to speed function
     vec3 gradient = ( speedFunction > 0. ) ? grad_phi_max : grad_phi_min;
     float gradientMagnitude = length( gradient );
