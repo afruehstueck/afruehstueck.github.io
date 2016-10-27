@@ -51,10 +51,10 @@
 .popup {
     visibility: hidden;
     display: inline-block;
-    background-color: #333;
+/*    background-color: #333;
     border: #444;
+    color: #fff;*/
     font-size: 10px;
-    color: #fff;
     text-align: left;
     padding: 6px;
     margin: 6px;
@@ -75,49 +75,48 @@
     padding: 0;
 }
 
-.menu li a {
+.menu li span {
     font-size: 11px;
     position: relative;
     min-width: 60px;
     display: inline-block;
-    margin: 6px 12px;
-    color: #fff;
+    padding: 6px 12px;
+    pointer-events: none;
+    /*color: #fff;*/
     text-decoration: none;
+}
+
+.menu .text:hover {
     cursor: pointer;
 }
 
-.menu li:hover {
-    background: #444;
-    /* color: #fff;
-     border-radius: 6px;*/
+.menu .gradient:hover {
+    opacity: 0.6;
 }
 
 .menu li ul li {
     display: none;
 }
 
-.menu li:hover ul li {
+.menu .folder:hover ul li {
     display: block;
     margin-left: 0px; margin-top: 0px;
 }
 
 .menu ul+li:before {
     content: '';
-    background: #444;
+    /*background: #444;*/
     display: block;
     margin: 0 auto;
     width: 86%;
     height: 1px;
 }
 
-.menu ul li ul li {
+.menu .gradient {
     cursor: pointer;
-    opacity: 0.8;
+    opacity: 0.99;
 }
 
-.menu ul li ul li:hover {
-    opacity: 1;
-}
 
 #tf-collapsible div {
     background-color: black;
@@ -140,6 +139,10 @@
     cursor: w-resize !important;
 }
 
+body {
+    font-family: sans-serif;
+}
+
 #tf-panel .handle:hover {
     opacity: 1;
 }
@@ -158,17 +161,62 @@
 #tf-panel .tooltip {
     visibility: hidden;
     display: inline-block;
-    background-color: #333;
-    border: #444;
     min-width: 52px;
     font-size: 10px;
-    color: #fff;
+   /* color: #fff;*/
     text-align: left;
     padding: 5px 8px;
     margin: 5px;
     border-radius: 6px;
     position: absolute;
     z-index: 10;
+}
+
+.dark {
+    background-color: #333;
+    color: #fff !important;
+}
+
+.dark .text:hover {
+    background: #444;
+}
+
+.dark input {
+    color: #ddd;
+    background-color: #2d2d2d;
+    border: 1px solid #222;
+}
+
+.light {
+    background-color: #eee;
+    border: 1px solid #ccc;
+    color: #111 !important;
+}
+
+.light .text:hover {
+    background: #ccc;
+}
+
+.light input {
+    color: #111;
+    background-color: #ddd;
+    border: 1px solid #ccc;
+}
+
+.blue {
+    background-color: #bdd5f0;
+    border: 1px solid #91c2f0;
+    color: #111 !important;
+}
+
+.blue .text:hover {
+    background: #91c2f0;
+}
+
+.blue input {
+    color: #111;
+    background-color: #c3ddf7;
+    border: 1px solid #91c2f0;
 }
 
 .unselectable {
@@ -205,8 +253,5 @@
 #cp-panel input[type=number] {
     font-size: 10px;
     text-align: right;
-    color: #dddddd;
-    background-color: #2d2d2d;
     border-radius: 2px;
-    border: 1px solid #222;
 }

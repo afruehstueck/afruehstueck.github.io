@@ -249,7 +249,10 @@ var CP_widget = function( options ) {
 	this.color = new Color();
 
 	panel.dom.id = 'cp-panel';
-	panel.dom.className += ' overlay popup';
+
+	panel.addClass( 'overlay' );
+	panel.addClass( 'popup' );
+	panel.addClass( options.colorScheme ? options.colorScheme : 'dark' );
 
 	this.hidePanel = this.hide.bind( this );
 

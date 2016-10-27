@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Transfer Function Editor</title>
-    <link rel="stylesheet" href="main.css"/>
     <link rel="stylesheet" href="UI/ui.css"/>
     <script src="scripts/es5-shim.min.js"></script>
     <script src="scripts/es6-shim.min.js"></script>
@@ -26,6 +25,7 @@
     var tf_panel = new TF_panel( { container: document.body, panel: { width: bWidth, height: bHeight } } );
 
     window.onresize = function() {
+        console.log('resize');
         tf_panel.resize( window.innerWidth, window.innerHeight );
     };
 

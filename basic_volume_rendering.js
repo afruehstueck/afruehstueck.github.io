@@ -15,17 +15,21 @@ let volumes = {
 	case5_tp2:'res/nrrd/case5_tp2.nrrd',
 	case6_tp1:'res/nrrd/case6_tp1.nrrd',
 	case6_tp2:'res/nrrd/case6_tp2.nrrd',
+	braintumor1:'res/nrrd/RegLib_C01_1.nrrd',
+	braintumor2:'res/nrrd/RegLib_C01_2.nrrd',
+	MRHead:'res/nrrd/MR-head.nrrd',
 	aneurysm:'res/nrrd/aneurysm.nrrd',
 	dtibrain:'res/nrrd/DTI-Brain.nrrd',
 	avf:	'res/nrrd/avf.nrrd',
 	I:		'res/nrrd/I.nrrd',
 	bonsai:	'res/tiled/bonsai128x128x256.png',
-	head:	'res/tiled/head128x128x256.png',
+	/*aorta:	'res/tiled/aorta400x400x100.png',*/
+	head:	'res/tiled/head256x128x256.png',
 	heart:	'res/tiled/heart128x128x256.png',
 	torso:	'res/tiled/torso128x128x256.png'
 };
 
-let volumePath = volumes.case1_tp1;
+let volumePath = volumes.torso;
 
 let volumeDimensions = {
 	x: 256,
@@ -702,7 +706,15 @@ function init( canvas ) {
 	let gl = canvas.context;
 
 	if( !tf_panel ) {
-		tf_panel = new TF_panel( canvas );
+		var options = {
+			parent: 	canvas,
+			container: 	canvas.parentElement,
+			panel: {
+				isCollapsible: true
+			}
+		};
+
+		tf_panel = new TF_panel( options );
 		tf_panel.registerCallback( function () {
 			updateTF = true;
 			requestRendering();
@@ -745,6 +757,10 @@ function init( canvas ) {
 			//create 3D FBO for 3D volume texture
 			canvas.volumeFrameBuffer = createFBO.call( canvas, [ volumeDimensions.x, volumeDimensions.y, volumeDimensions.z ] );
 
+			if( gl.type === 'webgl' ) {
+				canvas.volumeFrameBuffer.texture = canvas.tiledVolume;
+				canvas.volumeFrameBuffer.hasData = true;
+			}
 			canvas.sourceImage = sourceImage;
 
 			var dataCanvas = document.createElement( 'canvas' );
@@ -861,15 +877,24 @@ function init( canvas ) {
 		gl.enableVertexAttribArray( canvas.programs[ 'raytrace' ].texCoord );
 		//updateRaytraceUniforms( programs[ 'raytrace' ] );
 
-		tf_panel.updateHistogram = true;
+		let histogramOptions = {};
+		histogramOptions.numBins = ( tf_panel.panel.width / 10 );
+
+		let histogram = Statistics.calcHistogram( canvas.data, histogramOptions );
+		tf_panel.setHistogram( histogram );
 		tf_panel.draw();
+
 		renderOnce.call( canvas );
 		requestRendering();
 	} );
 }
 
 function updateTransferFunctionTextures( canvas ) {
-	tf_img = tf_panel.TFtoIMG();
+	var tf_img = document.createElement( 'img' );
+	tf_img.width = 256;
+	tf_img.height = 30;
+	tf_panel.plotTFResults( tf_img );
+
 	canvas.transferTexture = createTextureFromImage.call( canvas, tf_img, false );
 	console.log( 'updated transfer function texture' );
 }
@@ -880,10 +905,8 @@ function renderOnce() {
 	console.log( 'initializing...' );
 
 	//transfer the volume from the two tiled texture into the volume 3D texture
-	if( !this.volumeFrameBuffer.hasData ) {
+	if( gl.type === 'webgl2' ) {
 		initializeVolume.call( this, this.programs[ 'initialize_volume' ], this.volumeFrameBuffer, this.tiledVolume );
-	} else if( gl.type === 'webgl' ) {
-		
 	}
 }
 

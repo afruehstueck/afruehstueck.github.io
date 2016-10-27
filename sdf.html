@@ -11,11 +11,17 @@
 </head>
 
 <body>
+<h1>GLSL Signed Distance Function Demo</h1>
+<p>
+    This demo is based on the work of <a href="http://www.cs.utah.edu/~jmk/papers/lefohn_tvcg03.pdf">Lefohn et al.</a>
+    (TVCG' 03) on level sets. The distance field is inititialized with a circular region and iteratively approximates
+    the target region by applying a simple speed function moving the distance field towards the target intensity.
+</p>
 <h2>
-    Processed Image
+    Processed image
 </h2>
 <p>
-    Click and drag in image to center seed point and adjust seed radius.
+    Click and drag in image to center seed point (selecting target intensity value) and adjust seed radius.
 </p>
 <div id="outputContainer">
     <canvas id="renderCanvas"></canvas>

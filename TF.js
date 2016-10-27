@@ -634,7 +634,24 @@ function init( canvas ) {
 	let gl = canvas.context;
 
 	if( !tf_panel ) {
-		tf_panel = new TF_panel( { parent: canvas, container: canvas.parentElement, panel: { isCollapsible: true } } );
+		var options = {
+			widgets:			[	{ controlPoints: [  { value:   0.404,	alpha:	0.00,   color:  '#971904' },
+														{ value:   0.543,	alpha:	0.49,   color:  '#ed4200' },
+														{ value:   0.646,	alpha:	0.45,   color:  '#dfdc00' },
+														{ value:   0.834,	alpha:	0.40,   color:  '#f3f2a1' },
+														{ value:   1.000,	alpha:	0.24,   color:  '#fffffd' } ]    },
+									{ controlPoints: [  { value:   0.117,	alpha:	0.63,	color:	'#bdc3c7' },
+														{ value:   0.181,	alpha:	0.77,	color: 	'#2c3e50' } ] } ],
+			widget:		{	globalOpacity:	0.75,
+							gradientAlpha:	false },
+			parent: 	canvas,
+			container: 	canvas.parentElement,
+			panel: {
+				isCollapsible: true
+			}
+		};
+
+		tf_panel = new TF_panel( options );
 		tf_panel.registerCallback( function () {
 			updateTF = true;
 			requestRendering();
@@ -782,21 +799,23 @@ function updateTransferFunctionTextures( canvas ) {
 	tf_panel.plotTFResults( tf_img );
 
 	var output_img = document.querySelector( '.tf_output' );
-	tf_panel.plotTFResults( output_img );
+	if( output_img ) tf_panel.plotTFResults( output_img );
 	var output_values = document.querySelector( '.tf_values' );
-	let tf_string = '';
-	let gradient_string = '';
-	for ( let item of tf_panel.getTF() ) {
-		if( tf_string.length > 0 ) tf_string += ', ';
-		tf_string += '[' + item[ 0 ].toFixed( 3 ) + ', {r:' + item[ 1 ].r + ', g:' + item[ 1 ].g + ', b:' + item[ 1 ].b + ', a:' + item[ 1 ].a.toFixed( 3 ) + '}]';
-		if( gradient_string.length > 0 ) gradient_string += ', ';
-		gradient_string += Color.RGBtoHEX( item[ 1 ].r, item[ 1 ].g, item[ 1 ].b ) + ' ' + Math.round( item[ 0 ] * 100 ) + '% ';
+	if( output_values ) {
+		let tf_string = '';
+		let gradient_string = '';
+		for ( let item of tf_panel.getTF() ) {
+			if ( tf_string.length > 0 ) tf_string += ', ';
+			tf_string += '[' + item[ 0 ].toFixed( 3 ) + ', {r:' + item[ 1 ].r + ', g:' + item[ 1 ].g + ', b:' + item[ 1 ].b + ', a:' + item[ 1 ].a.toFixed( 3 ) + '}]';
+			if ( gradient_string.length > 0 ) gradient_string += ', ';
+			gradient_string += Color.RGBtoHEX( item[ 1 ].r, item[ 1 ].g, item[ 1 ].b ) + ' ' + Math.round( item[ 0 ] * 100 ) + '% ';
+		}
+		output_values.innerText = tf_string;
 	}
-	output_values.innerText = tf_string;
-
 	let headline = document.querySelector( 'h1' );
-
-	headline.style.backgroundImage = 'linear-gradient(to right, ' + gradient_string + ')';
+	if( headline ) {
+		headline.style.backgroundImage = 'linear-gradient(to right, ' + gradient_string + ')';
+	}
 	//headline.style.backgroundImage = '-webkit-linear-gradient(to right, ' + gradient_string + ')';
 
 	//let tfValues = tf_panel.getTF();

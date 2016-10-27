@@ -95,10 +95,11 @@
         options = { 'panel':			{	'width':			1000,
 											'height':			200,
                                             'background':	    'linear-gradient(to top, rgb(212,228,239) 30%, rgb(134,174,204) 100%)',
-                                            'border':	        '3px solid rgb(134,174,204)',
+                                            'border':	        '3px solid rgba(134,174,204, 0.2)',
                                             'isCollapsible':    false,
                                             'showTFResult':     true,
-                                            'resultBackground': 'rgb(0,0,0)',
+                                            'resultBackground': 'rgb(230,230,230)',
+                                            'colorScheme':      'light',
                                             'resultHeight':     30 },
 					'histogram':		{	'fillColor':		'#bcbcbc',
 											'lineColor':		'#111111',
@@ -139,8 +140,8 @@
 																	'height':       150,
 																	'pad':          4,
 																	'cursorHeight': 4   }	} };
+            options.parent = wrapper;
 
-        options.parent = wrapper;
         options.container = wrapper;
 
         var tf_panel = new TF_panel( options );
@@ -163,6 +164,7 @@
                 <DT>showTFResult</DT>    <DD><span class="gr">[ boolean ]</span> specifies whether a bottom bar should show the result of the alpha blended transfer function widgets  <i>(default: false)</i></DD>
                 <DT>resultHeight</DT>    <DD><span class="gr">[ number ]</span> height of result bar <i>(default: 20)</i></DD>
                 <DT>resultBackground</DT><DD><span class="gr">[ css ]</span> specifies css background attribute for result bar <i>(default: #000000)</i></DD>
+                <DT>colorScheme</DT>     <DD><span class="gr">[ 'dark', 'light' or 'blue' ]</span> specifies the color scheme for the context menus, tooltips and color picker <i>(default: 'dark')</i></DD>
             </dl>
         </ul>
         }

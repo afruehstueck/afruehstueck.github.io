@@ -681,7 +681,7 @@ function create3DBuffers() {
 }
 
 initCamera();
-let canvases = document.querySelectorAll( '.renderCanvas.webgl2' ); //.webgl2
+let canvases = document.querySelectorAll( '.renderCanvas' ); //.webgl2
 
 for( let canvas of canvases ) {
     canvas.active = true;
@@ -789,11 +789,21 @@ function freeResources( canvas ) {
 function init( canvas ) {
     let gl = canvas.context;
 
-	tf_panel = new TF_panel( canvas );
-	tf_panel.registerCallback( function() {
-		updateTF = true;
-		requestRendering();
-	});
+	if( !tf_panel ) {
+		var options = {
+			parent: 	canvas,
+			container: 	canvas.parentElement,
+			panel: {
+				isCollapsible: true
+			}
+		};
+
+		tf_panel = new TF_panel( options );
+		tf_panel.registerCallback( function () {
+			updateTF = true;
+			requestRendering();
+		} );
+	}
 
     freeResources( canvas );
     resizeCanvas( canvas );
@@ -825,6 +835,10 @@ function init( canvas ) {
 			//create 3D FBO for 3D volume texture
 			canvas.volumeFrameBuffer = createFBO.call( canvas, [ volumeDimensions.x, volumeDimensions.y, volumeDimensions.z ] );
 
+			if( gl.type === 'webgl' ) {
+				canvas.volumeFrameBuffer.texture = canvas.tiledVolume;
+				canvas.volumeFrameBuffer.hasData = true;
+			}
 			//create two fbos to alternately draw to them during iterations
 			canvas.frameBuffers = [ createFBO.call( canvas, [ volumeDimensions.x, volumeDimensions.y, volumeDimensions.z ] ),
 									createFBO.call( canvas, [ volumeDimensions.x, volumeDimensions.y, volumeDimensions.z ] ) ];
@@ -921,8 +935,7 @@ function init( canvas ) {
         ],
         [ box_vert,  'shaders_webgl2/raytrace.frag',
             [   { name: 'distanceFieldTexture', type: 'sampler3D',  variable: 'distanceFieldTexture' },
-            	{ name: 'transferColor', 		type: 'sampler2D',  variable: 'transferColor' },
-        		{ name: 'transferAlpha', 		type: 'sampler2D',  variable: 'transferAlpha' },
+            	{ name: 'transferTexture', 		type: 'sampler2D',  variable: 'transferTexture' },
                 { name: 'tiles',                type: 'vec2',       variable: 'tiles' },
                 { name: 'channel',              type: 'int',       	variable: 'channel' },
                 { name: 'mask',              	type: 'vec4v',      variable: 'mask' },
@@ -987,8 +1000,12 @@ function init( canvas ) {
 }
 
 function updateTransferFunctionTextures( canvas ) {
-	tf_img = tf_panel.TFtoIMG();
-	canvas.transferColor = createTextureFromImage.call( canvas, tf_img, false );
+	var tf_img = document.createElement( 'img' );
+	tf_img.width = 256;
+	tf_img.height = 30;
+	tf_panel.plotTFResults( tf_img );
+
+	canvas.transferTexture = createTextureFromImage.call( canvas, tf_img, false );
 	//canvas.transferAlpha = createTextureFromImage.call( canvas, document.getElementById( 'transferAlpha' ), false );
 	console.log( 'updated transfer function texture' );
 }
@@ -1080,12 +1097,13 @@ function render() {
     //render backface
     renderBackface.call( this, this.programs[ 'backfaces' ], this.backfaceFrameBuffer );
     //raytrace volume
-    renderRaytrace.call( this, this.programs[ 'raytrace' ], this.volumeFrameBuffer, this.frameBuffers[ iteration % 2 ], this.backfaceFrameBuffer, this.transferColor, this.transferAlpha );
+    renderRaytrace.call( this, this.programs[ 'raytrace' ], this.volumeFrameBuffer, this.frameBuffers[ iteration % 2 ], this.backfaceFrameBuffer, this.transferTexture );
 
 	this.isRendering = false;
     //render a texture to fullscreen (for debug purposes)
     //renderTextureToViewport.call( this, this.programs[ 'debug_texture' ], this.frameBuffers[ iteration % 2 ].texture );
     //renderTextureToViewport.call( this, this.programs[ 'debug_texture' ], this.backfaceFrameBuffer.texture );
+    //renderTextureToViewport.call( this, this.programs[ 'debug_texture' ], this.volumeFrameBuffer.texture );
 
     /*
      //debug: write gl2Canvas to download folder
@@ -1206,7 +1224,7 @@ function renderBackface( program, frameBuffer ) {
 }
 
 //do raytracing of cube
-function renderRaytrace( program, volumeFrameBuffer, distanceFieldFrameBuffer, backfaceFrameBuffer, textureColor = null, textureAlpha = null ) {
+function renderRaytrace( program, volumeFrameBuffer, distanceFieldFrameBuffer, backfaceFrameBuffer, textureColor = null ) {
     let gl = this.context;
 
     gl.viewport( 0, 0, this.width, this.height );
@@ -1237,13 +1255,9 @@ function renderRaytrace( program, volumeFrameBuffer, distanceFieldFrameBuffer, b
 	if( textureColor ) {
 		gl.activeTexture( gl.TEXTURE3 );
 		gl.bindTexture( gl.TEXTURE_2D, textureColor );
-		gl.uniform1i( program.transferColor, 3 );
+		gl.uniform1i( program.transferTexture, 3 );
 	}
-	if( textureAlpha ) {
-		gl.activeTexture( gl.TEXTURE4 );
-		gl.bindTexture( gl.TEXTURE_2D, textureAlpha );
-		gl.uniform1i( program.transferAlpha, 4 );
-	}
+
     gl.uniformMatrix4fv( program.projectionMatrix, false, camera.projectionMatrix );
     gl.uniformMatrix4fv( program.modelViewMatrix, false, camera.modelViewMatrix );
     gl.uniformMatrix4fv( program.modelMatrix, false, camera.modelMatrix );

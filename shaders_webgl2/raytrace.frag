@@ -11,9 +11,8 @@ in vec4 projectedCoordinate;
 
 out vec4 color;
 
-uniform sampler2D transferColor;
-uniform sampler2D transferAlpha;
 uniform sampler2D backfaceTexture;
+uniform sampler2D transferTexture;
 uniform sampler3D volumeTexture;
 uniform sampler3D distanceFieldTexture;
 uniform vec3 volumeDimensions;
@@ -21,11 +20,7 @@ uniform vec2 dataRange;
 uniform int samplingRate;
 uniform float alphaCorrection;
 
-uniform int channel;
-uniform vec4 mask[ 4 ];
-
-//todo: make this uniform
-const int MAX_STEPS = 500;
+const int MAX_STEPS = 1000;
 
 vec3 doMaterial( vec3 position, vec3 normal ) {
   return vec3( 0.2, 0.768, 1.0 ) * 0.7;
@@ -89,18 +84,19 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
         //do trilinear sampling (leave in this comment for trilinear polyfill)
         float sdfSample = texture( distanceFieldTexture, position ).r;
 
-        if( sdfSample >= 0./* sign( sdfSample ) != sign( prev )*/ ) {
+        /*if( sdfSample >= 0.*//* sign( sdfSample ) != sign( prev )*//* ) {
             //found isosurface, stop raycasting
             foundSurface = true;
             break;
-        }
+        }*/
 
         if( accumulatedAlpha < 1. ) {
             //if( position.x > 1. || position.y > 1. || position.z > 1. ) break;
             //if( position.x < 0. || position.y < 0. || position.z < 0. ) break;
             sampleColor = texture( volumeTexture, position );
 
-            sampleValue = dot( sampleColor, mask[ channel ] );
+            //sampleValue = dot( sampleColor, mask[ channel ] );
+            sampleValue = sampleColor.x;
 
             float min = dataRange.x;
             float max = dataRange.y;
@@ -109,10 +105,10 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
 
             sampleAlpha = sampleValue * alphaCorrection;
 
-            vec4 color = texture( transferColor, vec2( sampleValue, 0.9 ) ).rgba;
-            float alpha = color/*texture( transferAlpha, vec2( sampleValue, 0.9 ) )*/.a * alphaCorrection;
+            vec4 transferLookupColor = texture( transferTexture, vec2( sampleValue, 0.5 ) ).rgba;
+            float alpha = transferLookupColor.a * alphaCorrection;
 
-            accumulatedColor += ( 1. - accumulatedAlpha ) * color.rgb * alpha;
+            accumulatedColor += ( 1. - accumulatedAlpha ) * transferLookupColor.rgb * alpha;
 
             accumulatedAlpha += alpha;
         }
@@ -130,6 +126,7 @@ vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {
          vec3 normal = texture( distanceFieldTexture, position ).gba;//calcNormal( distanceFieldTexture, position );
          accumulatedColor += normal * .5 + .5;
     }
+
     clamp( accumulatedColor, 0., 1. );
     clamp( accumulatedAlpha, 0., 1. );
     return vec4( accumulatedColor, accumulatedAlpha );

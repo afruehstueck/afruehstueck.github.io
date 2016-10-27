@@ -18,7 +18,6 @@ uniform vec2 dataRange;
 uniform int samplingRate;
 uniform float alphaCorrection;
 
-//todo: make this uniform
 const int MAX_STEPS = 1000;
 
 vec4 rayAccumulate( vec3 rayStart, vec3 ray, int steps ) {

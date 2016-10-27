@@ -22,8 +22,8 @@ const float eps = 1e-9;
 uniform float sensitivity;
 uniform float alpha;
 
-uniform int channel;
-uniform vec4 mask[ 4 ];
+//uniform int channel;
+//uniform vec4 mask[ 4 ];
 
 float getDistance( vec3 texCoord ) {
     clamp( texCoord, 0., 1. );
@@ -207,7 +207,8 @@ void main( void ) {
     //float targetValue = texture( volumeTexture, seedOrigin ).r;
 
     vec4 sampleColor = texture( volumeTexture, currentPosition );
-    float sourceValue = dot( sampleColor, mask[ channel ] );
+    float sourceValue = sampleColor.x;
+    //float sourceValue = dot( sampleColor, mask[ channel ] );
 
     float min = dataRange.x;
     float max = dataRange.y;
