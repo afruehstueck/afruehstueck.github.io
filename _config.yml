@@ -20,7 +20,7 @@ avatar: profile.png
 email: anna.fruehstueck (at) kaust.edu.sa
 github: afruehstueck
 linkedin: afruehstueck
-#google_analytics: UA-69391421-1
+google_analytics: UA-55435735-2
 
 # needed for travis-ci build
 exclude: [vendor]
