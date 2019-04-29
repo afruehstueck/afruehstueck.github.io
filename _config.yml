@@ -11,21 +11,18 @@ safe: true
 
 
 # edit here to achieve your personal greatness
-url: http://username.github.io/
-baseurl: /sustain/
-title: Chris Turner
-author: Chris Turner
+url: http://afruehstueck.github.io
+baseurl: /
+title: Anna Frühstück
+author: Anna Frühstück
 description: Personal blog and resume
 avatar: profile.png
-email: yourname@email.com
-github: jekyller/sustain # username
-twitter: username
-linkedin: username
-stackoverflow: username   #e.g: users/2735833/proton1h1
-#Comment out if you don't want disqus
-disqus: username
-google_analytics: UA-69391421-1
-
+email: anna.fruehstueck (at) kaust.edu.sa
+github: afruehstueck
+linkedin: afruehstueck
+#google_analytics: UA-69391421-1
 
 # needed for travis-ci build
 exclude: [vendor]
+includes:
+- volumerendering

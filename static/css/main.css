@@ -4,28 +4,85 @@ html,
 body {
   height: 100%;
   background-color: #fff;
-  font-family: 'Source Sans Pro', sans-serif;
+  font-family: 'Open Sans Condensed', sans-serif;
   /* The html and body elements cannot have any padding or margin. */
-  border-top: 3px solid #27A822;
+  border-top: 3px solid #006699 /*#27A822;*/
 }
+
 /* Wrapper for page content to push down footer */
 #wrap {
-  padding-bottom: 50px;	
-  min-height: 100%;
-  height: auto;
-  /* Negative indent footer by its height */
-  margin: 0 auto -65px;
-  /* Pad bottom by footer height */
-  /*padding: 0 0 60px;*/
+	display: block;
+	padding-bottom: 50px;	
+	min-height: 100%;
+	height: auto;
+	/* Negative indent footer by its height */
+	margin: 0 auto -65px;
+	/* Pad bottom by footer height */
+	/*padding: 0 0 60px;*/
 }
+
+.project {
+	display: inline-block;
+	padding: 0;
+}
+
+.project-text {
+	float: left;
+}
+.project-image {
+	float: right;
+	padding-left: 2em;
+}
+.project-image img {
+    display: block;
+    margin: 0 auto;
+	width: 256px;	
+	text-align: center;
+}
+
+.linkbox {
+	/* position: absolute; */
+	bottom: 0;
+	text-align: left;
+}
+.linkbox a i {
+    padding-right: 10px;
+}
+
+.linkbox a {
+    padding-left: 12px;
+}
+.linkbox a:first-child {
+    padding-left: 0px;
+}
+
+@media (max-width: 767px) {
+   .project-image-box { 
+		padding: 0;
+		float: none; 
+	}
+
+	.project-image {
+		width: 100%;
+	}
+}
+
 
 /* Navbar
 -------------------------------------------------- */
+.navbar {
+  display: inline-block;
+  width: 100%;
+  float: left;
+  border: none;
+  /* margin-right: 50px; */
+}
 
 .navbar-static-top {
   margin-bottom: 10px;
 }
 .navbar-default {
+  font-size: 1.5em;
   background-color: #ffffff;
   border-color: #ffffff;
 }
@@ -40,9 +97,15 @@ body {
 }
 .navbar-default .navbar-nav > li > a {
   color: #6b6b6b;
+  -o-transition:.5s;
+  -ms-transition:.5s;
+  -moz-transition:.5s;
+  -webkit-transition:.5s;
+  /* ...and now for the proper property */
+  transition:.5s;
 }
 .navbar-default .navbar-nav > li > a:hover, .navbar-default .navbar-nav > li > a:focus {
-  color: #6b6b6b;
+  background-color: #99ccff; /*#6b6b6b;*/
 }
 .navbar-default .navbar-nav > .active > a, .navbar-default .navbar-nav > .active > a:hover, .navbar-default .navbar-nav > .active > a:focus {
   color: #6b6b6b;
@@ -84,23 +147,72 @@ body {
   }
 }
 
+/* citation box */
+.citation {
+	font-family: 'Nanum Gothic Coding', monospace;
+	padding: 0.5em 1.5em;
+	font-size: 0.8em;
+	line-height: 1em;
+	margin-top: 2em;
+	text-align: left;
+	border-radius: 5px;
+	background-color: #ebf5ff;
+	border: 1px solid #99ccff;
+}
+
 /* Custom page CSS
 -------------------------------------------------- */
 
-.container {
-  width: auto;
-  max-width: 800px;
-  text-align: center;
+.box {
+	display: inline-block; 
+  /* min-width: 768px; */
+  max-width: 1000px;
+  /* text-align: center; */
 }
-.container .text-muted {
+.box .text-muted {
+	margin: 20px 0;
+	text-align: center;
+}
+.box a {
+	color: #006699;
+}
+.box a:hover {
+	text-decoration: none;
+	color: #99ccff;
+}
+
+.column {
+	/* vertical-align:top; */
+	/* display: inline-block; */
+	padding: 0em 0.2em;
+	/* border: 1px solid black; */
+	height: auto;
+	overflow: hidden; 
+}
+
+#sidebar { 
+	/* flex: 1; */
+	/* height: 100vh; */
+	/* display: inline-block; */
+	margin-left: 20px;
+	float: left;
+	width: auto;
+	max-width: 280px;
+	text-align: left;
+}
+
+#sidebar .text-muted {
   margin: 20px 0;
 }
-.container a {
-  color: #27A822;
+#sidebar a {
+  color: #006699;
 }
-.container a:hover {
-  color: #267723;
+#sidebar a:hover {
+  text-decoration: none;
+  color: #99ccff;
 }
+.tab1 { display: inline-block; width: 50px; }
+.tab2 { display: inline-block; width: 100px; }
 .img-responsive {
  display: block;
  height: auto;
@@ -120,17 +232,18 @@ body {
   font-size: 15px;
 }
 .panel-default h4 a, h5 a {
-  color: #27A822;
+  color: #006699;
 }
 .panel-default h4 a:hover, h5 a:hover {
-  color: #267723;
+  color: #99ccff;
 }
-.panel{
+.panel {
   border-style: none;
 }
 .panel-body {
   padding-top: -10px;
   text-align: left;
+  padding-right: 0;
 }
 .social {
   padding-top: 12px;
@@ -141,6 +254,10 @@ body {
 }
 .avatar {
   padding-top: 5%;
+}
+.img-circle {
+  width: 140px;
+  height: auto;
 }
 .blog-post{
   padding-top: 15px;
@@ -174,7 +291,7 @@ body {
 	color: #6b6b6b;
 }
 div.footer{
-  border-bottom: 5px solid #27A822;;
+  border-bottom: 5px solid #006699;
 }
 /* Set the fixed height of the footer here */
 /*.footer {

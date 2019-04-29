@@ -1,45 +1,87 @@
-<section id="projects">
-<div class="container">
-  <h3>Projects</h3>
+<!-- <section id="projects">	 -->
+<div class='box'> 
+  <h2>Projects</h2>
   <div class="panel panel-default">
     <div class="panel-body">
-		<h5>
-			<i class="fa fa-github"></i>&nbsp;&nbsp;<strong><a href="#">Project 1</a></strong>
-			- Ei viderer tacimates pro, quem assum ea nam. Veritus omnesque eam te. Et natum mucius tamquam vel,
-			ea dolorem volumus deterruisset nec. Graeci mentitum sea an, eu prima elaboraret est.
+		<h5 class="project">
+			<div class="project-image">
+				<img src='{{ site.baseurl }}assets/images/tilegan.jpg'>
+			</div>	
+			<i class="fab fa-github"></i>&nbsp;&nbsp;<strong><a href="https://github.com/afruehstueck/tileGAN">TileGAN</a></strong>
+			&nbsp;&ndash;&nbsp;<i>will be presented at SIGGRAPH 2019</i> 
+			<p>
+				We generate large-scale textures by building on recent advances in the field of Generative Adversarial Networks. Our technique combine outputs of GANs trained on a smaller resolution to produce arbitrarily large-scale plausible texture map with virtually no boundary artifacts. We developed an interface to enable artistic control that allows user to create textures based on guidance images and modify and paint on the GAN textures interactively.
+			</p>
+			<div class='linkbox'>
+				<a href="#" title='Download PDF'><i class="fas fa-file-pdf"></i>PDF</a><i>&nbsp;(coming soon)</i> 
+				<a href="#" title='Watch video'><i class="fas fa-video"></i>Video</a><i>&nbsp;(coming soon)</i> 
+				<a href="https://github.com/afruehstueck/tileGAN" title='Code'><i class="fab fa-github"></i>Code on Github</a><i>&nbsp;(coming soon)</i> 
+				<a href="#" title='Citation'><span class="expander"><i class="fas fa-quote-right"></i>Citation</span></a>
+				{% raw %}
+				<div class="citation">
+				
+					@article{Fruehstueck2019TileGAN,<br>
+					&nbsp;&nbsp;title =      {{TileGAN}: Synthesis of Large-Scale Non-Homogeneous Textures},<br>
+					&nbsp;&nbsp;author =     {Fr\"{u}hst\"{u}ck, Anna and Alhashim, Ibraheem and Wonka, Peter},<br>
+					&nbsp;&nbsp;journal =    {ACM Transactions on Graphics (Proc. SIGGRAPH) },<br>
+					&nbsp;&nbsp;issue_date = {July 2019},<br>
+					&nbsp;&nbsp;volume =     {38},<br>
+					&nbsp;&nbsp;number =     {4},<br>
+					&nbsp;&nbsp;month = 	  jul,<br>
+					&nbsp;&nbsp;pages =      {0},<br>
+					&nbsp;&nbsp;year =       {2019}<br>
+					}
+				</div>
+				{% endraw %}
+			</div>		
+		</h5> 
+		
+		<h5 class="project">
+			<div class="project-image">
+				<img src='{{ site.baseurl }}assets/images/webgltf.jpg'>
+			</div>	
+			<i class="fas fa-cog"></i>&nbsp;&nbsp;<strong>GPU-accelerated browser-based visualization</a></strong>
+			&nbsp;&ndash;&nbsp;<i>Traineeship at Surgical Planning Lab, Brigham and Women's Hospital (Harvard Medical School)</i> 
+			<p>
+				During my traineeship at Harvard Medical School, I was working on GPU-accelerated browser-based visualization software. I designed and developed a prototype for a browser-based volume rendering solution and user interface components for web-based imaging and developed algorithms for browser-based GPU processing through grid-based PDE solvers for 2D and 3D image segmentation. Some of this code was integrated with open-source visualization and medical imaging software 3D Slicer.
+			</p>
+			<div class='linkbox'>
+				<a href="/volumerendering/basic_volume_rendering.html" title='Volume Rendering Demo'><i class="fas fa-globe"></i>Volume Rendering Demo</a>
+				<a href="/volumerendering/sdf.html" title='2D SDF Demo'><i class="fas fa-globe"></i>2D SDF Demo</a>
+				<a href="/volumerendering/TF.html" title='Documentation'><i class="fas fa-cogs"></i>Documentation for Transfer Function Panel</a>
+			</div>
 		</h5>
-		<h5>
-			<i class="fa fa-github"></i>&nbsp;&nbsp;<strong><a href="#">Project 2</a></strong>
-			- An eripuit phaedrum qui, nec facer splendide ex, vel ea assum facilisi convenire.
-			Te his neglegentur consectetuer.
+		<h5 class="project">
+			<div class="project-image">
+				<img src='{{ site.baseurl }}assets/images/vom3.jpg'>
+			</div>	
+			<i class="fas fa-globe-africa"></i>&nbsp;&nbsp;<strong><a href="https://www.cg.tuwien.ac.at/research/publications/2015/Fruehstueck_Anna_2015_DOM/">Volume Object Model for Remote Visualization</a></strong>
+			- <i>Master Thesis project TU Vienna in collaboration with KAUST</i> 
+			<p>
+				In visualization applications with many objects, the rendering of the scene can be prohibitively expensive, thus compromising an interactive user experience. Our deferred visualization pipeline divides the visualization computation between a server and a thin client. The scene is preprocessed on the server and transferred to the client using an intermediate representation consisting of metadata and pre-rendered visualization of the scene's objects, where client-side interactivity is enabled even on large datasets.
+			</p>
+			<div class='linkbox'>
+				<a href="https://www.cg.tuwien.ac.at/research/publications/2015/Fruehstueck_Anna_2015_DOM/Fruehstueck_Anna_2015_DOM-Thesis.pdf" title='Download PDF'><i class="fas fa-file-pdf"></i>Thesis</a>
+				<a href="https://www.cg.tuwien.ac.at/research/publications/2015/Fruehstueck_Anna_2015_DOM/Fruehstueck_Anna_2015_DOM-Poster.pdf" title='View Poster'><i class="far fa-file-image"></i>Poster</a>
+				<a href="#" title='Citation'><span class="expander"><i class="fas fa-quote-right"></i>Citation</span></a>
+				<div class="citation">
+					@mastersthesis{Fruehstueck2015DOM,<br>
+					&nbsp;&nbsp;title =      {Decoupling Object Manipulation from Rendering in a Thin Client Visualization System},<br>
+					&nbsp;&nbsp;author =     {Fr\"{u}hst\"{u}ck, Anna},<br>
+					&nbsp;&nbsp;year =       {2015},<br>
+					&nbsp;&nbsp;month =      Sep,<br>
+					&nbsp;&nbsp;school =     {Institute of Computer Graphics and Algorithms, Vienna University of Technology}<br>
+					}
+				</div>
+			</div>
 		</h5>
-    	<h5>
-			<i class="fa fa-github"></i>&nbsp;&nbsp;<strong><a href="#">Project 3</a></strong>
-			- An alii quot tantas eum, doming platonem persecuti mea et, vim perpetua cotidieque delicatissimi in.
-		</h5>
-		<h5>
-			<i class="fa fa-globe"></i>&nbsp;&nbsp;<strong><a href="#">Project 4</a></strong>
-			- Vim an case vidit sententiae, est at euismod laboramus efficiantur. Ei sit brute lorem,
-			ea eam timeam viderer aliquid, cu integre omittam moderatius quo.
-		</h5>
-		<h5>
-			<i class="fa fa-globe"></i>&nbsp;&nbsp;<strong><a href="#">Project 5</a></strong>
-			- Dicta causae meliore ex vel, in vix erant integre petentium. Vix ei nisl scripta recusabo,
-			eam doming blandit facilisis.
-		</h5>
-		<h5>
-			<i class="fa fa-cog"></i>&nbsp;&nbsp;<strong><a href="#">Project 6</a></strong>
-			- Inermis recusabo elaboraret mea et, dicat neglegentur vim te. Nec et sanctus scriptorem,
-			usu ex sapientem gubergren. Tamquam admodum ei usu.
-		</h5>
-		<h5>
-			<i class="fa fa-cog"></i>&nbsp;&nbsp;<strong><a href="#">Project 7</a></strong>
-			- Essent putant indoctum sed in, reprimique persequeris neglegentur te quo. Nam rebum
-			tractatos partiendo at, debet ubique oporteat ut his.
-		</h5>
-
 
     </div>
   </div>
 </div>
-</section>
+<!-- </section> -->
+
+
+
+
+
