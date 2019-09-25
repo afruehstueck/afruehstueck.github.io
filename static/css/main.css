@@ -255,6 +255,23 @@ body {
 .avatar {
   padding-top: 5%;
 }
+
+.card {
+  position: relative;
+  display: inline-block;
+}
+
+.avatar .img-top {
+	display: none;
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 99;
+}
+.avatar:hover .img-top {
+	display: inline;
+}
+	
 .img-circle {
   width: 140px;
   height: auto;
