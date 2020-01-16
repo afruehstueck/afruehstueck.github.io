@@ -1,12 +1,23 @@
 /* Main page with stikky-footer
 -------------------------------------------------- */
+
+:root {
+    --citation-color: linear-gradient(rgba(240, 230, 255, 1), rgba(240, 230, 255, 0.65));
+    --citation-border-color: #d1b3ff;
+	--hover-color: #99cc00;
+	--hover-box: linear-gradient(#ace600, #99cc00); 
+	--accent-color: #660066;
+	--text: 'Abel' /*Open Sans Condensed*/
+}
+
+
 html,
 body {
   height: 100%;
   background-color: #fff;
-  font-family: 'Open Sans Condensed', sans-serif;
+  font-family: var(--text), sans-serif;
   /* The html and body elements cannot have any padding or margin. */
-  border-top: 3px solid #006699 /*#27A822;*/
+  border-top: 3px solid var(--accent-color) /*#27A822;*/
 }
 
 /* Wrapper for page content to push down footer */
@@ -84,7 +95,7 @@ body {
 .navbar-default {
   font-size: 1.5em;
   background-color: #ffffff;
-  border-color: #ffffff;
+  accent-color: #ffffff;
 }
 .navbar-default .navbar-brand {
   color: #6b6b6b;
@@ -105,7 +116,7 @@ body {
   transition:.5s;
 }
 .navbar-default .navbar-nav > li > a:hover, .navbar-default .navbar-nav > li > a:focus {
-  background-color: #99ccff; /*#6b6b6b;*/
+  background: var(--hover-box);
 }
 .navbar-default .navbar-nav > .active > a, .navbar-default .navbar-nav > .active > a:hover, .navbar-default .navbar-nav > .active > a:focus {
   color: #6b6b6b;
@@ -116,7 +127,7 @@ body {
   background-color: #ffffff;
 }
 .navbar-default .navbar-toggle {
-  border-color: #ffffff;
+  accent-color: #ffffff;
 }
 .navbar-default .navbar-toggle:hover, .navbar-default .navbar-toggle:focus {
   background-color: #ffffff;
@@ -126,7 +137,7 @@ body {
 }
 .navbar-default .navbar-collapse,
 .navbar-default .navbar-form {
-  border-color: #6b6b6b;
+  accent-color: #6b6b6b;
 }
 .navbar-default .navbar-link {
   color: #6b6b6b;
@@ -135,6 +146,10 @@ body {
   color: #6b6b6b;
 }
 @media (max-width: 767px) {
+
+  .column {
+	  display: inline-block !important;
+  }
   .navbar-default .navbar-nav .open .dropdown-menu > li > a {
     color: #6b6b6b;
   }
@@ -156,8 +171,8 @@ body {
 	margin-top: 2em;
 	text-align: left;
 	border-radius: 5px;
-	background-color: #ebf5ff;
-	border: 1px solid #99ccff;
+	background: var(--citation-color);
+	border: 1px solid var(--citation-border-color);
 }
 
 /* Custom page CSS
@@ -173,12 +188,15 @@ body {
 	margin: 20px 0;
 	text-align: center;
 }
+
 .box a {
-	color: #006699;
+	/* text-decoration: none; */
+	color: var(--accent-color);
 }
 .box a:hover {
 	text-decoration: none;
-	color: #99ccff;
+	background-color: rgba(172, 230, 0, 0.1); 
+	color: var(--hover-color);
 }
 
 .column {
@@ -205,14 +223,33 @@ body {
   margin: 20px 0;
 }
 #sidebar a {
-  color: #006699;
+  color: var(--accent-color);
 }
 #sidebar a:hover {
   text-decoration: none;
-  color: #99ccff;
+  color: var(--hover-color);
 }
-.tab1 { display: inline-block; width: 50px; }
-.tab2 { display: inline-block; width: 100px; }
+.tab1 { 
+	display: inline-block; 
+	width: 50px;
+	height: 100%;
+}
+.tab2 { 
+	display: inline-block; 
+	width: 110px; 
+}
+
+@media (max-width: 767px) {
+	.tab1 { 
+		display: inline; 
+		width: 40px;
+	}
+	.tab2 { 
+		display: inline; 
+		padding-right: 5px;
+	}
+}
+
 .img-responsive {
  display: block;
  height: auto;
@@ -232,10 +269,10 @@ body {
   font-size: 15px;
 }
 .panel-default h4 a, h5 a {
-  color: #006699;
+  color: var(--accent-color);
 }
 .panel-default h4 a:hover, h5 a:hover {
-  color: #99ccff;
+  color: var(--hover-color);
 }
 .panel {
   border-style: none;
@@ -262,14 +299,23 @@ body {
 }
 
 .avatar .img-top {
-	display: none;
+	/* display: none; */
 	position: absolute;
 	top: 0;
 	left: 0;
 	z-index: 99;
 }
+
+.avatar .img-circle {
+  -webkit-transition: opacity .2s ease-in-out;
+  -moz-transition: opacity .2s ease-in-out;
+  -o-transition: opacity .2s ease-in-out;
+  transition: opacity .2s ease-in-out;
+}
+
 .avatar:hover .img-top {
-	display: inline;
+	/* display: inline; */
+	opacity: 0;
 }
 	
 .img-circle {
@@ -308,7 +354,7 @@ body {
 	color: #6b6b6b;
 }
 div.footer{
-  border-bottom: 5px solid #006699;
+  border-bottom: 5px solid var(--accent-color);
 }
 /* Set the fixed height of the footer here */
 /*.footer {
