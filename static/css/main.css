@@ -216,6 +216,10 @@ body {
  height: auto;
  max-width: 100%;
 }
+
+.panel-default h2 {
+  font-size:  28px;
+}
 .panel-default h4 {
   line-height: 24px;
   font-size: 18px;
