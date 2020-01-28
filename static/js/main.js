@@ -1,3 +1,6 @@
+/**
+ * Created by fabiomadeira on 25/02/15.
+ */
 // jQuery for page scrolling feature
 jQuery(document).ready(function(e) {
     e(".scroll").click(function(t) {
@@ -6,7 +9,7 @@ jQuery(document).ready(function(e) {
             scrollTop: e(this.hash).offset().top
         }, 1e3)
     })
-
+	
 	$('.citation').hide();
     $('.expander').click(function () {
         // .parent() selects the A tag, .next() selects the P tag
@@ -14,3 +17,5 @@ jQuery(document).ready(function(e) {
     });
     $('.citation').slideUp(200);
 });
+
+

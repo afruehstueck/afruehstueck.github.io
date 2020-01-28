@@ -1,86 +1,93 @@
-<!-- <section id="projects">	 -->
-<div class='box'> 
-  <h2>Projects</h2>
+<section id="projects">
+<div class="container">
   <div class="panel panel-default">
     <div class="panel-body">
-		<h5 class="project">
-			<a id="tileGAN"/>
-			<div class="project-image">
-				<img src='{{ site.baseurl }}assets/images/tilegan.jpg'>
-			</div>	
-			<i class="fas fa-th"></i>&nbsp;&nbsp;<strong><a href="https://github.com/afruehstueck/tileGAN">TileGAN</a></strong>
-			<p>
-			<strong>TileGAN: Synthesis of Large-Scale Non-Homogeneous Textures</strong>&nbsp;&ndash;&nbsp;<i>presented at SIGGRAPH 2019</i></br>
+		<h2>Projects</h2>
+		<div class="project">
+			<h4>
+				<a id="tileGAN"></a>
+				<i class="fas fa-th"></i>&nbsp;&nbsp;<strong><a href="https://github.com/afruehstueck/tileGAN">TileGAN: Synthesis of Large-Scale Non-Homogeneous Textures</a></strong>
+				<br>
+				<div class="project-image">
+					<img src='{{ site.baseurl }}assets/images/tilegan.jpg'>
+				</div>
+			</h4>
+			<h5 class='project-text'>
+			<!-- <i style='font-size: 90%'>&nbsp;&ndash;&nbsp;presented at SIGGRAPH 2019</i> -->
+				<p><i>Technical paper presented at SIGGRAPH 2019</i></p>
 				We generate large-scale textures by building on recent advances in the field of Generative Adversarial Networks. Our technique combine outputs of GANs trained on a smaller resolution to produce arbitrarily large-scale plausible texture map with virtually no boundary artifacts. We developed an interface to enable artistic control that allows user to create textures based on guidance images and modify and paint on the GAN textures interactively.
-			</p>
-			<div class='linkbox'>
-				<a href="https://arxiv.org/abs/1904.12795" title='Paper'><i class="fas fa-file-pdf"></i>Paper</a><i></i> 
-				<a href="{{ site.baseurl }}assets/data/TileGAN_Poster.pdf" title='View Poster' target="_blank"><i class="fas fa-chalkboard"></i>Poster</a><i></i> 
-				<a href="https://youtu.be/ye_HZOdW7kg" title='Watch video'><i class="fas fa-video"></i>Video</a><i></i> 
-				<a href="https://github.com/afruehstueck/tileGAN" title='Code'><i class="fab fa-github"></i>Code</a><i></i> 
-				<a href="#tileGAN" title='Citation'><span class="expander"><i class="fas fa-quote-right"></i>Citation</span></a>
-				{% raw %}
-				<div class="citation">
-				
-					@article{Fruehstueck2019TileGAN,<br>
-					&nbsp;&nbsp;title =      {{TileGAN}: Synthesis of Large-Scale Non-Homogeneous Textures},<br>
-					&nbsp;&nbsp;author =     {Fr\"{u}hst\"{u}ck, Anna and Alhashim, Ibraheem and Wonka, Peter},<br>
-					&nbsp;&nbsp;journal =    {ACM Transactions on Graphics (Proc. SIGGRAPH) },<br>
-					&nbsp;&nbsp;issue_date = {July 2019},<br>
-					&nbsp;&nbsp;volume =     {38},<br>
-					&nbsp;&nbsp;number =     {4},<br>
-					&nbsp;&nbsp;year =       {2019}<br>
-					}
-				</div>
-				{% endraw %}
-			</div>		
-		</h5> 
-		<h5 class="project">
-			<a id="GPUSlice"/>
-			<div class="project-image">
-				<img src='{{ site.baseurl }}assets/images/volume_rendering_tf.jpg'>
-			</div>	
-			<i class="fas fa-cube"></i>&nbsp;&nbsp;<strong>GPU-accelerated browser-based visualization</a></strong>&nbsp;&ndash;&nbsp;<i>Traineeship at Surgical Planning Lab, Brigham and Women's Hospital (Harvard Medical School)</i> 
-			<p>
+			</h5>		
+		</div> 
+		<h4 class='linkbox'>
+			<a href="https://arxiv.org/abs/1904.12795" title='Paper'><i class="fas fa-file-pdf"></i>Paper</a><i></i> 
+			<a href="{{ site.baseurl }}assets/data/TileGAN_Poster.pdf" title='View Poster' target="_blank"><i class="fas fa-chalkboard"></i>Poster</a><i></i> 
+			<a href="https://youtu.be/ye_HZOdW7kg" title='Watch video'><i class="fas fa-video"></i>Video</a><i></i> 
+			<a href="https://github.com/afruehstueck/tileGAN" title='Code'><i class="fab fa-github"></i>Code</a><i></i> 
+			<a href="#tileGAN" title='Citation'><span class="expander"><i class="fas fa-quote-right"></i>Citation</span></a>
+			{% raw %}
+			<div class="citation">
+			
+				@article{Fruehstueck2019TileGAN,<br>
+				&nbsp;&nbsp;title =      {{TileGAN}: Synthesis of Large-Scale Non-Homogeneous Textures},<br>
+				&nbsp;&nbsp;author =     {Fr\"{u}hst\"{u}ck, Anna and Alhashim, Ibraheem and Wonka, Peter},<br>
+				&nbsp;&nbsp;journal =    {ACM Transactions on Graphics (Proc. SIGGRAPH) },<br>
+				&nbsp;&nbsp;issue_date = {July 2019},<br>
+				&nbsp;&nbsp;volume =     {38},<br>
+				&nbsp;&nbsp;number =     {4},<br>
+				&nbsp;&nbsp;year =       {2019}<br>
+				}
+			</div>
+			{% endraw %}
+		</h4>
+		<div class="project">
+			<h4>
+				<a id="GPUSlice"></a>
+				<i class="fas fa-cube"></i>&nbsp;&nbsp;<strong>GPU-accelerated browser-based visualization</a></strong>
+				<!-- &nbsp;&ndash;&nbsp;<i>Traineeship at Surgical Planning Lab, Brigham and Women's Hospital (Harvard Medical School)</i>  -->
+				<br>
+				<div class="project-image">
+					<img src='{{ site.baseurl }}assets/images/volume_rendering_tf.jpg'>
+				</div>	
+			</h4>
+			<h5>
+				<p><i>Traineeship at Surgical Planning Lab, Brigham and Women's Hospital (Harvard Medical School)</i></p>
 				During my traineeship at Harvard Medical School, I was working on GPU-accelerated browser-based visualization software. I designed and developed a prototype for a browser-based volume rendering solution and user interface components for web-based imaging and developed algorithms for browser-based GPU processing through grid-based PDE solvers for 2D and 3D image segmentation. Some of this code was integrated with open-source visualization and medical imaging software 3D Slicer.
-			</p>
-			<div class='linkbox'>
-				<a href="/volumerendering/basic_volume_rendering.html" title='Volume Rendering Demo'><i class="fas fa-globe"></i>Volume Rendering Demo</a>
-				<a href="/volumerendering/sdf.html" title='2D SDF Demo'><i class="fas fa-globe"></i>2D SDF Demo</a>
-				<a href="/volumerendering/TF.html" title='Documentation'><i class="fas fa-cogs"></i>Documentation for Transfer Function Panel</a>
-			</div>
-		</h5>
-		<h5 class="project">
-			<a id="VOM"/>
-			<div class="project-image">
-				<img src='{{ site.baseurl }}assets/images/vom3.jpg'>
-			</div>	
-			<i class="fas fa-cookie"></i>&nbsp;&nbsp;<strong><a href="https://www.cg.tuwien.ac.at/research/publications/2015/Fruehstueck_Anna_2015_DOM/">Volume Object Model for Remote Visualization</a></strong>&nbsp;&ndash;&nbsp;<i>Master Thesis project TU Vienna in collaboration with KAUST</i> 
-			<p>
-				In visualization applications with many objects, the rendering of the scene can be prohibitively expensive, thus compromising an interactive user experience. Our deferred visualization pipeline divides the visualization computation between a server and a thin client. The scene is preprocessed on the server and transferred to the client using an intermediate representation consisting of metadata and pre-rendered visualization of the scene's objects, where client-side interactivity is enabled even on large datasets.
-			</p>
-			<div class='linkbox'>
-				<a href="https://www.cg.tuwien.ac.at/research/publications/2015/Fruehstueck_Anna_2015_DOM/Fruehstueck_Anna_2015_DOM-Thesis.pdf" title='Download PDF'><i class="fas fa-file-pdf"></i>Thesis</a>
-				<a href="https://www.cg.tuwien.ac.at/research/publications/2015/Fruehstueck_Anna_2015_DOM/Fruehstueck_Anna_2015_DOM-Poster.pdf" title='View Poster'><i class="fas fa-chalkboard"></i>Poster</a>
-				<a href="#VOM" title='Citation'><span class="expander"><i class="fas fa-quote-right"></i>Citation</span></a>
-				<div class="citation">
-					@mastersthesis{Fruehstueck2015DOM,<br>
-					&nbsp;&nbsp;title =      {Decoupling Object Manipulation from Rendering in a Thin Client Visualization System},<br>
-					&nbsp;&nbsp;author =     {Fr\"{u}hst\"{u}ck, Anna},<br>
-					&nbsp;&nbsp;year =       {2015},<br>
-					&nbsp;&nbsp;month =      Sep,<br>
-					&nbsp;&nbsp;school =     {Institute of Computer Graphics and Algorithms, Vienna University of Technology}<br>
-					}
+			</h5>
+		</div>
+		<h4 class='linkbox'>
+			<a href="/volumerendering/basic_volume_rendering.html" title='Volume Rendering Demo'><i class="fas fa-globe"></i>Volume Rendering Demo</a>
+			<a href="/volumerendering/sdf.html" title='2D SDF Demo'><i class="fas fa-globe"></i>2D SDF Demo</a>
+			<a href="/volumerendering/TF.html" title='Documentation'><i class="fas fa-cogs"></i>Documentation for Transfer Function Panel</a>
+		</h4>
+		<div class="project">
+			<h4>
+				<a id="VOM"></a>
+				<i class="fas fa-cookie"></i>&nbsp;&nbsp;<strong><a href="https://www.cg.tuwien.ac.at/research/publications/2015/Fruehstueck_Anna_2015_DOM/">Volume Object Model for Remote Visualization</a></strong> 
+				<br>
+				<div class="project-image">
+					<img src='{{ site.baseurl }}assets/images/vom3.jpg'>
 				</div>
+			</h4>			
+			<h5>
+				<p><i>Master Thesis project at TU Vienna in collaboration with KAUST</i></p>
+				In visualization applications with many objects, the rendering of the scene can be prohibitively expensive, thus compromising an interactive user experience. Our deferred visualization pipeline divides the visualization computation between a server and a thin client. The scene is preprocessed on the server and transferred to the client using an intermediate representation consisting of metadata and pre-rendered visualization of the scene's objects, where client-side interactivity is enabled even on large datasets.
+			</h5>
+		</div>
+		<h4 class='linkbox'>
+			<a href="https://www.cg.tuwien.ac.at/research/publications/2015/Fruehstueck_Anna_2015_DOM/Fruehstueck_Anna_2015_DOM-Thesis.pdf" title='Download PDF'><i class="fas fa-file-pdf"></i>Thesis</a>
+			<a href="https://www.cg.tuwien.ac.at/research/publications/2015/Fruehstueck_Anna_2015_DOM/Fruehstueck_Anna_2015_DOM-Poster.pdf" title='View Poster'><i class="fas fa-chalkboard"></i>Poster</a>
+			<a href="#VOM" title='Citation'><span class="expander"><i class="fas fa-quote-right"></i>Citation</span></a>
+			<div class="citation">
+				@mastersthesis{Fruehstueck2015DOM,<br>
+				&nbsp;&nbsp;title =      {Decoupling Object Manipulation from Rendering in a Thin Client Visualization System},<br>
+				&nbsp;&nbsp;author =     {Fr\"{u}hst\"{u}ck, Anna},<br>
+				&nbsp;&nbsp;year =       {2015},<br>
+				&nbsp;&nbsp;month =      Sep,<br>
+				&nbsp;&nbsp;school =     {Institute of Computer Graphics and Algorithms, Vienna University of Technology}<br>
+				}
 			</div>
-		</h5>
-
+		</h4>
     </div>
   </div>
 </div>
-<!-- </section> -->
-
-
-
-
-
+</section>

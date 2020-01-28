@@ -1,9 +1,19 @@
 <nav class="navbar navbar-default">
-    <div id="navbar" class="container box">
-      <ul class="nav navbar-nav navbar-right">
-        <li><a href="{{ site.baseurl }}projects.html">PROJECTS</a></li>
-        <li><a href="{{ site.baseurl }}bio.html">BIO</a></li>
-      </ul>
+    <div class="container">
+        <div class="navbar-header">
+			<a class="navbar-brand" href="{{ site.baseurl }}">Anna Frühstück</a>
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>                        
+            </button>
+
+        </div>
+        <div class="collapse navbar-collapse" id="myNavbar">
+        <ul class="nav navbar-nav navbar-right">
+            <li><a href="{{ site.baseurl }}bio.html">BIO</a></li>
+			 <li><a href="{{ site.baseurl }}projects.html">PROJECTS</a></li>
+        </ul>
+        </div>
     </div>
-  <!-- </div> -->
 </nav>

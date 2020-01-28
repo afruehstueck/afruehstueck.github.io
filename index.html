@@ -3,13 +3,27 @@ layout: home
 ---
 
 <section id="about">
-	<div class="box">
-	  <h3>I'm currently a PhD student at the <a href='http://vcc.kaust.edu.sa'>Visual Computing Center</a> at King Abdullah University of Science and Technology working with <a href='http://peterwonka.net'>Prof. Peter Wonka</a>.</h3>
-	  <h3>I'm broadly interested in computer graphics, especially image synthesis and generative modeling techniques. My research involves the generation of large-scale images using deep neural networks.</h3>
-	  <h3>Have a look at some of the <a href="{{ site.baseurl }}projects.html"> projects</a> I've worked on in the recent years.</h3>
-	  <h3>For more details on my academic background, check out my professional <a href="{{ site.baseurl }}bio.html">resume</a>.</h3>
-	  <h3>In my spare time, I enjoy designing, building, disassembling and assembling things. I love to play music and explore the world.
-	  <!-- <h3>Contact me at <a href="http://twitter.com/{{ site.twitter }}">@{{ site.twitter }}</a> or by <a href="mailto:{{ site.email }}">email</a>.</h3> -->
-	  <!-- {% include social.html %} -->
+	<div class="container">
+	<div id="sidebar">
+		<div class="avatar">
+			<img class="img-circle" src="{{ site.baseurl }}static/img/{{ site.avatar_hover }}" alt="Profile picture with glasses">
+			<img class="img-circle img-top" src="{{ site.baseurl }}static/img/{{ site.avatar }}" alt="Profile Picture">
+		</div>
+		<h4>PhD student at <a href='http://kaust.edu.sa'>KAUST</a></h4>
+		<h5>
+			<p><a href='http://vcc.kaust.edu.sa'>Visual Computing Center</a></p>
+			<p>Bldg. 1 Al Khawarizmi, Level 2, 2101-WS04</p>
+			<p>4700 King Abdullah University of Science and Technology </p>
+			<p>Thuwal, 23955-6900, KSA</p>
+		</h5>
+	{% include social.html %}
+	</div>
+	  <h4>
+	  <p>I'm currently a PhD student at the <a href='http://vcc.kaust.edu.sa'>Visual Computing Center</a> at King Abdullah University of Science and Technology working with <a href='http://peterwonka.net'>Prof. Peter Wonka</a>.</p>
+	  <p>I'm broadly interested in computer graphics, especially image synthesis and generative modeling techniques. My research involves the generation of large-scale images using deep neural networks.</p>
+	  <p>Have a look at some of the <a href="{{ site.baseurl }}projects.html"> projects</a> I've worked on in the recent years.</p>
+	  <p>For more details on my academic background, check out my professional <a href="{{ site.baseurl }}bio.html">resume</a>.</p>
+	  <p>In my spare time, I enjoy designing, building, disassembling and assembling things. I love to play music and explore the world.
+	  </h4>
 	</div>
 </section>
