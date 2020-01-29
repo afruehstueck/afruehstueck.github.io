@@ -217,6 +217,126 @@ body {
  max-width: 100%;
 }
 
+#info {
+  font-size: 18px;
+  display: flex;
+  margin-bottom: 36px;
+}
+
+#info ul {
+	padding: 0;
+	list-style-type: none;
+}
+
+#info li {
+  background: #fafafa;
+  border-radius: 3px;
+  margin: 2px;
+  padding: 0.3em 0.5em 0em;
+  border-bottom: 1px solid #ccc;
+  box-shadow: 0px 1px 4px rgba(0,0,0,0.1);
+  
+  -webkit-transition: background .3s ease-in-out;
+  -moz-transition: background .3s ease-in-out;
+  -o-transition: background .3s ease-in-out;
+  transition: background .3s ease-in-out;
+}
+
+#info li:last-child {
+  border: none;
+  padding-bottom: 0.3em;
+}
+
+#info li:hover {
+  background: var(--hover-background);
+  -webkit-transition: background .3s ease-in-out;
+  -moz-transition: background .3s ease-in-out;
+  -o-transition: background .3s ease-in-out;
+  transition: background .3s ease-in-out;
+}
+/**************************************************************************/
+.sublist {
+  position: relative;
+  height: auto;
+  border-top: 0;
+}
+
+[type="checkbox"] {
+  position: absolute;
+  left: -9999px;
+}
+
+label {
+  display: block;
+  width: 100%;
+  height: 24px;
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  transition: top .45s cubic-bezier(.44, .99, .48, 1);
+}
+
+label:before,
+label:after {
+  position: absolute;
+}
+
+
+label:after {  
+  content: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' height='20' width='20' viewBox='0 0 320 512'><path fill='rgb(128,128,128)' d='M143 352L7 216c-9-9-9-24 0-34l23-22c9-10 24-10 34 0l96 96 96-96c10-10 25-10 34 0l23 22c9 10 9 25 0 34L177 352c-9 10-25 10-34 0z'/></svg>");
+  left: 50%;
+}
+
+input[type="checkbox"] ~ ul {
+  width: 100%;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height .45s cubic-bezier(.44, .99, .48, 1);
+}
+
+[type="checkbox"]:checked ~ ul {
+  /**
+   * the value of the `max-height` property specifies the transition speed
+   * set a very big value (e.g. 9999px) to see the difference
+   */
+  
+  max-height: 1000px;
+}
+
+[type="checkbox"]:checked + label {
+  top: 100%;
+}
+
+[type="checkbox"]:checked + label:after {     
+  content: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' height='20' width='20' viewBox='0 0 320 512'><path fill='rgb(128,128,128)' d='M177 160l136 136c9 9 9 24 0 34l-23 22c-9 10-24 10-34 0l-96-96-96 96c-10 10-25 10-34 0L7 330c-9-10-9-25 0-34l136-136c9-10 25-10 34 0z'/></svg>");
+}
+
+.sublist ul li:last-child {
+  margin-bottom: 10px;
+}
+
+/**************************************************************************/
+@media (max-width: 767px) {
+	#info {
+	  display: inline-block;
+	}
+} 
+
+.news-date {
+	font-size: 14px;
+	color: #aaa;
+}
+
+.news-title {
+	font-size: 18px;
+  font-style: oblique;
+}
+
+.news-text {
+	font-size: 16px;
+	padding-left: 20px;
+}
+
 .panel-default h2 {
   font-size:  28px;
 }
@@ -282,6 +402,7 @@ body {
 	float: left;
 	width: auto;
 	max-width: 220px;
+	height: 100%;
 	text-align: left;
 	margin-right: 1em;
 	margin-bottom: 1em;
@@ -366,7 +487,7 @@ body {
 }
 .text-muted {
 	text-align: center;
-	color: #6b6b6b;
+	color: #6d6d6d;
 }
 div.footer{
   border-bottom: 5px solid var(--accent-color);
