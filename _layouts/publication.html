@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 	  <meta name="author" content="{{ site.author }}" />
     <meta name="description" content="{{ site.description }}">
-    <link rel="shortcut icon" type="image/x-icon" href="{{ site.baseurl }}static/img/favicon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href={{ "static/img/favicon.ico" | relative_url }}>
 	
     {% if page.title %}
       <title>{{ page.title }}</title>
@@ -30,7 +30,7 @@
     <![endif]-->
 
 	<!-- Custom styles for this template -->
-    <link rel="stylesheet" type="text/css" href="{{ site.baseurl }}static/css/pub.css" />
+    <link rel="stylesheet" type="text/css" href={{ "static/css/pub.css" | relative_url }}/>
 	<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />
 	<link href="https://fonts.googleapis.com/css?family=Abel|Nanum+Gothic+Coding&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
@@ -117,7 +117,7 @@
 				<h2>{{item[1].title}}</h2>
 				<div class="image centered">
 					{%  if item[1].description %}<p>{{item[1].description}}</p>{% endif %}
-					<img src= "{{ site.baseurl }}{{item[1].link}}" style="{% if item[1].width %}max-width: {{item[1].width}}{% else %}max-width: 100%{% endif %}" alt="{{item[1].title}}">	
+					<img src="{{ item[1].link | relative_url }}" style="{% if item[1].width %}max-width: {{item[1].width}}{% else %}max-width: 100%{% endif %}" alt="{{item[1].title}}">	
 				</div>
 			{% endfor %}
 		{% endif %}
@@ -130,7 +130,7 @@
 					<div class="image">
 						<div style="display: inline-block; padding: 0em 1em; margin-left: auto; margin-right: auto;">
 							<video width="{% if item[1].width %}{{item[1].width}}{% else %}256px{% endif %}" loop="true" autoplay="autoplay" muted>
-								<source src="{{ site.baseurl }}{{item[1].link1}}"/>
+								<source src="{{ item[1].link1 | relative_url }}"/>
 								This is a video of {{item[1].title}}. Sorry, your browser doesn't support embedded videos!
 							</video>
 							<!-- <img src="{{ site.baseurl }}assets/publications/insetgan/1way_rect_new.gif" style='max-height: 750px;' alt=""> -->
@@ -139,7 +139,7 @@
 						{% if item[1].link2 %}
 							<div style="display: inline-block; padding: 0em 1em;  margin-left: auto; margin-right: auto;">
 								<video width="{% if item[1].width %}{{item[1].width}}{% else %}256px{% endif %}" loop="true" autoplay="autoplay" muted>
-									<source src="{{ site.baseurl }}{{item[1].link2}}"/>
+									<source src="{{ item[1].link2 | relative_url }}"/>
 									This is a video of {{item[1].title}}. Sorry, your browser doesn't support embedded videos!
 								</video>
 								<!-- <img src="{{ site.baseurl }}assets/publications/insetgan/2way_rect_new.gif" style='max-height: 750px;' alt="">	 -->
@@ -149,7 +149,7 @@
 						{% if item[1].link3 %}
 							<div style="display: inline-block; padding: 0em 1em;  margin-left: auto; margin-right: auto;">
 								<video width="{% if item[1].width %}{{item[1].width}}{% else %}256px{% endif %}" loop="true" autoplay="autoplay" muted>
-									<source src="{{ site.baseurl }}{{item[1].link3}}"/>
+									<source src="{{ item[1].link3 | relative_url }}"/>
 									This is a video of {{item[1].title}}. Sorry, your browser doesn't support embedded videos!
 								</video>
 								<!-- <img src="{{ site.baseurl }}assets/publications/insetgan/2way_rect_new.gif" style='max-height: 750px;' alt="">	 -->
@@ -299,8 +299,8 @@
 	<div class="footer"></div>
 
     <!-- Include all compiled plugins (below), or include individual files as needed -->
-	<script src="{{ site.baseurl }}static/js/docs.min.js"></script>
-    <script src="{{ site.baseurl }}static/js/main.js"></script>
+	<script src={{ "static/js/docs.min.js" | relative_url }}</script>
+    <script src={{ "static/js/main.js" | relative_url }}</script>
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <script src="{{ site.baseurl }}static/js/ie10-viewport-bug-workaround.js"></script>
   </body>
