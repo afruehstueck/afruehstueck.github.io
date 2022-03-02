@@ -67,43 +67,43 @@ gallery:
   text :  'We show a comparison of several examples of StyleGAN2-generated full-body humans. We concentrate on regions that often exhibit unwanted artifacts in our generated results. Using our InsetGAN method, we are able to generate both faces and shoes using dedicated models and generate appropriate bodies for the respective combination. The result yields a seamless transition between the output of the three distinct generator models.'
   rows : 2
   links :
-    - 'assets/publications/insetgan/result_01_optimized.png'
-    - 'assets/publications/insetgan/result_04_optimized.png'
-    - 'assets/publications/insetgan/result_08_optimized.png'
-    - 'assets/publications/insetgan/result_09_optimized.png'
-    - 'assets/publications/insetgan/result_07_optimized.png'
-    - 'assets/publications/insetgan/result_02_optimized.png'
-    - 'assets/publications/insetgan/result_05_optimized.png'
-    - 'assets/publications/insetgan/result_03_optimized.png'
-    - 'assets/publications/insetgan/result_11_optimized.png'
-    - 'assets/publications/insetgan/result_10_optimized.png'
+    - './assets/publications/insetgan/result_01_optimized.png'
+    - './assets/publications/insetgan/result_04_optimized.png'
+    - './assets/publications/insetgan/result_08_optimized.png'
+    - './assets/publications/insetgan/result_09_optimized.png'
+    - './assets/publications/insetgan/result_07_optimized.png'
+    - './assets/publications/insetgan/result_02_optimized.png'
+    - './assets/publications/insetgan/result_05_optimized.png'
+    - './assets/publications/insetgan/result_03_optimized.png'
+    - './assets/publications/insetgan/result_11_optimized.png'
+    - './assets/publications/insetgan/result_10_optimized.png'
   labels :
     - 'InsetGAN improved'
     - 'StyleGAN'
   init_state:
-    - 'assets/publications/insetgan/result_01_optimized.png' 
-    - 'assets/publications/insetgan/result_01.png'
+    - './assets/publications/insetgan/result_01_optimized.png' 
+    - './assets/publications/insetgan/result_01.png'
   
 figures:
   pipeline:
     title: 'InsetGAN Pipeline'
     description: 'We show a diagram of the pipeline of our InsetGAN optimization process.'
     width: '768px'
-    link: 'assets/publications/insetgan_pipeline2.jpg'
+    link: './assets/publications/insetgan_pipeline2.jpg'
 
 sidebysidevideos:
   face_and_body :
     title : 'Face+Body Combination Optimization'
     description : 'We can choose to optimize only one of our generator networks, the inset <i>(left)</i> and optimize for coherence with the canvas, however we see that using this strategy, we cannot sufficiently adapt to desired features from the inset (blond hair) and achieve equally good global coherence as when we jointly optimize both canvas and inset <i>(right)</i>.'
-    link1 : 'assets/publications/insetgan/optimization_1way.mp4'
+    link1 : './assets/publications/insetgan/optimization_1way.mp4'
     text1 : 'Single GAN optimization'
-    link2 : 'assets/publications/insetgan/optimization_2way.mp4'
+    link2 : './assets/publications/insetgan/optimization_2way.mp4'
     text2 : 'Dual GAN optimization'		
   latent_space_walk:
     title : 'Latent Space Walks'
     description : 'We show joint latent space walks through two generators, demonstrating that our method can achieve excellent overal image coherence for many different face/body combinations.'
-    link1 : 'assets/publications/insetgan/lsw_women.mp4'
-    link2 : 'assets/publications/insetgan/lsw_men.mp4'
+    link1 : './assets/publications/insetgan/lsw_women.mp4'
+    link2 : './assets/publications/insetgan/lsw_men.mp4'
     width: '320px'
     
 #link to publication video (optional): you can either upload the video to our website (insert local link) or host it on youtube or vimeo (in this case insert the youtube/vimeo link)
