@@ -9,7 +9,7 @@
 		<div class="row">
 	{% endif %}
 			<div class="column">
-				<img src="{{ site.baseurl }}{{imageaddress}}" class='galleryImg {% if forloop.first %} selected {% endif %}' style="width:100%" onclick="gallery(this);">
+				<img src="{{ imageaddress | relative_url }}" class='galleryImg {% if forloop.first %} selected {% endif %}' style="width:100%" onclick="gallery(this);">
 			</div>
 	{% if forloop.last %}
 		</div>
@@ -18,14 +18,14 @@
 	  
 	<div id="gallery" class="slider-container">
 	  <div class="slider-after">
-		<img id="expandedImg-after" src="{{ site.baseurl }}{{page.gallery.init_state[0]}}">
+		<img id="expandedImg-after" src="{{ page.gallery.init_state[0] | relative_url }}">
 		<div class="slider-afterPosition afterLabel">
 		  {{page.gallery.labels[0]}}
 		</div>
 	  </div>
 	  <div class="slider-before">
 		<div class="slider-before-inset">
-		<img id="expandedImg-before" src="{{ site.baseurl }}{{page.gallery.init_state[1]}}">
+		<img id="expandedImg-before" src="{{ page.gallery.init_state[1] | relative_url }}">
 		  <div class="slider-beforePosition beforeLabel">
 		  {{page.gallery.labels[1]}}
 		  </div>

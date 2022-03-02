@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 	  <meta name="author" content="{{ site.author }}" />
     <meta name="description" content="{{ site.description }}">
-    <link rel="shortcut icon" type="image/x-icon" href={{ "static/img/favicon.ico" | relative_url }}>
+    <link rel="shortcut icon" type="image/x-icon" href={{ "./static/img/favicon.ico" | relative_url }}>
 	
     {% if page.title %}
       <title>{{ page.title }}</title>
@@ -30,7 +30,7 @@
     <![endif]-->
 
 	<!-- Custom styles for this template -->
-    <link rel="stylesheet" type="text/css" href={{ "static/css/pub.css" | relative_url }}/>
+    <link rel="stylesheet" type="text/css" href={{ "./static/css/pub.css" | relative_url }}/>
 	<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />
 	<link href="https://fonts.googleapis.com/css?family=Abel|Nanum+Gothic+Coding&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
@@ -299,8 +299,8 @@
 	<div class="footer"></div>
 
     <!-- Include all compiled plugins (below), or include individual files as needed -->
-	<script src={{ "static/js/docs.min.js" | relative_url }}</script>
-    <script src={{ "static/js/main.js" | relative_url }}</script>
+	<script src={{ "./static/js/docs.min.js" | relative_url }}</script>
+    <script src={{ "./static/js/main.js" | relative_url }}</script>
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <script src="{{ site.baseurl }}static/js/ie10-viewport-bug-workaround.js"></script>
   </body>
