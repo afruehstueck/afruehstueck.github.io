@@ -27,3 +27,9 @@ google_analytics: UA-55435735-2
 exclude: [vendor]
 includes:
 - volumerendering
+- insetgan
+
+collections:
+  publications:
+    output: true
+    permalink: /:title/

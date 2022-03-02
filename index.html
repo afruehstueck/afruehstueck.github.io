@@ -24,12 +24,12 @@ layout: home
 		  <p>I'm broadly interested in computer graphics, especially image synthesis and generative modeling techniques. My research involves the generation of large-scale images using deep neural networks.</p>
 		  <p>Have a look at some of the <a href="{{ site.baseurl }}projects.html"> projects</a> I've worked on in the recent years.</p>
 		  <p>For more details on my academic background, check out my professional <a href="{{ site.baseurl }}bio.html">resume</a>.</p>
-		  <p>In my spare time, I enjoy designing, building, disassembling and assembling things. I love to play music and explore the world.</p>
+		  <p>In my spare time, I enjoy designing, building, creating, disassembling and assembling things. I love to play music, learn languages and explore the world.</p>
 		  
 		
 		<h3 style='text-align: center'>News</h3>
 		  <ul>
-		  {% for post in site.posts limit:4 %}
+		  {% for post in site.posts limit:7 %}
 			<li>
 			  <span class='news-date'>{{ post.date | date: "%B %Y" }} | </span><span class='news-title'> {{ post.title }}</span>
 			  <div class='news-text'>
@@ -41,7 +41,7 @@ layout: home
 				<input type="checkbox" id="check_id">
 				<label for="check_id"></label>
 				<ul>
-				  {% for post in site.posts offset:4 %}
+				  {% for post in site.posts offset:7 %}
 					<li>
 					  <span class='news-date'>{{ post.date | date: "%B %Y" }} | </span><span class='news-title'> {{ post.title }}</span>
 					  <div class='news-text'>

@@ -1,0 +1,190 @@
+<div class='container dark'>
+	{% for imageaddress in page.gallery.links %} 
+	{% assign split = forloop.length | divided_by: page.gallery.rows %}
+	{% assign splitplus = split | plus: 1 %}
+	{% if forloop.first %}
+		<div class="row">
+	{% elsif forloop.index == splitplus %}
+		</div>
+		<div class="row">
+	{% endif %}
+			<div class="column">
+				<img src="{{ site.baseurl }}{{imageaddress}}" class='galleryImg {% if forloop.first %} selected {% endif %}' style="width:100%" onclick="gallery(this);">
+			</div>
+	{% if forloop.last %}
+		</div>
+	{% endif %}	
+	{% endfor %}
+	  
+	<div id="gallery" class="slider-container">
+	  <div class="slider-after">
+		<img id="expandedImg-after" src="{{ site.baseurl }}{{page.gallery.init_state[0]}}">
+		<div class="slider-afterPosition afterLabel">
+		  {{page.gallery.labels[0]}}
+		</div>
+	  </div>
+	  <div class="slider-before">
+		<div class="slider-before-inset">
+		<img id="expandedImg-before" src="{{ site.baseurl }}{{page.gallery.init_state[1]}}">
+		  <div class="slider-beforePosition beforeLabel">
+		  {{page.gallery.labels[1]}}
+		  </div>
+		</div>
+	  </div>
+	  <div class="inset-before">
+	  </div>
+	  <div class="inset-after">
+	  </div>
+	  <div class="slider-handle">
+		<span class=" handle-left-arrow"></span>
+		<span class="handle-right-arrow"></span>
+	  </div>
+	</div>
+<script>
+	function gallery(clickedImg) {
+	  $('.galleryImg').each(function() {
+		  $( this ).removeClass('selected');
+		});
+	  $(clickedImg).addClass('selected');
+	  var expandImgAfter = document.getElementById("expandedImg-after");
+	  var srcAfter = clickedImg.src
+	  expandImgAfter.src = srcAfter;
+	  var expandImgBefore = document.getElementById("expandedImg-before");
+	  var srcBefore = srcAfter.substring(0, srcAfter.length - 14) + '.png';
+	  expandImgBefore.src = srcBefore;
+	  
+	  initMagnifier(expandImgBefore, expandImgAfter);
+	}
+	
+	function initMagnifier(expandImgBefore, expandImgAfter, zoom=2.0) {
+		let x = 512
+		let y = 110
+		
+		srcBefore = expandImgBefore.src
+		srcAfter = expandImgAfter.src
+		glassBefore = document.getElementsByClassName('inset-before')[0];
+		glassAfter = document.getElementsByClassName('inset-after')[0];
+		
+		let w = glassAfter.offsetWidth / 2;
+		let h = glassAfter.offsetHeight / 2;
+		<!-- var initialPos =  "-" + ((x * zoom) - w) + "px -" + ((y * zoom) - h) + "px"; -->
+		<!-- console.log(initialPos) -->
+		glassBefore.style.backgroundImage = "url('" + srcBefore + "')";
+		<!-- glassBefore.style.backgroundPosition = initialPos; -->
+		glassBefore.style.backgroundSize = (expandImgAfter.width * zoom) + "px " + (expandImgAfter.height * zoom) + "px";
+		
+		glassAfter.style.backgroundImage = "url('" + srcAfter + "')";
+		<!-- glassAfter.style.backgroundPosition = initialPos; -->
+		glassAfter.style.backgroundSize = (expandImgBefore.width * zoom) + "px " + (expandImgBefore.height * zoom) + "px";
+		moveMagnifier(x, y)
+		e = {
+		
+		}
+		
+		expandImgAfter.addEventListener("mousemove", magnifierMouseMove);
+		expandImgAfter.addEventListener("touchmove", magnifierMouseMove);
+		expandImgBefore.addEventListener("mousemove", magnifierMouseMove);
+		expandImgBefore.addEventListener("touchmove", magnifierMouseMove);
+		
+		function magnifierMouseMove(e) {
+			var pos, x, y;
+			/* Prevent any other actions that may occur when moving over the image */
+			e.preventDefault();
+			/* Get the cursor's x and y positions: */
+			pos = getCursorPos(e);
+			x = pos.x;
+			y = pos.y;
+
+			moveMagnifier(x, y)
+		}
+		
+		function moveMagnifier(x, y) {
+			console.log('mouse at(',x, ',', y, ') setting background position to ', ((x * zoom) - w), ((y * zoom) - h))
+			/* Prevent the magnifier glass from being positioned outside the image: */
+			if (x > expandImgAfter.width - (w / zoom)) {x = expandImgAfter.width - (w / zoom);}
+			if (x < w / zoom) {x = w / zoom;}
+			if (y > expandImgAfter.height - (h / zoom)) {y = expandImgAfter.height - (h / zoom);}
+			if (y < h / zoom) {y = h / zoom;}
+
+			glassBefore.style.backgroundPosition = "-" + ((x * zoom) - w) + "px -" + ((y * zoom) - h) + "px";
+			glassAfter.style.backgroundPosition = "-" + ((x * zoom) - w) + "px -" + ((y * zoom) - h) + "px";
+		}
+		function getCursorPos(e) {
+			var a, x = 0, y = 0;
+			e = e || window.event;
+			/* Get the x and y positions of the image: */
+			a = expandImgAfter.getBoundingClientRect();
+			/* Calculate the cursor's x and y coordinates, relative to the image: */
+			x = e.pageX - a.left;
+			y = e.pageY - a.top;
+			/* Consider any page scrolling: */
+			x = x - window.pageXOffset;
+			y = y - window.pageYOffset;
+			return {x : x, y : y};
+		}
+	}
+
+	class BeforeAfter {
+		constructor(entryObject) {
+
+			const beforeAfterContainer = document.querySelector(entryObject.id);
+			const before = beforeAfterContainer.querySelector('.slider-before');
+			const beforeText = beforeAfterContainer.querySelector('.slider-beforePosition');
+			const afterText = beforeAfterContainer.querySelector('.slider-afterPosition');
+			const handle = beforeAfterContainer.querySelector('.slider-handle');
+			var widthChange = 0;
+
+			beforeAfterContainer.querySelector('.slider-before-inset').setAttribute("style", "width: " + beforeAfterContainer.offsetWidth + "px;")
+			window.onresize = function () {
+				beforeAfterContainer.querySelector('.slider-before-inset').setAttribute("style", "width: " + beforeAfterContainer.offsetWidth + "px;")
+			}
+			before.setAttribute('style', "width: 50%;");
+			handle.setAttribute('style', "left: 50%;");
+
+			//touch screen event listener
+			beforeAfterContainer.addEventListener("touchstart", (e) => {
+
+				beforeAfterContainer.addEventListener("touchmove", (e2) => {
+					let containerWidth = beforeAfterContainer.offsetWidth;
+					let currentPoint = e2.changedTouches[0].clientX;
+
+					let startOfDiv = beforeAfterContainer.offsetLeft;
+
+					let modifiedCurrentPoint = currentPoint - startOfDiv;
+
+					if (modifiedCurrentPoint > 10 && modifiedCurrentPoint < beforeAfterContainer.offsetWidth - 10) {
+						let newWidth = modifiedCurrentPoint * 100 / containerWidth;
+
+						before.setAttribute('style', "width:" + newWidth + "%;");
+						afterText.setAttribute('style', "z-index: 1;");
+						handle.setAttribute('style', "left:" + newWidth + "%;");
+					}
+				});
+			});
+
+			//mouse move event listener
+			beforeAfterContainer.addEventListener('mousemove', (e) => {
+				let containerWidth = beforeAfterContainer.offsetWidth;
+				widthChange = e.offsetX;
+				let newWidth = widthChange * 100 / containerWidth;
+
+				if (e.offsetX > 10 && e.offsetX < beforeAfterContainer.offsetWidth - 10) {
+					before.setAttribute('style', "width:" + newWidth + "%;");
+					afterText.setAttribute('style', "z-index:" + "1;");
+					handle.setAttribute('style', "left:" + newWidth + "%;");
+				}
+			})
+			
+			var expandImgAfter = document.getElementById("expandedImg-after");
+			var expandImgBefore = document.getElementById("expandedImg-before");
+			initMagnifier(expandImgBefore, expandImgAfter);
+		}
+	}
+	new BeforeAfter({
+		id: '#gallery'
+	});
+</script>
+</div>
+
+
+

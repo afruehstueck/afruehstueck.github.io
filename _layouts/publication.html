@@ -1,0 +1,312 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	  <meta name="author" content="{{ site.author }}" />
+    <meta name="description" content="{{ site.description }}">
+    <link rel="shortcut icon" type="image/x-icon" href="{{ site.baseurl }}static/img/favicon.ico">
+	
+    {% if page.title %}
+      <title>{{ page.title }}</title>
+    {% else %}
+      <title>{{ site.title }}</title>
+    {% endif %}
+	
+	<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <!-- Bootstrap -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha256-MfvZlkHCEqatNoGiOXveE8FIwMzZg4W85qfrfIFBfYc= sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ=="
+    crossorigin="anonymous">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+	<!-- Custom styles for this template -->
+    <link rel="stylesheet" type="text/css" href="{{ site.baseurl }}static/css/pub.css" />
+	<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />
+	<link href="https://fonts.googleapis.com/css?family=Abel|Nanum+Gothic+Coding&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+	<!-- Place this tag in your head or just before your close body tag. -->
+	<script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!-- Google Analytics -->
+    {% include analytics.html %}
+  </head>
+  <!-- Main Body-->
+  <body>
+
+  <!-- Wrap all page content here -->
+  <div id="wrap">
+    
+	<article class="container wrapper first">
+	<!--begin-modal-content-->
+	<div id="content" class="wrapper noshadow leftalign">
+		<h1 id="publication_title">{{page.title}}</h1>
+		<h3 id="publication_authors">
+		{% assign single_institution = page.affiliations.size %}
+		{% if single_institution == 1 %}
+		    {% for author in page.authors %}{% assign half = forloop.length | divided_by: 2 %}{% assign halfplus = half | plus: 1 %}{% assign link_to_person = false %}{% if forloop.last %} and&nbsp;{% elsif forloop.index != 1 %}, {% if forloop.index == halfplus and forloop.length > 3 %}<br>{% endif %}{% endif %}{% for person in page.authorlinks %}{% if author[0] == person[0] %}<a href="{{person[1]}}">{% assign link_to_person = true %}{% endif %}{% endfor %}{{author[0]}}{% if link_to_person %}</a>{% endif %}{% endfor %}
+			<br><br>
+			{% for affiliation in page.affiliations %}{{affiliation[1]}}{% endfor %}
+		{% else %}
+			{% for author in page.authors %}{% assign half = forloop.length | divided_by: 2 %}{% assign halfplus = half | plus: 1 %}{% assign link_to_person = false %}{% if forloop.last %} and&nbsp;{% elsif forloop.index != 1 %}, {% if forloop.index == halfplus and forloop.length > 3 %}<br>{% endif %}{% endif %}{% for person in page.authorlinks %}{% if author[0] == person[0] %}<a href="{{person[1]}}">{% assign link_to_person = true %}{% endif %}{% endfor %}{{author[0]}}{% if link_to_person %}</a>{% endif %}<sup>&nbsp;{{author[1]}}</sup>{% endfor %}
+			<br><br>
+			{% for affiliation in page.affiliations %}<sup>{{affiliation[0]}}&nbsp;</sup>{{affiliation[1]}}{% unless forloop.last %}&nbsp;&nbsp;&nbsp;{% endunless %}{% endfor %}
+		{% endif %}
+		<!-- generate author list with links to group members
+		{% for author in page.authors %}{% if forloop.last %} and {% elsif forloop.index != 1 %}, {% endif %}
+		{% if author[1] == "" %}{{author[0]}}{% else %}<a href={{author[1]}}>{{author[0]}}</a>{% endif %}
+		{% endfor %} -->	
+		</h3>
+		{% assign venue = page.venue %}
+		<h3 id="publication_venue">{{page.venue}}, {{ page.year }}</h3>
+		<div id="publication_image" class="image centered"><img src= "{{ page.teaser | relative_url }}" style="max-width: 100%" alt="{{page.title}}"></div>
+		
+		{% if page.abstract %}
+			<h2>Abstract</h2>
+			<p id="publication_abstract"><p class="text-flow">{{ page.abstract }}</p></p>
+		{% endif %}
+		
+		<!-- content boxes -->
+		<h2>Paper</h2>
+		<div class='container'>
+			<div class="image leftimage">
+			{% if page.papersource %} 
+				<a href='{{page.papersource}}' target='_blank'>
+			{% endif %}	
+				<img src="{{ page.thumbnail | relative_url }}">
+			{% if page.papersource %} 
+				</a>
+			{% endif %}
+			</div>
+		<div style='display: flex'>
+		{% if page.citation %}
+		<blockquote id="box-citation" class="box slim citation leftalign"><p id="content-citation">{{ page.citation }}</p></blockquote>
+		{% endif %}
+		</div>	
+		<br>
+		<br>
+		<br>
+		<br>
+		
+		{% if page.github %}
+			<h2>Our Code is available on Github</h2>
+			<div class="container centered" >
+			<!-- {{ site.github }} -->
+			<a href="{{ page.github }}" class='icon'><i class="fab fa-github fa-5x"></i></a>
+			<!-- Place this tag where you want the button to render. -->
+			
+			</div>
+		{% endif %}
+		
+		{% if page.gallery %}
+			<h2>{{ page.gallery.title }}</h2>
+			<p class="text-flow">{{ page.gallery.text }}</p>
+			{% include gallery.html %}
+		{% endif %}
+		
+		{% if page.figures %}
+			{% for item in page.figures %}
+				<h2>{{item[1].title}}</h2>
+				<div class="image centered">
+					{%  if item[1].description %}<p>{{item[1].description}}</p>{% endif %}
+					<img src= "{{ site.baseurl }}{{item[1].link}}" style="{% if item[1].width %}max-width: {{item[1].width}}{% else %}max-width: 100%{% endif %}" alt="{{item[1].title}}">	
+				</div>
+			{% endfor %}
+		{% endif %}
+		
+		{% if page.sidebysidevideos %}
+			{% for item in page.sidebysidevideos %}
+				<h2>{{item[1].title}}</h2>
+				<div class="container centered">
+				{%  if item[1].description %}<p>{{item[1].description}}</p>{% endif %}
+					<div class="image">
+						<div style="display: inline-block; padding: 0em 1em; margin-left: auto; margin-right: auto;">
+							<video width="{% if item[1].width %}{{item[1].width}}{% else %}256px{% endif %}" loop="true" autoplay="autoplay" muted>
+								<source src="{{ site.baseurl }}{{item[1].link1}}"/>
+								This is a video of {{item[1].title}}. Sorry, your browser doesn't support embedded videos!
+							</video>
+							<!-- <img src="{{ site.baseurl }}assets/publications/insetgan/1way_rect_new.gif" style='max-height: 750px;' alt=""> -->
+							{%if item[1].text1 %}<p>{{item[1].text1}}</p>{% endif %}
+						</div>
+						{% if item[1].link2 %}
+							<div style="display: inline-block; padding: 0em 1em;  margin-left: auto; margin-right: auto;">
+								<video width="{% if item[1].width %}{{item[1].width}}{% else %}256px{% endif %}" loop="true" autoplay="autoplay" muted>
+									<source src="{{ site.baseurl }}{{item[1].link2}}"/>
+									This is a video of {{item[1].title}}. Sorry, your browser doesn't support embedded videos!
+								</video>
+								<!-- <img src="{{ site.baseurl }}assets/publications/insetgan/2way_rect_new.gif" style='max-height: 750px;' alt="">	 -->
+								{%if item[1].text2 %}<p>{{item[1].text2}}</p>{% endif %}
+							</div>
+						{% endif %}
+						{% if item[1].link3 %}
+							<div style="display: inline-block; padding: 0em 1em;  margin-left: auto; margin-right: auto;">
+								<video width="{% if item[1].width %}{{item[1].width}}{% else %}256px{% endif %}" loop="true" autoplay="autoplay" muted>
+									<source src="{{ site.baseurl }}{{item[1].link3}}"/>
+									This is a video of {{item[1].title}}. Sorry, your browser doesn't support embedded videos!
+								</video>
+								<!-- <img src="{{ site.baseurl }}assets/publications/insetgan/2way_rect_new.gif" style='max-height: 750px;' alt="">	 -->
+								{%if item[1].text2 %}<p>{{item[1].text3}}</p>{% endif %}
+							</div>
+						{% endif %}
+					</div>
+				</div>
+			{% endfor %}
+		{% endif %}	
+
+		{% if page.video %} 
+		<h2>{{page.video.title}}</h2>
+		<div class='container centered'>
+			{%  if page.video.description %}<p>{{page.video.description}}</p>{% endif %}
+			{% if page.video.link %}
+				{% if page.video.link contains "youtube.com" %}
+					<!-- parse youtube link -->
+					{% assign videoID = page.video.link | split: "=" | last %}
+					{% assign video_link = "https://www.youtube.com/embed/" | append: videoID %}
+					<iframe id="box-video" class="12u toggleBox contentBox" src="{{ video_link }}" style="width: 100%; min-height: 600px"></iframe>
+				{% elsif page.video.link contains "vimeo.com" %}
+					<!-- parse vimeo link -->
+					{% assign videoID = page.video.link | split: "/" | last %}
+					{% assign video_link = "https://player.vimeo.com/video/" | append: videoID %}	
+					<iframe id="box-video" class="12u toggleBox contentBox" src="{{ video_link }}" style="width: 100%; min-height: 600px"></iframe>
+				{% else %}
+					<!-- video is hosted locally --> 
+					<div id="box-video" class="contentBox toggleBox" style="background: url({{'./assets/css/images/loading.gif' | relative_url }}) center center no-repeat transparent width: 100%; min-height: 600px;"><video id="publication_video" class="contentBox" controls=""style="width: 100%; min-height: 600px"><source src="{{ page.video.link | relative_url }}"><p>video cannot be displayed.</p></video></div>
+				{% endif %}
+			{% endif %}
+		</div>
+		{% endif %}
+		
+		{% if page.pdf %}
+			<div id="box-pdf" class="contentBox toggleBox" style="background: url({{'./assets/css/images/loading.gif' | relative_url }}) center center no-repeat transparent; display: none;"><object id="publication_pdf" class="contentBox" data="{{ page.pdf | relative_url }}"><p>PDF cannot be displayed.</p></object></div>
+		{% endif %}
+		
+		{% if page.pdfsupp %}
+			<div id="box-pdfsupp" class="contentBox toggleBox" style="background: url({{'./assets/css/images/loading.gif' | relative_url }}) center center no-repeat transparent; display: none;"><object id="publication_appendix_pdf" class="contentBox" data="{{ page.pdfsupp | relative_url }}"><p>PDF cannot be displayed.</p></object></div>
+		{% endif %}
+		
+		{% if supp_pdf %}
+			<div id="box-supp-pdf" class="contentBox toggleBox" style="background: url({{'./assets/css/images/loading.gif' | relative_url }}) center center no-repeat transparent; display: none;"><object id="publication_supp_pdf" class="contentBox" data="{{ supp_pdf  | relative_url }}"><p>PDF cannot be displayed.</p></object></div>
+		{% endif %}
+		
+	</div>
+
+	<!-- Scripts -->
+	<script>
+	var id = null;
+	var isModal = false;
+	$( document ).ready( function( varSearch ) {
+		//check if ID was set as document variable (for modal dialog)
+		if ( typeof document.urloptions !== "undefined" && typeof document.urloptions.id !== "undefined" ){
+			id = document.urloptions.id;
+			isModal = true;
+		} else { //parse url
+			var params = window.location.search;
+
+			var getURLParams = function ( url ) {
+				var hash;
+				var json = {};
+				var hashes = url.slice( url.indexOf( '?' ) + 1 ).split( '&' );
+				for ( var i = 0; i < hashes.length; i++ ) {
+					hash = hashes[ i ].split( '=' );
+					json[ hash[ 0 ] ] = hash[ 1 ];
+				}
+				return json;
+			};
+
+			params = getURLParams( params );
+			console.log(window.top.location.hash)
+
+			//check if ID comes from url (for separate webpage)
+			if ( typeof params.id !== "undefined" ) {
+				id = params.id;
+
+				//unhide navigation bar
+				$( "#nav" ).removeClass("hidden");
+				$( "article:first-of-type" ).addClass("container wrapper");
+			}
+		}
+
+		$('#toggle-citation').click(function(){
+			var wasHidden = $('#box-citation').is( ':visible' );
+			$( '.toggleBox' ).hide();
+			if( !wasHidden ) {
+				$('#box-citation').show();
+			}
+		});
+		
+		$('#toggle-video').click(function(){
+			var wasHidden = $('#box-video').is(':visible');
+			$('.toggleBox').hide();
+			if( !wasHidden ) {
+				$('#box-video').show();
+			}
+		});
+		
+		$('#toggle-talk').click(function(){
+			var wasHidden = $('#box-talk').is(':visible');
+			$('.toggleBox').hide();
+			if( !wasHidden ) {
+				$('#box-talk').show();
+			}
+		});
+
+		$('#toggle-pdf').click(function(){
+			var wasHidden = $('#box-pdf').is( ':visible' );
+			$('.toggleBox').hide();
+			if( !wasHidden ) {
+				$('#box-pdf').show();
+			}
+		});
+
+		$('#toggle-pdfsupp').click(function(){
+			var wasHidden = $('#box-pdfsupp').is( ':visible' );
+			$('.toggleBox').hide();
+			if( !wasHidden ) {
+				$('#box-pdfsupp').show();
+			}
+		});
+
+		$('#toggle-supp-pdf').click(function(){
+			var wasHidden = $('#box-supp-pdf').is( ':visible' );
+			$('.toggleBox').hide();
+			if( !wasHidden ) {
+				$('#box-supp-pdf').show();
+			}
+		});
+	});
+	
+	</script>
+	<!--end-modal-content-->
+	</article>
+
+  </div>
+  <!-- Footer -->
+  <footer>
+		<div class="container box">
+		<div id="footer">
+				<p class="text-muted" style='font-size: 80%'>Last modified with ♥️ in {{ site.time | date: '%B %Y' }}&nbsp;&ndash;&nbsp;All rights reserved.</p>
+			</div>
+		</div>
+	</footer>
+	<div class="footer"></div>
+
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+	<script src="{{ site.baseurl }}static/js/docs.min.js"></script>
+    <script src="{{ site.baseurl }}static/js/main.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="{{ site.baseurl }}static/js/ie10-viewport-bug-workaround.js"></script>
+  </body>
+</html>
+
+
+
+
+
