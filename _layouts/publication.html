@@ -1,4 +1,3 @@
-{% assign base = '' %}{% assign depth = page.url | split: '/' | size | minus: 1 %}{% if depth <= 1 %}{% assign base = '.' %}{% elsif depth == 2 %}{% assign base = '..' %}{% elsif depth == 3 %}{% assign base = '../..' %}{% elsif depth == 4 %}{% assign base = '../../..' %}{% endif %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -30,7 +29,7 @@
     <![endif]-->
 
 	<!-- Custom styles for this template -->
-    <link rel="stylesheet" type="text/css" href={{ site.baseurl }}'../static/css/pub.css'/>
+    <link rel="stylesheet" type="text/css" href='{{ site.baseurl }}../static/css/pub.css'/>
 	<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />
 	<link href="https://fonts.googleapis.com/css?family=Abel|Nanum+Gothic+Coding&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
@@ -76,8 +75,39 @@
 		
 		<!-- content boxes -->
 		<h2>Paper</h2>
-		<div class='container'>
-			<div class="image leftimage">
+		
+		<div class='container centered'>
+		{% if page.paper_description %}
+			<p>{{page.paper_description}}</p>
+		{% endif %}
+		{% if page.thumbnail and page.supplementary_thumbnail %}
+			<div style="display: inline-block; padding: 0em 1em; margin-left: auto; margin-right: auto;">
+				<div class="image paper">
+				{% if page.papersource %} 
+					<a href='{{page.papersource}}' target='_blank'>
+				{% endif %}	
+					<img src="{{ page.thumbnail | relative_url }}">
+				{% if page.papersource %} 
+					</a>
+				{% endif %}
+				</div>
+				<p>Paper</p>
+			</div>
+			<div style="display: inline-block; padding: 0em 1em; margin-left: auto; margin-right: auto;">
+				<div class="image paper2">
+				{% if page.supplementarysource %} 
+					<a href='{{page.papersource}}' target='_blank'>
+				{% endif %}	
+					<img src="{{ page.supplementary_thumbnail | relative_url }}">
+				{% if page.supplementarysource %} 
+					</a>
+				{% endif %}
+				</div>
+				<p>Supplementary Materials</p>
+			</div>
+			<blockquote id="box-citation" class="box slim citation leftalign"><p id="content-citation">{{ page.citation }}</p></blockquote>
+		{% else %}
+			<div class="image leftimage paper" style='margin-right: 1em'>
 			{% if page.papersource %} 
 				<a href='{{page.papersource}}' target='_blank'>
 			{% endif %}	
@@ -86,15 +116,13 @@
 				</a>
 			{% endif %}
 			</div>
-		<div style='display: flex'>
-		{% if page.citation %}
-		<blockquote id="box-citation" class="box slim citation leftalign"><p id="content-citation">{{ page.citation }}</p></blockquote>
+			<div style='display: flex'>
+			{% if page.citation %}
+			<blockquote id="box-citation" class="box slim citation leftalign"><p id="content-citation">{{ page.citation }}</p></blockquote>
+			{% endif %}
+			</div>
 		{% endif %}
 		</div>	
-		<br>
-		<br>
-		<br>
-		<br>
 		
 		{% if page.github %}
 			<h2>Our Code is available on Github</h2>
@@ -299,10 +327,10 @@
 	<div class="footer"></div>
 
     <!-- Include all compiled plugins (below), or include individual files as needed -->
-	<script src={{ site.baseurl }}'../static/js/docs.min.js'></script>
-    <script src={{ site.baseurl }}'../static/js/main.js'></script>
+	<script src='{{ site.baseurl }}../static/js/docs.min.js'></script>
+    <script src='{{ site.baseurl }}../static/js/main.js'></script>
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <script src={{ site.baseurl }}"../static/js/ie10-viewport-bug-workaround.js"></script>
+    <script src='{{ site.baseurl }}../static/js/ie10-viewport-bug-workaround.js'></script>
   </body>
 </html>
 

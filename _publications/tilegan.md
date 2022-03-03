@@ -43,7 +43,7 @@ abstract: We tackle the problem of texture synthesis in the setting where many i
 teaser: './assets/publications/tilegan_results.jpg'
 
 #link to smaller thumbnail image of publication (please make sure the aspect ratio is 3:2, suggested size is 150x100px)
-thumbnail: './assets/publications/tilegan_paper_noborder.jpg'
+thumbnail: './assets/publications/tilegan_paper.jpg'
 
 
 #link to paper PDF

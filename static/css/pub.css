@@ -175,12 +175,12 @@ h1, h2, h3 {
 	padding-right: 0.2em;
 }
 
-.leftimage img {
-	max-height: 300px; 
-	border: 1px solid #aaa;
-	box-shadow: 1px 1px 3px #ddd;
-	margin: 3px;
-}
+/* .leftimage img { */
+	/* max-height: 300px;  */
+	/* border: 1px solid #aaa; */
+	/* box-shadow: 1px 1px 3px #ddd; */
+	/* margin: 3px; */
+/* } */
 
 .image a {
    text-decoration: none !important;
@@ -252,6 +252,68 @@ h1, h2, h3 {
 #gallery {
   position: relative;
   /*display: none;*/
+}
+
+
+.paper, .paper2 {
+  background: #fff;
+  padding: 1em;
+  position: relative;
+  margin-bottom: 0.25em;
+}
+
+.paper img , .paper2 img {
+	max-height: 310px;
+}
+
+.paper,
+.paper2,
+.paper::before,
+.paper2::before,
+.paper::after,
+.paper2::after {
+  /* Styles to distinguish sheets from one another */
+  box-shadow: 1px 1px 1px rgba(0,0,0,0.25);
+  border: 1px solid #bbb;
+}
+
+.paper::before,
+.paper2::before,
+.paper::after,
+.paper2::after {
+  content: "";
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  background-color: #eee;
+}
+
+.paper::before {
+  right: 6px;
+  top: 1px;
+  transform: rotate(-1.2deg);
+  z-index: -1;
+}
+
+.paper::after {
+  top: 3px;
+  right: -3px;
+  transform: rotate(1deg);
+  z-index: -2;
+}
+
+.paper2::before {
+  right: 4px;
+  top: -1px;
+  transform: rotate(1.1deg);
+  z-index: -1;
+}
+
+.paper2::after {
+  top: 2px;
+  right: -4px;
+  transform: rotate(-1.3deg);
+  z-index: -2;
 }
 
 /* SLIDER
