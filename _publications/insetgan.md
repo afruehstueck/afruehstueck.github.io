@@ -115,10 +115,8 @@ sidebysidevideos:
     
 #link to publication video (optional): you can either upload the video to our website (insert local link) or host it on youtube or vimeo (in this case insert the youtube/vimeo link)
 video:
-    title : 'Paper Video' 
-    description : 'Coming soon!' 
-#   link : './assets/publications/InsetGAN.mp4'
-#video: 'www.youtube.com/watch?v=ye_HZOdW7kg'
+    title : 'Paper Video'  
+    link : 'https://www.youtube.com/watch?v=YKFYEt5hvOo'
 
 
 #insert citation. please format citation by inserting <br> at line breaks, &nbsp;&nbsp; will insert a tab character to prettify the citation

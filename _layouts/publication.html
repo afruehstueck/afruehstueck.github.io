@@ -134,6 +134,29 @@
 			</div>
 		{% endif %}
 		
+		{% if page.video %} 
+		<h2>{{page.video.title}}</h2>
+		<div class='container centered'>
+			{%  if page.video.description %}<p>{{page.video.description}}</p>{% endif %}
+			{% if page.video.link %}
+				{% if page.video.link contains "youtube.com" %}
+					<!-- parse youtube link -->
+					{% assign videoID = page.video.link | split: "=" | last %}
+					{% assign video_link = "https://www.youtube.com/embed/" | append: videoID %}
+					<iframe id="box-video" class="12u toggleBox contentBox" src="{{ video_link }}" style="width: 100%; min-height: 600px"></iframe>
+				{% elsif page.video.link contains "vimeo.com" %}
+					<!-- parse vimeo link -->
+					{% assign videoID = page.video.link | split: "/" | last %}
+					{% assign video_link = "https://player.vimeo.com/video/" | append: videoID %}	
+					<iframe id="box-video" class="12u toggleBox contentBox" src="{{ video_link }}" style="width: 100%; min-height: 600px"></iframe>
+				{% else %}
+					<!-- video is hosted locally --> 
+					<div id="box-video" class="contentBox toggleBox" style="background: url({{'./assets/css/images/loading.gif' | relative_url }}) center center no-repeat transparent width: 100%; min-height: 600px;"><video id="publication_video" class="contentBox" controls=""style="width: 100%; min-height: 600px"><source src="{{ page.video.link | relative_url }}"><p>video cannot be displayed.</p></video></div>
+				{% endif %}
+			{% endif %}
+		</div>
+		{% endif %}
+		
 		{% if page.gallery %}
 			<h2>{{ page.gallery.title }}</h2>
 			<p class="text-flow">{{ page.gallery.text }}</p>
@@ -188,29 +211,6 @@
 				</div>
 			{% endfor %}
 		{% endif %}	
-
-		{% if page.video %} 
-		<h2>{{page.video.title}}</h2>
-		<div class='container centered'>
-			{%  if page.video.description %}<p>{{page.video.description}}</p>{% endif %}
-			{% if page.video.link %}
-				{% if page.video.link contains "youtube.com" %}
-					<!-- parse youtube link -->
-					{% assign videoID = page.video.link | split: "=" | last %}
-					{% assign video_link = "https://www.youtube.com/embed/" | append: videoID %}
-					<iframe id="box-video" class="12u toggleBox contentBox" src="{{ video_link }}" style="width: 100%; min-height: 600px"></iframe>
-				{% elsif page.video.link contains "vimeo.com" %}
-					<!-- parse vimeo link -->
-					{% assign videoID = page.video.link | split: "/" | last %}
-					{% assign video_link = "https://player.vimeo.com/video/" | append: videoID %}	
-					<iframe id="box-video" class="12u toggleBox contentBox" src="{{ video_link }}" style="width: 100%; min-height: 600px"></iframe>
-				{% else %}
-					<!-- video is hosted locally --> 
-					<div id="box-video" class="contentBox toggleBox" style="background: url({{'./assets/css/images/loading.gif' | relative_url }}) center center no-repeat transparent width: 100%; min-height: 600px;"><video id="publication_video" class="contentBox" controls=""style="width: 100%; min-height: 600px"><source src="{{ page.video.link | relative_url }}"><p>video cannot be displayed.</p></video></div>
-				{% endif %}
-			{% endif %}
-		</div>
-		{% endif %}
 		
 		{% if page.pdf %}
 			<div id="box-pdf" class="contentBox toggleBox" style="background: url({{'./assets/css/images/loading.gif' | relative_url }}) center center no-repeat transparent; display: none;"><object id="publication_pdf" class="contentBox" data="{{ page.pdf | relative_url }}"><p>PDF cannot be displayed.</p></object></div>
