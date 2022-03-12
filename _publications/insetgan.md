@@ -108,7 +108,7 @@ sidebysidevideos:
     text2 : 'Dual GAN optimization'		
   latent_space_walk:
     title : 'Latent Space Walks'
-    description : 'We show joint latent space walks through two generators, demonstrating that our method can achieve excellent overal image coherence for many different face/body combinations.'
+    description : 'We show joint latent space walks through two generators, demonstrating that our method can achieve excellent overall image coherence for many different face/body combinations.'
     link1 : './assets/publications/insetgan/lsw_women.mp4'
     link2 : './assets/publications/insetgan/lsw_men.mp4'
     width: '320px'
@@ -123,9 +123,9 @@ video:
 citation:   >
   @inproceedings{Fruehstueck2022InsetGAN,<br>
    &nbsp;&nbsp;title = {InsetGAN for Full-Body Image Generation},<br>
-   &nbsp;&nbsp;author = {Fr{\"u}hst{\"u}ck, Anna and Singh, {Krishna Kumar} and Shechtman, Eli and Mitra, {Niloy J.} and Wonka, Peter, and Lu, Jingwan},<br>
+   &nbsp;&nbsp;author = {Fr{\"u}hst{\"u}ck, Anna and Singh, {Krishna Kumar} and Shechtman, Eli and Mitra, {Niloy J.} and Wonka, Peter and Lu, Jingwan},<br>
    &nbsp;&nbsp;booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision and Pattern Recognition (CVPR)},<br>
-   &nbsp;&nbsp;year = {2022},<br>
+   &nbsp;&nbsp;year = {2022}<br>
   }
 
 #insert links to additional material for the publication (optional)
