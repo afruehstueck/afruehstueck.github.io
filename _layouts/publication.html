@@ -84,7 +84,7 @@
 			<div style="display: inline-block; padding: 0em 1em; margin-left: auto; margin-right: auto;">
 				<div class="image paper">
 				{% if page.papersource %} 
-					<a href='{{page.papersource}}' target='_blank'>
+					<a href='{{page.papersource | relative_url }}' target='_blank'>
 				{% endif %}	
 					<img src="{{ page.thumbnail | relative_url }}">
 				{% if page.papersource %} 
@@ -96,7 +96,7 @@
 			<div style="display: inline-block; padding: 0em 1em; margin-left: auto; margin-right: auto;">
 				<div class="image paper2">
 				{% if page.supplementarysource %} 
-					<a href='{{page.papersource}}' target='_blank'>
+					<a href='{{page.supplementarysource | relative_url }}' target='_blank'>
 				{% endif %}	
 					<img src="{{ page.supplementary_thumbnail | relative_url }}">
 				{% if page.supplementarysource %} 
