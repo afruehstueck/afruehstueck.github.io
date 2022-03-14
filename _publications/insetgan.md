@@ -59,13 +59,13 @@ thumbnail:  './assets/publications/insetgan_paper.jpg'
 
 supplementary_thumbnail:  './assets/publications/insetgan_supplementary.jpg'
 
-paper_description: 'Coming soon!'
+#paper_description: '<a href=''>arXiv</a>'
 
 #link to paper PDF
-#papersource: 'https://dl.acm.org/doi/pdf/10.1145/3306346.3322993'
+papersource: './assets/publications/insetgan/insetGAN.pdf'
 
 #link to supplementary PDF
-#supplementarysource: 'https://dl.acm.org/doi/pdf/10.1145/3306346.3322993'
+supplementarysource: './assets/publications/insetgan/insetGAN_supp.pdf'
 
 #github: 
   
