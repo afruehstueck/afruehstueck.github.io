@@ -113,7 +113,7 @@ h1, h2, h3 {
 }
 
 /* Custom page CSS
--------------------------------------------------- */
+-------------------------------------------------- */	
 .container {
   width: auto;
   max-width: 1100px;
@@ -123,12 +123,14 @@ h1, h2, h3 {
 .container .text-muted {
   margin: 20px 0;
 }
+
 .container a {
   color: var(--accent-color);
   border-bottom: 2px solid var(--accent-color);
   display: inline-block;
   line-height: 0.85;
 }
+
 .centered {
   text-align: center;
 }
@@ -201,6 +203,16 @@ h1, h2, h3 {
    border-bottom: none;
    display: inline-block;
   transition: opacity .5s;
+}
+
+.btn, .btn:active, .btn:focus {
+	color: #eee !important;
+	background-color: var(--accent-color);
+	font-size: 1.2em;
+}
+
+.btn:hover {
+	color: color: var(--hover-color) !important;
 }
 
 /* GALLERY

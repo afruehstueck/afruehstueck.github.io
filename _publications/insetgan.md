@@ -59,7 +59,7 @@ thumbnail:  './assets/publications/insetgan_paper.jpg'
 
 supplementary_thumbnail:  './assets/publications/insetgan_supplementary.jpg'
 
-#paper_description: '<a href=''>arXiv</a>'
+paper_description: '<a class="btn btn-primary" href="https://arxiv.org/abs/2203.07293" target="_blank"><span><b><i class="ai ai-arxiv ai-1x"></i> arXiv page</b></span></a>'
 
 #link to paper PDF
 papersource: './assets/publications/insetgan/insetGAN.pdf'
