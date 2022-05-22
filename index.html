@@ -29,7 +29,7 @@ layout: home
 		
 		<h3 style='text-align: center'>News</h3>
 		  <ul>
-		  {% for post in site.posts limit:7 %}
+		  {% for post in site.posts limit:8 %}
 			<li>
 			  <span class='news-date'>{{ post.date | date: "%B %Y" }} | </span><span class='news-title'> {{ post.title }}</span>
 			  <div class='news-text'>
@@ -41,7 +41,7 @@ layout: home
 				<input type="checkbox" id="check_id">
 				<label for="check_id"></label>
 				<ul>
-				  {% for post in site.posts offset:7 %}
+				  {% for post in site.posts offset:8 %}
 					<li>
 					  <span class='news-date'>{{ post.date | date: "%B %Y" }} | </span><span class='news-title'> {{ post.title }}</span>
 					  <div class='news-text'>
