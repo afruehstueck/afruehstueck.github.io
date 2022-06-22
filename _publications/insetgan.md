@@ -67,8 +67,8 @@ papersource: './assets/publications/insetGAN.pdf'
 #link to supplementary PDF
 supplementarysource: './assets/publications/insetGAN_supp.pdf'
 
-#github: 
-  
+github: 'https://github.com/afruehstueck/insetGAN'
+
 gallery:
   title : 'InsetGAN results'
   text :  'We show a comparison of several examples of StyleGAN2-generated full-body humans. We concentrate on regions that often exhibit unwanted artifacts in our generated results. Using our InsetGAN method, we are able to generate both faces and shoes using dedicated models and generate appropriate bodies for the respective combination. The result yields a seamless transition between the output of the three distinct generator models.'
