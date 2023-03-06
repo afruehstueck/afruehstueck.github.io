@@ -48,15 +48,15 @@ thumbnail: './assets/publications/tilegan_paper.jpg'
 figures:
   munch:
     title: 'High-Resolution Results'
-    description: 'Please zoom to look at detailed textures of some of our large-scale results.'
+    description: 'Please zoom and pan to look at detailed textures of some of our large-scale results.'
     width: '100%'
-    link: 'https://www.easyzoom.com/embed/2d83528fd5cc4007953cd6822ed20369'
+    link: 'https://www.easyzoom.com/embed/2d83528fd5cc4007953cd6822ed20369?roi=%5B12803%2C-7680%2C7%5D'
   balad:
     width: '100%'
-    link: 'https://www.easyzoom.com/embed/d16837356655462bb034a6e2c6c209d8'
+    link: 'https://www.easyzoom.com/embed/d16837356655462bb034a6e2c6c209d8?roi=%5B8000%2C-3057%2C6%5D'
   westeros:
     width: '100%'
-    link: 'https://www.easyzoom.com/embed/9b16b3affcc748b986fc32aaac2fb3cb'
+    link: 'https://www.easyzoom.com/embed/9b16b3affcc748b986fc32aaac2fb3cb?roi=%5B3135%2C-4391%2C6%5D'
 
 #link to paper PDF
 papersource: 'https://dl.acm.org/doi/pdf/10.1145/3306346.3322993'
