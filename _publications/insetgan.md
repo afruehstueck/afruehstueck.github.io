@@ -40,7 +40,7 @@ affiliations:
  '3': "University College London"
 
 #insert publication venue (displayed on publication page)
-venue: 'accepted to CVPR'
+venue: 'CVPR'
 #insert short venue (displayed in box in publication list)
 shortvenue: >
    ABC

@@ -45,6 +45,18 @@ teaser: './assets/publications/tilegan_results.jpg'
 #link to smaller thumbnail image of publication (please make sure the aspect ratio is 3:2, suggested size is 150x100px)
 thumbnail: './assets/publications/tilegan_paper.jpg'
 
+figures:
+  munch:
+    title: 'High-Resolution Results'
+    description: 'Please zoom to look at detailed textures of some of our large-scale results.'
+    width: '100%'
+    link: 'https://www.easyzoom.com/embed/2d83528fd5cc4007953cd6822ed20369'
+  balad:
+    width: '100%'
+    link: 'https://www.easyzoom.com/embed/d16837356655462bb034a6e2c6c209d8'
+  westeros:
+    width: '100%'
+    link: 'https://www.easyzoom.com/embed/9b16b3affcc748b986fc32aaac2fb3cb'
 
 #link to paper PDF
 papersource: 'https://dl.acm.org/doi/pdf/10.1145/3306346.3322993'

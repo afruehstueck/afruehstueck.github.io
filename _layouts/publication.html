@@ -145,6 +145,11 @@
 					{% assign videoID = page.video.link | split: "=" | last %}
 					{% assign video_link = "https://www.youtube.com/embed/" | append: videoID %}
 					<iframe id="box-video" class="12u toggleBox contentBox" src="{{ video_link }}" style="width: 100%; min-height: 600px"></iframe>
+				{% elsif page.video.link contains "youtu.be" %}
+					<!-- parse youtube link -->
+					{% assign videoID = page.video.link | split: "/" | last %}
+					{% assign video_link = "https://www.youtube.com/embed/" | append: videoID %}
+					<iframe id="box-video" class="12u toggleBox contentBox" src="{{ video_link }}" style="width: 100%; min-height: 600px"></iframe>
 				{% elsif page.video.link contains "vimeo.com" %}
 					<!-- parse vimeo link -->
 					{% assign videoID = page.video.link | split: "/" | last %}
@@ -166,10 +171,14 @@
 		
 		{% if page.figures %}
 			{% for item in page.figures %}
-				<h2>{{item[1].title}}</h2>
+				{%  if item[1].title %} <h2>{{item[1].title}}</h2>{% endif %}
 				<div class="image centered">
 					{%  if item[1].description %}<p>{{item[1].description}}</p>{% endif %}
-					<img src="{{ item[1].link | relative_url }}" style="{% if item[1].width %}max-width: {{item[1].width}}{% else %}max-width: 100%{% endif %}" alt="{{item[1].title}}">	
+					{% if item[1].link contains "easyzoom" %}
+						<iframe allowfullscreen="true" src="{{ item[1].link }}" width="{{ item[1].width }}" height="512"></iframe>
+					{% else %}
+						<img src="{{ item[1].link | relative_url }}" style="{% if item[1].width %}max-width: {{item[1].width}}{% else %}max-width: 100%{% endif %}" alt="{{item[1].title}}">	
+					{% endif %}
 				</div>
 			{% endfor %}
 		{% endif %}
