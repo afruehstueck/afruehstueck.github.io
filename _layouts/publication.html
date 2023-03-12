@@ -176,6 +176,11 @@
 					{%  if item[1].description %}<p>{{item[1].description}}</p>{% endif %}
 					{% if item[1].link contains "easyzoom" %}
 						<iframe allowfullscreen="true" src="{{ item[1].link }}" width="{{ item[1].width }}" height="512"></iframe>
+					{% elsif item[1].link contains ".mp4" %}
+						<video width="{% if item[1].width %}{{item[1].width}}{% else %}768px{% endif %}" loop="true" autoplay="autoplay" muted>
+							<source src="{{ item[1].link | relative_url }}"/>
+							This is a video of {{item[1].title}}. Sorry, your browser doesn't support embedded videos!
+						</video>
 					{% else %}
 						<img src="{{ item[1].link | relative_url }}" style="{% if item[1].width %}max-width: {{item[1].width}}{% else %}max-width: 100%{% endif %}" alt="{{item[1].title}}">	
 					{% endif %}
