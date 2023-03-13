@@ -241,7 +241,7 @@ body {
 #info li {
   background: #f3f0f3;
   border-radius: 3px;
-  margin: 2px;
+  margin: 5px 0px;
   padding: 0.3em 0.5em 0em;
   border-bottom: 1px solid #ccc;
   box-shadow: 0px 1px 4px rgba(0,0,0,0.1);
@@ -310,7 +310,7 @@ input[type="checkbox"] ~ ul {
    * set a very big value (e.g. 9999px) to see the difference
    */
   
-  max-height: 1000px;
+  max-height: 1500px;
 }
 
 [type="checkbox"]:checked + label {
