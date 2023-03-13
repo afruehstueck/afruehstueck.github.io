@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  Paper accepted to CVPR 2022
+title:  Paper accepted to CVPR
 tags:
 - News
 - Publication

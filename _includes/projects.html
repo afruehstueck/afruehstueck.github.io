@@ -3,12 +3,13 @@
   <div class="panel panel-default">
     <div class="panel-body">
 		<h2>Projects</h2>
-		<div class="project">
+		<div class="project-item">
 			<h4>
 				<a id="vive3D"></a>
-				<i class="fas fa-th"></i>&nbsp;&nbsp;<strong>VIVE3D: Viewpoint-Independent Video Editing using 3D-Aware GANs</strong> 
-				<br>
+				<!-- <strong><a href="{{ site.baseurl }}vive3D">VIVE3D: Viewpoint-Independent Video Editing using 3D-Aware GANs</a></strong> -->
+				<strong>VIVE3D: Viewpoint-Independent Video Editing using 3D-Aware GANs</strong>
 				<div class="project-image">
+					<!-- <a href="{{ site.baseurl }}vive3D"><img src='{{ site.baseurl }}assets/publications/vive.png'></a> -->
 					<img src='{{ site.baseurl }}assets/publications/vive.png'>
 				</div>
 			</h4>
@@ -16,31 +17,30 @@
 			<!-- <i style='font-size: 90%'>&nbsp;&ndash;&nbsp;presented at SIGGRAPH 2019</i> -->
 				<p><i>Paper will be presented at CVPR 2023</i></p>
 				We extends the capabilities of image-based 3D GANs to video editing by introducing a novel GAN inversion technique specifically tailored to 3D GANs. Besides traditional semantic face edits (e.g. for age and expression), we are the first to demonstrate edits that show novel views of the head enabled by the inherent properties of 3D GANs and our optical flow-guided compositing technique to combine the head with the background video. 
-			</h5>		
-		</div> 
-		<h4 class='linkbox'>
-			<!-- <a href="{{ site.baseurl }}vive3D" title='Webpage'><i class="fas fa-rainbow"></i>Webpage</a><i></i>  -->
-			<!-- <a href="https://arxiv.org/abs/XXX" title='Paper'><i class="fas fa-file-pdf"></i>Paper</a><i></i>  -->
-			<!-- <a href="https://www.youtube.com/watch?v=qfYGQwOw8pg" title='Watch video'><i class="fas fa-video"></i>Video</a><i></i>  -->
-			<a href="#vive3D" title='Citation'><span class="expander"><i class="fas fa-quote-right"></i>Citation</span></a>
-			{% raw %}
-			<div class="citation">
-				@inproceedings{Fruehstueck2023VIVE3D,<br>
-				&nbsp;&nbsp;title =      {{VIVE3D}: Viewpoint-Independent Video Editing using {3D}-Aware {GANs}},<br>
-				&nbsp;&nbsp;author =     {Fr{\"u}hst{\"u}ck, Anna and Sarafianos, Nikolaos and Xu, Yuanlu and Wonka, Peter and Tung, Tony},<br>
-               &nbsp;&nbsp;booktitle = {to appear in Proceedings of CVPR},<br>
-				&nbsp;&nbsp;year =       {2023}<br>
-				}
-			</div>
-			{% endraw %}
-		</h4>
-		<div class="project">
+			</h5>	
+			<h4 class='linkbox'>
+				<!-- <a href="{{ site.baseurl }}vive3D" title='Webpage'><i class="fas fa-rainbow"></i>Webpage</a><i></i>  -->
+				<!-- <a href="https://arxiv.org/abs/XXX" title='Paper'><i class="fas fa-file-pdf"></i>Paper</a><i></i>  -->
+				<!-- <a href="https://www.youtube.com/watch?v=qfYGQwOw8pg" title='Watch video'><i class="fas fa-video"></i>Video</a><i></i>  -->
+				<a href="#vive3D" title='Citation'><span class="expander"><i class="fas fa-quote-right"></i>Citation</span></a>
+				{% raw %}
+				<div class="citation">
+					@inproceedings{Fruehstueck2023VIVE3D,<br>
+					&nbsp;&nbsp;title =      {{VIVE3D}: Viewpoint-Independent Video Editing using {3D}-Aware {GANs}},<br>
+					&nbsp;&nbsp;author =     {Fr{\"u}hst{\"u}ck, Anna and Sarafianos, Nikolaos and Xu, Yuanlu and Wonka, Peter and Tung, Tony},<br>
+				   &nbsp;&nbsp;booktitle = {to appear in Proceedings of CVPR},<br>
+					&nbsp;&nbsp;year =       {2023}<br>
+					}
+				</div>
+				{% endraw %}
+			</h4>
+		</div>
+		<div class="project-item">
 			<h4>
 				<a id="insetGAN"></a>
-				<i class="fas fa-th"></i>&nbsp;&nbsp;<strong><a href="{{ site.baseurl }}insetgan">InsetGAN for Full-Body Image Generation</a></strong> <!-- https://github.com/afruehstueck/tileGAN -->
-				<br>
+				<strong><a href="{{ site.baseurl }}insetgan">InsetGAN for Full-Body Image Generation</a></strong> <!-- https://github.com/afruehstueck/tileGAN -->
 				<div class="project-image">
-					<img src='{{ site.baseurl }}assets/publications/insetgan.jpg'>
+					<a href="{{ site.baseurl }}insetgan"><img src='{{ site.baseurl }}assets/publications/insetgan.jpg'></a>
 				</div>
 			</h4>
 			<h5 class='project-text'>
@@ -48,66 +48,64 @@
 				<p><i>Paper presented at CVPR 2022</i></p>
 				We demonstrate the first viable framework to generate high-quality synthesized full-body human images at state-of-the-art resolution. The full-body human domain is very challenging due to the large variance in pose, clothing and identity. To capture the rich details of the domain, we define a canvas network that generates a human body and one or more specialized Inset generators that enhance specific image regions.
 			</h5>		
+			<h4 class='linkbox'>
+				<a href="{{ site.baseurl }}insetgan" title='Webpage'><i class="fas fa-rainbow"></i>Webpage</a><i></i> 
+				<a href="https://arxiv.org/abs/2203.07293" title='Paper'><i class="fas fa-file-pdf"></i>Paper</a><i></i> 
+				<a href="https://www.youtube.com/watch?v=YKFYEt5hvOo" title='Watch video'><i class="fas fa-video"></i>Video</a><i></i> 
+				<a href="#insetGAN" title='Citation'><span class="expander"><i class="fas fa-quote-right"></i>Citation</span></a>
+				{% raw %}
+				<div class="citation">
+					@inproceedings{Fruehstueck2022InsetGAN,<br>
+					&nbsp;&nbsp;title =      {{InsetGAN} for Full-Body Image Generation},<br>
+					&nbsp;&nbsp;author =     {Fr{\"u}hst{\"u}ck, Anna and Singh, {Krishna Kumar} and Shechtman, Eli and Mitra, {Niloy J.} and Wonka, Peter and Lu, Jingwan},<br>
+				   &nbsp;&nbsp;booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision and Pattern Recognition (CVPR)},<br>
+					&nbsp;&nbsp;year =       {2022}<br>
+					}
+				</div>
+				{% endraw %}
+			</h4>
 		</div> 
-		<h4 class='linkbox'>
-			<a href="{{ site.baseurl }}insetgan" title='Webpage'><i class="fas fa-rainbow"></i>Webpage</a><i></i> 
-			<a href="https://arxiv.org/abs/2203.07293" title='Paper'><i class="fas fa-file-pdf"></i>Paper</a><i></i> 
-			<a href="https://www.youtube.com/watch?v=YKFYEt5hvOo" title='Watch video'><i class="fas fa-video"></i>Video</a><i></i> 
-			<a href="#insetGAN" title='Citation'><span class="expander"><i class="fas fa-quote-right"></i>Citation</span></a>
-			{% raw %}
-			<div class="citation">
-				@inproceedings{Fruehstueck2022InsetGAN,<br>
-				&nbsp;&nbsp;title =      {{InsetGAN} for Full-Body Image Generation},<br>
-				&nbsp;&nbsp;author =     {Fr{\"u}hst{\"u}ck, Anna and Singh, {Krishna Kumar} and Shechtman, Eli and Mitra, {Niloy J.} and Wonka, Peter and Lu, Jingwan},<br>
-               &nbsp;&nbsp;booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision and Pattern Recognition (CVPR)},<br>
-				&nbsp;&nbsp;year =       {2022}<br>
-				}
-			</div>
-			{% endraw %}
-		</h4>
-		<div class="project">
+		<div class="project-item">
 			<h4>
 				<a id="tileGAN"></a>
-				<i class="fas fa-th"></i>&nbsp;&nbsp;<strong><a href="{{ site.baseurl }}tilegan">TileGAN: Synthesis of Large-Scale Non-Homogeneous Textures</a></strong> <!-- https://github.com/afruehstueck/tileGAN -->
-				<br>
+				<strong><a href="{{ site.baseurl }}tilegan">TileGAN: Synthesis of Large-Scale Non-Homogeneous Textures</a></strong> <!-- https://github.com/afruehstueck/tileGAN -->
 				<div class="project-image">
-					<img src='{{ site.baseurl }}assets/publications/tilegan.jpg'>
+					<a href="{{ site.baseurl }}tilegan"><img src='{{ site.baseurl }}assets/publications/tilegan.jpg'></a>
 				</div>
 			</h4>
 			<h5 class='project-text'>
 			<!-- <i style='font-size: 90%'>&nbsp;&ndash;&nbsp;presented at SIGGRAPH 2019</i> -->
 				<p><i>Technical paper presented at SIGGRAPH 2019</i></p>
 				We generate large-scale textures by building on recent advances in the field of Generative Adversarial Networks. Our technique combine outputs of GANs trained on a smaller resolution to produce arbitrarily large-scale plausible texture map with virtually no boundary artifacts. We developed an interface to enable artistic control that allows user to create textures based on guidance images and modify and paint on the GAN textures interactively.
-			</h5>		
+			</h5>	
+			<h4 class='linkbox'>
+				<a href="{{ site.baseurl }}tilegan" title='Webpage'><i class="fas fa-rainbow"></i>Webpage</a><i></i> 
+				<a href="https://arxiv.org/abs/1904.12795" title='Paper'><i class="fas fa-file-pdf"></i>Paper</a><i></i> 
+				<a href="{{ site.baseurl }}assets/data/TileGAN_Poster.pdf" title='View Poster' target="_blank"><i class="fas fa-chalkboard"></i>Poster</a><i></i> 
+				<a href="https://youtu.be/ye_HZOdW7kg" title='Watch video'><i class="fas fa-video"></i>Video</a><i></i> 
+				<a href="https://github.com/afruehstueck/tileGAN" title='Code'><i class="fab fa-github"></i>Code</a><i></i> 
+				<a href="#tileGAN" title='Citation'><span class="expander"><i class="fas fa-quote-right"></i>Citation</span></a>
+				{% raw %}
+				<div class="citation">
+				
+					@article{Fruehstueck2019TileGAN,<br>
+					&nbsp;&nbsp;title =      {{TileGAN}: Synthesis of Large-Scale Non-Homogeneous Textures},<br>
+					&nbsp;&nbsp;author =     {Fr\"{u}hst\"{u}ck, Anna and Alhashim, Ibraheem and Wonka, Peter},<br>
+					&nbsp;&nbsp;journal =    {ACM Transactions on Graphics (Proc. SIGGRAPH) },<br>
+					&nbsp;&nbsp;issue_date = {July 2019},<br>
+					&nbsp;&nbsp;volume =     {38},<br>
+					&nbsp;&nbsp;number =     {4},<br>
+					&nbsp;&nbsp;year =       {2019}<br>
+					}
+				</div>
+				{% endraw %}
+			</h4>	
 		</div> 
-		<h4 class='linkbox'>
-			<a href="{{ site.baseurl }}tilegan" title='Webpage'><i class="fas fa-rainbow"></i>Webpage</a><i></i> 
-			<a href="https://arxiv.org/abs/1904.12795" title='Paper'><i class="fas fa-file-pdf"></i>Paper</a><i></i> 
-			<a href="{{ site.baseurl }}assets/data/TileGAN_Poster.pdf" title='View Poster' target="_blank"><i class="fas fa-chalkboard"></i>Poster</a><i></i> 
-			<a href="https://youtu.be/ye_HZOdW7kg" title='Watch video'><i class="fas fa-video"></i>Video</a><i></i> 
-			<a href="https://github.com/afruehstueck/tileGAN" title='Code'><i class="fab fa-github"></i>Code</a><i></i> 
-			<a href="#tileGAN" title='Citation'><span class="expander"><i class="fas fa-quote-right"></i>Citation</span></a>
-			{% raw %}
-			<div class="citation">
-			
-				@article{Fruehstueck2019TileGAN,<br>
-				&nbsp;&nbsp;title =      {{TileGAN}: Synthesis of Large-Scale Non-Homogeneous Textures},<br>
-				&nbsp;&nbsp;author =     {Fr\"{u}hst\"{u}ck, Anna and Alhashim, Ibraheem and Wonka, Peter},<br>
-				&nbsp;&nbsp;journal =    {ACM Transactions on Graphics (Proc. SIGGRAPH) },<br>
-				&nbsp;&nbsp;issue_date = {July 2019},<br>
-				&nbsp;&nbsp;volume =     {38},<br>
-				&nbsp;&nbsp;number =     {4},<br>
-				&nbsp;&nbsp;year =       {2019}<br>
-				}
-			</div>
-			{% endraw %}
-		</h4>
-		<div class="project">
+		<div class="project-item">
 			<h4>
 				<a id="GPUSlice"></a>
-				<i class="fas fa-cube"></i>&nbsp;&nbsp;<strong>GPU-accelerated browser-based visualization</a></strong>
+				<strong>GPU-accelerated browser-based visualization</a></strong>
 				<!-- &nbsp;&ndash;&nbsp;<i>Traineeship at Surgical Planning Lab, Brigham and Women's Hospital (Harvard Medical School)</i>  -->
-				<br>
 				<div class="project-image">
 					<img src='{{ site.baseurl }}assets/images/volume_rendering_tf.jpg'>
 				</div>	
@@ -116,40 +114,39 @@
 				<p><i>Traineeship at Surgical Planning Lab, Brigham and Women's Hospital (Harvard Medical School)</i></p>
 				During my traineeship at Harvard Medical School, I was working on GPU-accelerated browser-based visualization software. I designed and developed a prototype for a browser-based volume rendering solution and user interface components for web-based imaging and developed algorithms for browser-based GPU processing through grid-based PDE solvers for 2D and 3D image segmentation. Some of this code was integrated with open-source visualization and medical imaging software 3D Slicer.
 			</h5>
+			<h4 class='linkbox'>
+				<a href="/volumerendering/basic_volume_rendering.html" title='Volume Rendering Demo'><i class="fas fa-globe"></i>Volume Rendering Demo</a>
+				<a href="/volumerendering/sdf.html" title='2D SDF Demo'><i class="fas fa-globe"></i>2D SDF Demo</a>
+				<a href="/volumerendering/TF.html" title='Documentation'><i class="fas fa-cogs"></i>Documentation for Transfer Function Panel</a>
+			</h4>
 		</div>
-		<h4 class='linkbox'>
-			<a href="/volumerendering/basic_volume_rendering.html" title='Volume Rendering Demo'><i class="fas fa-globe"></i>Volume Rendering Demo</a>
-			<a href="/volumerendering/sdf.html" title='2D SDF Demo'><i class="fas fa-globe"></i>2D SDF Demo</a>
-			<a href="/volumerendering/TF.html" title='Documentation'><i class="fas fa-cogs"></i>Documentation for Transfer Function Panel</a>
-		</h4>
-		<div class="project">
+		<div class="project-item">
 			<h4>
 				<a id="VOM"></a>
-				<i class="fas fa-cookie"></i>&nbsp;&nbsp;<strong><a href="https://www.cg.tuwien.ac.at/research/publications/2015/Fruehstueck_Anna_2015_DOM/">Volume Object Model for Remote Visualization</a></strong> 
-				<br>
+				<strong><a href="https://www.cg.tuwien.ac.at/research/publications/2015/Fruehstueck_Anna_2015_DOM/">Volume Object Model for Remote Visualization</a></strong> 
 				<div class="project-image">
-					<img src='{{ site.baseurl }}assets/images/vom3.jpg'>
+					<a href="https://www.cg.tuwien.ac.at/research/publications/2015/Fruehstueck_Anna_2015_DOM/"><img src='{{ site.baseurl }}assets/images/vom3.jpg'></a>
 				</div>
 			</h4>			
 			<h5>
 				<p><i>Master Thesis project at TU Vienna in collaboration with KAUST</i></p>
 				In visualization applications with many objects, the rendering of the scene can be prohibitively expensive, thus compromising an interactive user experience. Our deferred visualization pipeline divides the visualization computation between a server and a thin client. The scene is preprocessed on the server and transferred to the client using an intermediate representation consisting of metadata and pre-rendered visualization of the scene's objects, where client-side interactivity is enabled even on large datasets.
 			</h5>
+			<h4 class='linkbox'>
+				<a href="https://www.cg.tuwien.ac.at/research/publications/2015/Fruehstueck_Anna_2015_DOM/Fruehstueck_Anna_2015_DOM-Thesis.pdf" title='Download PDF'><i class="fas fa-file-pdf"></i>Thesis</a>
+				<a href="https://www.cg.tuwien.ac.at/research/publications/2015/Fruehstueck_Anna_2015_DOM/Fruehstueck_Anna_2015_DOM-Poster.pdf" title='View Poster'><i class="fas fa-chalkboard"></i>Poster</a>
+				<a href="#VOM" title='Citation'><span class="expander"><i class="fas fa-quote-right"></i>Citation</span></a>
+				<div class="citation">
+					@mastersthesis{Fruehstueck2015DOM,<br>
+					&nbsp;&nbsp;title =      {Decoupling Object Manipulation from Rendering in a Thin Client Visualization System},<br>
+					&nbsp;&nbsp;author =     {Fr\"{u}hst\"{u}ck, Anna},<br>
+					&nbsp;&nbsp;year =       {2015},<br>
+					&nbsp;&nbsp;month =      Sep,<br>
+					&nbsp;&nbsp;school =     {Institute of Computer Graphics and Algorithms, Vienna University of Technology}<br>
+					}
+				</div>
+			</h4>
 		</div>
-		<h4 class='linkbox'>
-			<a href="https://www.cg.tuwien.ac.at/research/publications/2015/Fruehstueck_Anna_2015_DOM/Fruehstueck_Anna_2015_DOM-Thesis.pdf" title='Download PDF'><i class="fas fa-file-pdf"></i>Thesis</a>
-			<a href="https://www.cg.tuwien.ac.at/research/publications/2015/Fruehstueck_Anna_2015_DOM/Fruehstueck_Anna_2015_DOM-Poster.pdf" title='View Poster'><i class="fas fa-chalkboard"></i>Poster</a>
-			<a href="#VOM" title='Citation'><span class="expander"><i class="fas fa-quote-right"></i>Citation</span></a>
-			<div class="citation">
-				@mastersthesis{Fruehstueck2015DOM,<br>
-				&nbsp;&nbsp;title =      {Decoupling Object Manipulation from Rendering in a Thin Client Visualization System},<br>
-				&nbsp;&nbsp;author =     {Fr\"{u}hst\"{u}ck, Anna},<br>
-				&nbsp;&nbsp;year =       {2015},<br>
-				&nbsp;&nbsp;month =      Sep,<br>
-				&nbsp;&nbsp;school =     {Institute of Computer Graphics and Algorithms, Vienna University of Technology}<br>
-				}
-			</div>
-		</h4>
     </div>
   </div>
 </div>

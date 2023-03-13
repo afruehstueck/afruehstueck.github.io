@@ -138,6 +138,16 @@ body {
 	box-shadow: 1px 1px 4px grey;
 }
 
+.project-item {
+  background: #f3f0f3;
+  border-radius: 3px;
+  margin: 2px;
+  margin-bottom: 0.8em;
+  padding: 0.3em 0.5em 0em;
+  border-bottom: 1px solid #ccc;
+  box-shadow: 0px 1px 4px rgba(0,0,0,0.1);
+}
+
 .linkbox {
 	/* position: absolute; */
 	font-size: 16px !important;
@@ -229,7 +239,7 @@ body {
 }
 
 #info li {
-  background: #fafafa;
+  background: #f3f0f3;
   border-radius: 3px;
   margin: 2px;
   padding: 0.3em 0.5em 0em;
@@ -324,12 +334,12 @@ input[type="checkbox"] ~ ul {
 
 .news-date {
 	font-size: 14px;
-	color: #aaa;
+	color: var(--accent-color);
 }
 
 .news-title {
-	font-size: 18px;
-  font-style: oblique;
+	font-size: 16px;
+  font-weight: bold;
 }
 
 .news-text {
