@@ -5,7 +5,9 @@ rdiscount:
   extensions: [smart]
 permalink: /:title.html
 paginate: 5
-plugins: [jekyll-paginate]
+plugins: 
+ - jekyll-paginate
+ - jekyll-sitemap
 port: 3000
 safe: true
 
