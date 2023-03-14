@@ -9,23 +9,23 @@ layout: null
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
-  {% for post in site.posts %}
+  {% for publication in site.publications %}
     <url>
-      <loc>{{ site.url }}{{ post.url }}</loc>
-      {% if post.sitemap.lastmod %}
-        <lastmod>{{ post.sitemap.lastmod | date: "%Y-%m-%d" }}</lastmod>
-      {% elsif post.date %}
-        <lastmod>{{ post.date | date_to_xmlschema }}</lastmod>
+      <loc>{{ site.url }}{{ publication.url }}</loc>
+      {% if publication.sitemap.lastmod %}
+        <lastmod>{{ publication.sitemap.lastmod | date: "%Y-%m-%d" }}</lastmod>
+      {% elsif publication.date %}
+        <lastmod>{{ publication.date | date_to_xmlschema }}</lastmod>
       {% else %}
         <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
       {% endif %}
-      {% if post.sitemap.changefreq %}
-        <changefreq>{{ post.sitemap.changefreq }}</changefreq>
+      {% if publication.sitemap.changefreq %}
+        <changefreq>{{ publication.sitemap.changefreq }}</changefreq>
       {% else %}
         <changefreq>monthly</changefreq>
       {% endif %}
-      {% if post.sitemap.priority %}
-        <priority>{{ post.sitemap.priority }}</priority>
+      {% if publication.sitemap.priority %}
+        <priority>{{ publication.sitemap.priority }}</priority>
       {% else %}
         <priority>0.5</priority>
       {% endif %}
