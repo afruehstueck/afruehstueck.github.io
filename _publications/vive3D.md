@@ -34,10 +34,10 @@ authors:
  
 affiliations:
  '1': "KAUST"
- '2': "Meta Reality Labs"
+ '2': "Meta Reality Labs Research, Sausalito"
 
 #insert publication venue (displayed on publication page)
-venue: 'accepted at CVPR'
+venue: 'CVPR'
 
 #insert short venue (displayed in box in publication list)
 shortvenue: >
@@ -57,7 +57,7 @@ thumbnail:  './assets/publications/vive3d_paper.jpg'
 
 supplementary_thumbnail:  './assets/publications/vive3d_supplementary.jpg'
 
-paper_description: '<a class="btn btn-primary" href="https://arxiv.org/abs/XXX" target="_blank"><span><b><i class="ai ai-arxiv ai-1x"></i> arXiv page</b></span></a>'
+#paper_description: '<a class="btn btn-primary" href="https://arxiv.org/abs/XXX" target="_blank"><span><b><i class="ai ai-arxiv ai-1x"></i> arXiv page</b></span></a>'
 
 #link to paper PDF
 papersource: './assets/publications/insetGAN.pdf'
@@ -84,6 +84,22 @@ citation:   >
   }
 
 figures:
+  res1:
+    title: 'Results'
+    description: 'Our method produces natural head compositions for angular changes.'
+    width: '100%'
+    link: './assets/publications/vive3d/Results_Obama_8.mp4'
+  res2:
+    width: '100%'
+    link: './assets/publications/vive3d/Results_Dennis_8.mp4'
+  res1_edit:
+    title: 'Results with Editing'
+    description: 'Our method seamlessly combines traditional latent space editing techniques with the additional capabilities afforded by the 3D GAN.'
+    width: '100%'
+    link: './assets/publications/vive3d/Results_John.mp4'
+  res2_edit:
+    width: '100%'
+    link: './assets/publications/vive3d/Results_Hair_Color.mp4'
   comp_age1:
     title: 'Age Editing Comparison'
     description: 'We showcase our method in comparison to related methods for age editing.'
@@ -100,11 +116,11 @@ figures:
   comp_angle2:
     width: '100%'
     link: './assets/publications/vive3d/Comparison_Angle_Dennis.mp4'
-  pipeline:
-    title: 'Personalized Generator Creation'
-    description: 'We showcase our personalized inversion and fine-tuning strategy to obtain a personalized 3D Generator model.'
-    width: '100%'
-    link: './assets/publications/vive3d/inversion.mp4'
+#  pipeline:
+#   title: 'Personalized Generator Creation'
+#    description: 'We showcase our personalized inversion and fine-tuning strategy to obtain a personalized 3D Generator model.'
+#    width: '100%'
+#    link: './assets/publications/vive3d/inversion.mp4'
   
 #insert links to additional material for the publication (optional)
 #links need a title, a URL and a type (this defines the link icon) which can be one of the following values: code, archive, files, slides or text (this is the default icon)
