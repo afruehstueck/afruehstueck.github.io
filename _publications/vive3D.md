@@ -79,7 +79,7 @@ citation:   >
   @inproceedings{Fruehstueck2023VIVE3D,<br>
    &nbsp;&nbsp;title = {{VIVE3D}: Viewpoint-Independent Video Editing using {3D}-Aware {GANs}},<br>
    &nbsp;&nbsp;author = {Fr{\"u}hst{\"u}ck, Anna and Sarafianos, Nikolaos and Xu, Yuanlu and Wonka, Peter and Tung, Tony},<br>
-   &nbsp;&nbsp;booktitle = {to appear in Proceedings of CVPR},<br>
+   &nbsp;&nbsp;booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision and Pattern Recognition (CVPR)},<br>
    &nbsp;&nbsp;year = {2023}<br>
   }
 
@@ -88,13 +88,13 @@ figures:
     title: 'Results'
     description: 'Our method produces natural head compositions for angular changes.'
     width: '100%'
-    link: './assets/publications/vive3d/Results_Obama_8.mp4'
-  res2:
-    width: '100%'
     link: './assets/publications/vive3d/Results_Dennis_8.mp4'
-  res1_edit:
+  res0_edit:
     title: 'Results with Editing'
     description: 'Our method seamlessly combines traditional latent space editing techniques with the additional capabilities afforded by the 3D GAN.'
+    width: '100%'
+    link: './assets/publications/vive3d/Obama_Ages_Grid.mp4'
+  res1_edit:
     width: '100%'
     link: './assets/publications/vive3d/Results_John.mp4'
   res2_edit:
