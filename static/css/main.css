@@ -375,7 +375,7 @@ input[type="checkbox"] ~ ul {
 }
 .social {
   padding-top: 12px;
-  word-spacing: 25px;
+  word-spacing: 20px;
 }
 .social h4 > a {
   color: #000000;
