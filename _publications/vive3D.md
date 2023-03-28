@@ -60,10 +60,10 @@ supplementary_thumbnail:  './assets/publications/vive3d_supplementary.jpg'
 #paper_description: '<a class="btn btn-primary" href="https://arxiv.org/abs/XXX" target="_blank"><span><b><i class="ai ai-arxiv ai-1x"></i> arXiv page</b></span></a>'
 
 #link to paper PDF
-papersource: './assets/publications/insetGAN.pdf'
+papersource: './assets/publications/VIVE3D_CVPR2023.pdf'
 
 #link to supplementary PDF
-supplementarysource: './assets/publications/insetGAN_supp.pdf'
+supplementarysource: './assets/publications/VIVE3D_CVPR2023_supp.pdf'
 
 #github: 'https://github.com/afruehstueck/insetGAN'
 
