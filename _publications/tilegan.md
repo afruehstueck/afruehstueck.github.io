@@ -45,6 +45,8 @@ teaser: './assets/publications/tilegan_results.jpg'
 #link to smaller thumbnail image of publication (please make sure the aspect ratio is 3:2, suggested size is 150x100px)
 thumbnail: './assets/publications/tilegan_paper.jpg'
 
+arXiv: '1904.12795'
+
 figures:
   munch:
     title: 'High-Resolution Results'

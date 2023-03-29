@@ -57,7 +57,8 @@ thumbnail:  './assets/publications/vive3d_paper.jpg'
 
 supplementary_thumbnail:  './assets/publications/vive3d_supplementary.jpg'
 
-#paper_description: '<a class="btn btn-primary" href="https://arxiv.org/abs/XXX" target="_blank"><span><b><i class="ai ai-arxiv ai-1x"></i> arXiv page</b></span></a>'
+arXiv: '2303.15893'
+#paper_description: '<a class="btn btn-primary" href="https://arxiv.org/abs/2303.15893" target="_blank"><span><b><i class="ai ai-arxiv ai-1x"></i> arXiv page</b></span></a>'
 
 #link to paper PDF
 papersource: './assets/publications/VIVE3D_CVPR2023.pdf'
