@@ -32,6 +32,9 @@ includes:
 - volumerendering
 
 collections:
-  publications:
+  papers:
+    output: false
+    sort_by: year
+  projects:
     output: true
     permalink: /:title/

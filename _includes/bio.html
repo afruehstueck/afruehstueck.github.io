@@ -2,15 +2,97 @@
 <div class="container">
   <div class="panel panel-default">
     <div class="panel-body">
+		<h2>Education</h2>
+			<div class="imgbox">
+				<div class="imgtxt_right">
+				<h4><span class='tab2'><b>PhD</b></span><i>King Abdullah University of Science and Technology</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;Thuwal, KSA</span></h4>
+				<h4><span class='tab2'>2017 – 2023</span>Computer Science | GPA: 4.0</h4>
+				<h5><span class='tab2'></span>Thesis: Latent Space Manipulation of GANs for Seamless Image Compositing</h5>
+				<h5><span class='tab2'></span>Adviser: <a href='http://peterwonka.net'>Peter Wonka</a></h5>
+				</div>
+				<img src='{{ site.baseurl }}assets/images/KAUST_seeds.png' class="thumb_right">
+			</div>
+			<div class="imgbox">
+				<div class="imgtxt_right">
+				<h4><span class='tab2'><b>MSc</b></span><i>Vienna University of Technology</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;Vienna, Austria</span></h4>
+				<h4><span class='tab2'>2015</span>Visual Computing | graduated with distinction</h4>
+				<h5><span class='tab2'></span>Thesis: Decoupling Object Manipulation from Rendering in a Thin Client Visualization System</h5>
+				<h5><span class='tab2'></span>Thesis adviser: <a href="https://www.cg.tuwien.ac.at/staff/EduardGroeller.html">Meister Eduard Gröller</a></h5>
+				</div>
+				<img src='{{ site.baseurl }}assets/images/TU_Wien.png' class="thumb_right">
+			</div>
+			<div class="imgbox">
+				<div class="imgtxt_right">
+				<h4><span class='tab2'><b>BSc</b></span><i>Vienna University of Technology</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;Vienna, Austria</span></h4>
+				<h4><span class='tab2'>2011</span>Media Informatics and Visual Computing</h4>
+				</div>
+				<img src='{{ site.baseurl }}assets/images/TU_Wien.png' class="thumb_right">
+			</div> 
+		<h2>Publications</h2>
+		{% assign sorted_papers = site.papers | sort: "year" | reverse %}
+		{% for paper in sorted_papers %}
+			<div class="imgbox">
+				<div class="thumb_left shaded">
+					{% if paper.projecturl %}
+						<a href="{{ site.baseurl }}{{ paper.projecturl }}"><img src="{{ paper.thumbnail }}" ></a>
+					{% elsif paper.externalurl %}
+						<a href="{{ paper.url }}"><img src="{{ paper.thumbnail }}" ></a>
+					{% else %}
+					<img src="{{ paper.thumbnail }}" >
+					{% endif %}
+					
+				</div>
+				<div class="imgtxt_left">
+					<h4>{% if paper.projecturl %}
+						<a href="{{ site.baseurl }}{{ paper.projecturl }}">{{ paper.title }}</a>
+						{% elsif paper.externalurl %}
+						<a href="{{ paper.url }}">{{ paper.title }}</a>
+						{% else %}
+						{{ paper.title }}
+						{% endif %}
+					</h4>
+					<h5>
+						{% for author in paper.authors %}{% if forloop.first == false %}{% if forloop.last == true %} and {% else %}, {% endif %}{% endif %}
+						{% if author == 'Anna Frühstück'%}<u>{{ author }}</u>{% else %}{{ author }}{% endif %}{% endfor %}
+						<br>
+						<i>{{paper.venue}}</i>
+					</h5>
+					{% if paper.links %}
+					<h5>
+						{% for link in paper.links %}
+							<a href={% if link.localurl %}'{{ site.baseurl }}{{link.localurl}}'{% else %}'{{link.url}}'{% endif %} style='margin-right:12px'>
+							<i class=
+							{% if link.type == 'video' %}
+								"fa-regular fa-video"
+							{% elsif link.type == 'youtube' %}
+								"fa-brands fa-youtube"
+							{% elsif link.type == 'github' %}
+								"fa-brands fa-github"
+							{% elsif link.type == 'pdf' %}
+								"fas fa-file-pdf"
+							{% else %}
+								"fas fa-link"
+							{% endif %}
+							style='margin-right:3px'></i>
+							{{link.name}}
+							</a> 
+						{% endfor %}
+					</h5>
+					{% endif %}
+				</div>
+			</div>
+	   {% endfor %}
+		
+<!--		
 		<h2>Publications</h2>
 			<div class="item">	
-				<h4><i class="tab1 fas fa-newspaper"></i><span class='tab2'>2023</span><a href="{{ site.baseurl }}vive3D">VIVE3D: Viewpoint-Independent Video Editing using 3D-Aware GANs</a></h4>
-				<h5><span class='tab1'></span><span class='tab2'></span><u>Anna Frühstück</u>, Nikolaos Sarafianos, Yuanlu Xu, Peter Wonka and Tony Tung<br>
-				<span class='tab1'></span><span class='tab2'></span>Will be published at CVPR 2023.</h5>
+				<h4><a href="{{ site.baseurl }}vive3D">VIVE3D: Viewpoint-Independent Video Editing using 3D-Aware GANs</a></h4>
+				<h5><u>Anna Frühstück</u>, Nikolaos Sarafianos, Yuanlu Xu, Peter Wonka and Tony Tung<br>
+				CVPR 2023.</h5>
 			</div>
 			<div class="item">	
 				<h4><i class="tab1 fas fa-newspaper"></i><span class='tab2'>2022</span><a href="https://arxiv.org/abs/2201.13019" target="_blank">On the Robustness of Quality Measures for GANs</a></h4>
-				<h5><span class='tab1'></span><span class='tab2'></span>Motasem Alfarra, Juan C. Pérez, <u>Anna Frühstück</u>, Philip H. S. Torr, Peter Wonka, Bernard Ghanem<br>
+				<h5><span class='tab1'></span><span class='tab2'></span>Motasem Alfarra, Juan C. Pérez, <u>Anna Frühstück</u>, Philip H. S. Torr, Peter Wonka and Bernard Ghanem<br>
 				<span class='tab1'></span><span class='tab2'></span>Proceedings of ECCV 2022, Part XVII, pp. 18-33</h5>
 			</div>
 			<div class="item">	
@@ -28,10 +110,12 @@
 				<h5><span class='tab1'></span><span class='tab2'></span><u>Anna Frühstück</u>, Ibraheem Alhashim, and Peter Wonka<br>
 				<span class='tab1'></span><span class='tab2'></span>ACM Transactions on Graphics (Proceedings of SIGGRAPH 2019), Vol. 38(4), pp. 58:1-58:11.</h5>
 			</div>
-	  <h2>Education</h2>
+-->			
+<!--
+		<h2>Education</h2>
 			<div class="item">	
 				<h4><i class="tab1 fas fa-university"></i><span class='tab2'>2017 – 2023</span><i>PhD degree</i> at <i>King Abdullah University of Science and Technology</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;Thuwal, KSA</span></h4>
-				<h5><span class='tab1'></span><span class='tab2'></span>Computer Science | Current GPA: 4.0 | Adviser: <a href='http://h5eterwonka.net'>Peter Wonka</a></h5>
+				<h5><span class='tab1'></span><span class='tab2'></span>Computer Science | Current GPA: 4.0 | Adviser: <a href='http://peterwonka.net'>Peter Wonka</a></h5>
 				<h5><span class='tab1'></span>Latent Space Manipulation of GANs for Seamless Image Compositing</h5>
 			</div>
 			<div class="item">	
@@ -45,53 +129,70 @@
 				<h5><span class='tab1'></span><span class='tab2'></span>Media Informatics and Visual Computing</h5>
 				<h5><div class='tab1'></div>Fundamentals in computer science with a focus on the topics computer vision, computer graphics, visualization, virtual reality, human computer interaction and sensor systems</h5>
 			</div> 
-	  <h2>Awards</h2>
-			<div class="item">	
-				<h4><i class="tab1 fas fa-highlighter"></i><span class='tab2'>2022</span><span><a href='https://eccv2022.ecva.net/program/outstanding-reviewers'>ECCV Outstanding Reviewer Award</a></span></h4>
-				<h4><i class="tab1 fas fa-highlighter"></i><span class='tab2'>2022</span><span><a href='https://cvpr2022.thecvf.com/outstanding-reviewers'>CVPR Outstanding Reviewer Award</a></span></h4>
-			</div>
-			<div class="item">	
-				<h4><i class="tab1 fas fa-award"></i><span class='tab2'>2020</span><a href='https://research.facebook.com/fellows/fruhstuck-anna/'>Meta Research Fellowship</a></h4>
-			</div>
+-->			
 	  <h2>Professional Experience</h2>
 			<div class="item">	
-				<h4><i class="tab1 fas fa-highlighter"></i><span class='tab2'><i>Reviewer</i></span><span> for ECCV, CVPR, ICCV, SIGGRAPH, TVCG, TOG, TOMM</span></h4>
+				<h4><span class='tab2'><b>Reviewer</b></span><span> for ECCV, CVPR, ICCV, SIGGRAPH, TVCG, TOG, TOMM</span></h4>
+			</div>
+			<div class="imgbox">	
+				<div class="imgtxt_right">	
+					<h4><span class='tab2'>2022</span><b>Intern</b> at <i>Meta Reality Labs Research</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;Sausalito, CA</span></h4>
+					<!-- <h5><span class='tab2'></span><a href="https://research.facebook.com/" target="_blank">Meta Reality Labs Research</a></h5> -->
+					<h5>Investigating 3D-aware generation as a tool for context-aware video editing to unlock realistic 3D editing for human faces in a temporally constistent fashion.</h5>
+				</div>
+				<img src='{{ site.baseurl }}assets/images/Meta_Reality.png' class="thumb_right">
+			</div>
+			<div class="imgbox">	
+				<div class="imgtxt_right">
+				<h4><span class='tab2'>2020</span><b>Intern</b> at <i>Adobe Research</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;remote due to COVID-19</span></h4>
+				<!-- <h5><span class='tab2'></span><a href="https://research.adobe.com/" target="_blank">Creative Intelligence Lab</a></h5> -->
+				<h5>Designing strategies for controllable image synthesis of large-scale photorealistic full-body human images using state-of-the-art machine learning techniques.</h5>
+				</div>
+				<img src='{{ site.baseurl }}assets/images/Adobe_Research.png' class="thumb_right">
+			</div>
+			<div class="imgbox">	
+				<div class="imgtxt_right">
+				<h4><span class='tab2'>2020</span><b>Intern</b> at <i>Weta Digital</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;remote due to COVID-19</span></h4>
+				<!-- <h5><span class='tab1'></span><span class='tab2'></span><a href="https://www.wetafx.co.nz/research-and-tech/" target="_blank">Look Dev R&D</a></h5> -->
+				<h5>Designing and evaluating state-of-the art Generative Adversarial Networks for high-resolution texture synthesis. Research on how to dissect GAN models for improved controllability for user interaction.</h5>
+				</div>
+				<img src='{{ site.baseurl }}assets/images/Weta.png' class="thumb_right">
+			</div>
+			<div class="imgbox">	
+				<div class="imgtxt_right">
+				<h4><span class='tab2'>2016</span><b>Trainee</b> at <i>SPL, Harvard Medical School</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;Boston, MA</span></h4>
+				<!-- <h5><span class='tab1'></span><span class='tab2'></span><a href="http://www.spl.harvard.edu/" target="_blank">Surgical Planning Lab, Brigham and Women's Hospital</a></h5> -->
+				<h5>Implementation of GPU-accelerated browser-based visualization software. Design and development of user interface components for web-based imaging. Browser-based GPU processing through grid-based PDE solver for 2D and 3D image segmentation. Integration with open-source visualization and medical imaging software 3D Slicer</h5>
+				</div>
+				<img src='{{ site.baseurl }}assets/images/SPL.png' class="thumb_right">
+			</div>
+			<div class="imgbox">	
+				<div class="imgtxt_right">
+				<h4><span class='tab2'>2015</span><b>Visiting Researcher</b> at <i>KAUST</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;Thuwal, KSA</span></h4>
+				<!-- <h5><span class='tab2'></span><a href="http://vccvisualization.org" target="_blank">Visualization Group, Visual Computing Center</a></h5> -->
+				<h5>Development of my <a href="{{ site.baseurl }}projects.html">Master Thesis research project</a> with the <a href="http://vccvisualization.org" target="_blank">Visualization Group</a> at the Visual Computing Center, supervised by <a href='http://vccvisualization.org/people/rautek/'>Peter Rautek</a></h5>
+				</div>
+				<img src='{{ site.baseurl }}assets/images/KAUST_logo.png' class="thumb_right">
+			</div>
+			<div class="imgbox">	
+				<div class="imgtxt_right">
+				<h4><span class='tab2'>2010 – 2012</span><b>Software Developer</b> at <i>SimVis</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;Vienna, Austria</span></h4>
+				<!-- <h5><span class='tab1'></span><span class='tab2'></span>SimVis GmbH</h5> -->
+				<h5>Independent design and development of different components of the visualization software SimVis for the interactive visual analysis of time-dependent and multi-dimensional data, e.g. computational fluid dynamics, climate research, architectural flow visualization</h5></div>
+				<img src='{{ site.baseurl }}assets/images/simvis_logo.png' class="thumb_right">
+			</div> 
+		<h2>Awards</h2>
+			<div class="item">	
+				<h4><span class='tab2'>2022</span><span><a href='https://eccv2022.ecva.net/program/outstanding-reviewers'>ECCV Outstanding Reviewer Award</a></span></h4>
+				<h4><span class='tab2'>2022</span><span><a href='https://cvpr2022.thecvf.com/outstanding-reviewers'>CVPR Outstanding Reviewer Award</a></span></h4>
 			</div>
 			<div class="item">	
-				<h4><i class="tab1 fas fa-laptop-code"></i><span class='tab2'>2022</span>Internship with <i>Meta</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;Sausalito, CA</span></h4>
-				<h5><span class='tab1'></span><span class='tab2'></span><a href="https://research.facebook.com/" target="_blank">Meta Reality Labs Research</a></h5>
-				<h5><span class='tab1'></span>Investigating 3D-aware generation as a tool for context-aware video editing to unlock realistic 3D editing for human faces in a temporally constistent fashion.</h5>
-			</div>
-			<div class="item">	
-				<h4><i class="tab1 fas fa-laptop-code"></i><span class='tab2'>2020</span>Internship with <i>Adobe Research</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;remote due to COVID-19</span></h4>
-				<h5><span class='tab1'></span><span class='tab2'></span><a href="https://research.adobe.com/" target="_blank">Creative Intelligence Lab</a></h5>
-				<h5><span class='tab1'></span>Designing strategies for controllable image synthesis of large-scale photorealistic full-body human images using state-of-the-art machine learning techniques.</h5>
-			</div>
-			<div class="item">	
-				<h4><i class="tab1 fas fa-laptop-code"></i><span class='tab2'>2020</span>Internship with <i>Weta Digital</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;remote due to COVID-19</span></h4>
-				<h5><span class='tab1'></span><span class='tab2'></span><a href="https://www.wetafx.co.nz/research-and-tech/" target="_blank">Look Dev R&D</a></h5>
-				<h5><span class='tab1'></span>Designing and evaluating state-of-the art Generative Adversarial Networks for high-resolution texture synthesis. Research on how to dissect GAN models for improved controllability for user interaction.</h5>
-			</div>
-			<div class="item">	
-				<h4><i class="tab1 fas fa-laptop-code"></i><span class='tab2'>2016</span>Traineeship at <i>Harvard Medical School</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;Boston, MA</span></h4>
-				<h5><span class='tab1'></span><span class='tab2'></span><a href="http://www.spl.harvard.edu/" target="_blank">Surgical Planning Lab, Brigham and Women's Hospital</a></h5>
-				<h5><span class='tab1'></span>Implementation of GPU-accelerated browser-based visualization software. Design and development of user interface components for web-based imaging. Browser-based GPU processing through grid-based PDE solver for 2D and 3D image segmentation. Integration with open-source visualization and medical imaging software 3D Slicer</h5>
-			</div>
-			<div class="item">	
-				<h4><i class="tab1 fas fa-laptop-code"></i><span class='tab2'>2015</span>Visiting Researcher at <i>King Abdullah University of Science and Technology</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;Thuwal, KSA</span></h4>
-				<h5><span class='tab1'></span><span class='tab2'></span><a href="http://vccvisualization.org" target="_blank">Visualization Group, Visual Computing Center</a></h5>
-				<h5><span class='tab1'></span>Development of my <a href="{{ site.baseurl }}projects.html">Master Thesis research project</a> supervised by <a href='http://vccvisualization.org/people/rautek/'>Peter Rautek</a></h5>
-			</div>
-			<div class="item">	
-				<h4><i class="tab1 fas fa-laptop-code"></i><span class='tab2'>2010 – 2012</span>Software Developer at <i>SimVis</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;Vienna, Austria</span></h4>
-				<h5><span class='tab1'></span><span class='tab2'></span>SimVis GmbH</h5>
-				<h5><span class='tab1'></span>
-				Independent design and development of different components of the visualization software SimVis for the interactive visual analysis of time-dependent and multi-dimensional data, e.g. computational fluid dynamics, climate research, architectural flow visualization</h5>
-			</div>    
+				<h4><span class='tab2'>2020</span><a href='https://research.facebook.com/fellows/fruhstuck-anna/'>Meta Research Fellowship</a></h4>
+			</div>			
 		<h2>Teaching and Mentorship</h2>
 			<div class="item">	
-				<h4><i class="tab1 fas fa-chalkboard-teacher"></i><span class='tab2'>2021 – 2022</span>Student Ambassador for <a href='https://cemse.kaust.edu.sa/'>CEMSE Division</a> at KAUST</h4>
-				<h4><i class="tab1 fas fa-chalkboard-teacher"></i><span class='tab2'>2021 & 2019</span>Teaching Assistant for <i>Deep Learning for Visual Computing (CS323)</i> at KAUST</h4>
+				<h4><span class='tab2'>2021 – 2022</span><b>Student Ambassador</b> for <a href='https://cemse.kaust.edu.sa/'>CEMSE Division</a> at KAUST</h4>
+				<h4><span class='tab2'>2021 & 2019</span><b>Teaching Assistant</b> for <i>Deep Learning for Visual Computing (CS323)</i> at KAUST</h4>
 			</div>
 	</div>
 	</div>
