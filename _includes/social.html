@@ -1,5 +1,8 @@
 <div class="social">
-	<h4>
+    <h4>
+    {% if site.scholar %}
+        <a href="https://scholar.google.com/citations?user={{ site.scholar }}"><i class="ai ai-google-scholar-square ai-1x"></i></a>
+    {% endif %}
     {% if site.github %}
 	  <a href="http://github.com/{{ site.github }}"><i class="fab fa-github"></i></a>
     {% endif %}
@@ -15,5 +18,6 @@
     {% if site.stackoverflow %}
 	  <a href="http://stackoverflow.com/{{ site.stackoverflow }}"><i class="fab fa-stack-overflow"></i></a>
     {% endif %}
+    
 	</h4>
 </div>
