@@ -66,7 +66,7 @@ papersource: './assets/data/VIVE3D_CVPR2023.pdf'
 #link to supplementary PDF
 supplementarysource: './assets/data/VIVE3D_CVPR2023_supp.pdf'
 
-#github: 'https://github.com/afruehstueck/insetGAN'
+github: 'https://github.com/afruehstueck/VIVE3D'
 
     
 #link to publication video (optional): you can either upload the video to our website (insert local link) or host it on youtube or vimeo (in this case insert the youtube/vimeo link)
