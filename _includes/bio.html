@@ -36,7 +36,7 @@
 					{% if paper.projecturl %}
 						<a href="{{ site.baseurl }}{{ paper.projecturl }}"><img src="{{ paper.thumbnail }}" ></a>
 					{% elsif paper.externalurl %}
-						<a href="{{ paper.url }}"><img src="{{ paper.thumbnail }}" ></a>
+						<a href="{{ paper.externalurl }}"><img src="{{ paper.thumbnail }}" ></a>
 					{% else %}
 					<img src="{{ paper.thumbnail }}" >
 					{% endif %}
@@ -46,7 +46,7 @@
 					<h4>{% if paper.projecturl %}
 						<a href="{{ site.baseurl }}{{ paper.projecturl }}">{{ paper.title }}</a>
 						{% elsif paper.externalurl %}
-						<a href="{{ paper.url }}">{{ paper.title }}</a>
+						<a href="{{ paper.externalurl }}">{{ paper.title }}</a>
 						{% else %}
 						{{ paper.title }}
 						{% endif %}
