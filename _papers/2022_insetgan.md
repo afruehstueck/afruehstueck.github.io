@@ -24,4 +24,7 @@ links:
 - name: Video
   type: youtube
   url: 'https://www.youtube.com/watch?v=YKFYEt5hvOo'
+- name: arXiv
+  type: arxiv 
+  url: 'https://arxiv.org/abs/2203.07293'
 ---

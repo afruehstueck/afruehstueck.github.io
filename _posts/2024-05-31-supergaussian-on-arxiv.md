@@ -5,4 +5,4 @@ tags:
 - News
 - Publication
 ---
-Our paper <a href="https://supergaussian.github.io">"SuperGaussian: Repurposing Video Models for 3D Super Resolution"</a> was released on <a href="">arXiv</a>. This paper was led by Adobe intern <a href="https://yshen47.github.io/">Yuan Shen</a>, who was co-mentored by myself and several other amazing Adobe researchers.
+Our paper ["SuperGaussian: Repurposing Video Models for 3D Super Resolution"](https://supergaussian.github.io) was released on [arXiv](https://arxiv.org/abs/2406.00609). This paper was led by Adobe intern [Yuan Shen](https://yshen47.github.io/), who was co-mentored by myself and several other amazing Adobe researchers.

@@ -14,4 +14,7 @@ links:
 - name: PDF
   type: pdf
   url: 'https://arxiv.org/pdf/2201.13019.pdf'
+- name: arXiv
+  type: arxiv 
+  url: 'https://arxiv.org/abs/2201.13019'
 ---
