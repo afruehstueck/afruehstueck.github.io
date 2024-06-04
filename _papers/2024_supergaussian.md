@@ -2,7 +2,7 @@
 title: "SuperGaussian: Repurposing Video Models for 3D Super Resolution"
 venue: arXiv 2024.
 year: 2024
-#projecturl: vive3D
+externalurl: https://supergaussian.github.io
 authors: 
 - Yuan Shen
 - Duygu Ceylan
