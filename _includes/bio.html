@@ -2,32 +2,6 @@
 <div class="container">
   <div class="panel panel-default">
     <div class="panel-body">
-		<h2>Education</h2>
-			<div class="imgbox">
-				<div class="imgtxt_right">
-				<h4><span class='tab2'><b>PhD</b></span><i>King Abdullah University of Science and Technology</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;Thuwal, KSA</span></h4>
-				<h4><span class='tab2'>2017 – 2023</span>Computer Science | GPA: 4.0</h4>
-				<h5><span class='tab2'></span>Thesis: <a href='https://repository.kaust.edu.sa/handle/10754/691535'>Latent Space Manipulation of GANs for Seamless Image Compositing</a></h5>
-				<h5><span class='tab2'></span>Adviser: <a href='http://peterwonka.net'>Peter Wonka</a></h5>
-				</div>
-				<img src='{{ site.baseurl }}assets/images/KAUST_seeds.png' class="thumb_right">
-			</div>
-			<div class="imgbox">
-				<div class="imgtxt_right">
-				<h4><span class='tab2'><b>MSc</b></span><i>Vienna University of Technology</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;Vienna, Austria</span></h4>
-				<h4><span class='tab2'>2015</span>Visual Computing | graduated with distinction</h4>
-				<h5><span class='tab2'></span>Thesis: <a href='https://www.cg.tuwien.ac.at/research/publications/2015/Fruehstueck_Anna_2015_DOM/'>Decoupling Object Manipulation from Rendering in a Thin Client Visualization System</a></h5>
-				<h5><span class='tab2'></span>Thesis adviser: <a href="https://www.cg.tuwien.ac.at/staff/EduardGroeller.html">Meister Eduard Gröller</a></h5>
-				</div>
-				<img src='{{ site.baseurl }}assets/images/TU_Wien.png' class="thumb_right">
-			</div>
-			<div class="imgbox">
-				<div class="imgtxt_right">
-				<h4><span class='tab2'><b>BSc</b></span><i>Vienna University of Technology</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;Vienna, Austria</span></h4>
-				<h4><span class='tab2'>2011</span>Media Informatics and Visual Computing</h4>
-				</div>
-				<img src='{{ site.baseurl }}assets/images/TU_Wien.png' class="thumb_right">
-			</div> 
 		<h2>Publications</h2>
 		{% assign sorted_papers = site.papers | sort: "year" | reverse %}
 		{% for paper in sorted_papers %}
@@ -84,7 +58,32 @@
 				</div>
 			</div>
 	   {% endfor %}
-		
+	
+
+	<h2>Education</h2>
+		<div class="imgbox">
+			<div class="imgtxt_right">
+			<h4><span class='tab2'><b>PhD</b></span><i>King Abdullah University of Science and Technology (KAUST)</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;Thuwal, KSA</span></h4>
+			<h4><span class='tab2'>2017 – 2023</span>Computer Science | Advisor: <a href='http://peterwonka.net'>Peter Wonka</a></h4>
+			<h5><span class='tab2'></span>Thesis: <a href='https://repository.kaust.edu.sa/handle/10754/691535'>Latent Space Manipulation of GANs for Seamless Image Compositing</a></h5>
+			</div>
+			<img src='{{ site.baseurl }}assets/images/KAUST_seeds.png' class="thumb_right">
+		</div>
+		<div class="imgbox">
+			<div class="imgtxt_right">
+			<h4><span class='tab2'><b>MSc</b></span><i>Vienna University of Technology</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;Vienna, Austria</span></h4>
+			<h4><span class='tab2'>2015</span>Visual Computing | Advisor: <a href="https://www.cg.tuwien.ac.at/staff/EduardGroeller.html">Meister Eduard Gröller</a></h4>
+			<h5><span class='tab2'></span>Thesis: <a href='https://www.cg.tuwien.ac.at/research/publications/2015/Fruehstueck_Anna_2015_DOM/'>Decoupling Object Manipulation from Rendering in a Thin Client Visualization System</a></h5>
+			</div>
+			<img src='{{ site.baseurl }}assets/images/TU_Wien.png' class="thumb_right">
+		</div>
+		<div class="imgbox">
+			<div class="imgtxt_right">
+			<h4><span class='tab2'><b>BSc</b></span><i>Vienna University of Technology</i><span style='font-size: 90%'>&nbsp;&ndash;&nbsp;Vienna, Austria</span></h4>
+			<h4><span class='tab2'>2011</span>Media Informatics and Visual Computing</h4>
+			</div>
+			<img src='{{ site.baseurl }}assets/images/TU_Wien.png' class="thumb_right">
+		</div> 
 	  <h2>Professional Experience</h2>
 			<div class="item">	
 				<h4><span class='tab2'><b>TPC Member</b></span><span> for SIGGRAPH Asia 2024</span></h4>
