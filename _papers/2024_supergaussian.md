@@ -1,6 +1,6 @@
 ---
 title: "SuperGaussian: Repurposing Video Models for 3D Super Resolution"
-venue: arXiv 2024.
+venue: ECCV 2024.
 year: 2024
 externalurl: https://supergaussian.github.io
 authors: 
@@ -13,9 +13,9 @@ authors:
 - Anna Frühstück
 thumbnail: assets/publications/supergaussian.png
 links:
-# - name: PDF
-#   type: pdf
-#   localurl: assets/data/VIVE3D_CVPR2023.pdf
+- name: PDF
+  type: pdf
+  url: 'https://arxiv.org/pdf/2406.00609.pdf'
 # - name: Supplementary PDF
 #   type: pdf
 #   localurl: assets/data/VIVE3D_CVPR2023_supp.pdf
