@@ -13,11 +13,11 @@ authors:
 - Wenbin Li
 - Christian Richardt
 - Tuanfeng Wang
-thumbnail: assets/publications/intrinsicdiffusion.png
-# links:
-# - name: PDF
-#   type: pdf
-#   localurl: assets/data/VIVE3D_CVPR2023.pdf
+thumbnail: assets/publications/intrinsicdiffusion2.png
+links:
+ - name: PDF
+   type: pdf
+   url: https://richardt.name/publications/IntrinsicDiffusion/LuoEtAl-IntrinsicDiffusion-SIGGRAPH2024.pdf
 # - name: Supplementary PDF
 #   type: pdf
 #   localurl: assets/data/VIVE3D_CVPR2023_supp.pdf
