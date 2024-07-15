@@ -2,6 +2,7 @@
 title: "On the Robustness of Quality Measures for GANs"
 venue: ECCV 2022.
 year: 2022
+externalurl: https://arxiv.org/abs/2201.13019
 authors: 
 - Motasem Alfarra
 - Juan C. Pérez
@@ -17,4 +18,7 @@ links:
 - name: arXiv
   type: arxiv 
   url: 'https://arxiv.org/abs/2201.13019'
+- name: Code
+  type: github
+  url: https://github.com/MotasemAlfarra/R-FID-Robustness-of-Quality-Measures-for-GANs
 ---

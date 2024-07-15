@@ -20,7 +20,7 @@
 					<h4>{% if paper.projecturl %}
 						<a href="{{ site.baseurl }}{{ paper.projecturl }}">{{ paper.title }}</a>
 						{% elsif paper.externalurl %}
-						<a href="{{ paper.externalurl }}">{{ paper.title }}</a>
+						<a href="{{ paper.externalurl }}" target="_blank">{{ paper.title }}</a>
 						{% else %}
 						{{ paper.title }}
 						{% endif %}
