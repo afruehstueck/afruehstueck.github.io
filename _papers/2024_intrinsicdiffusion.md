@@ -2,7 +2,7 @@
 title: "IntrinsicDiffusion: Joint Intrinsic Layers from Latent Diffusion Models"
 venue: SIGGRAPH 2024.
 year: 2024
-#projecturl: vive3D
+externalurl: https://intrinsicdiffusion.github.io
 authors: 
 - Jundan Luo
 - Duygu Ceylan
