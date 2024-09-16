@@ -2,7 +2,7 @@
 title: "TileGAN: Synthesis of Large-Scale Non-Homogeneous Textures"
 venue: ACM Transactions on Graphics (Proceedings of SIGGRAPH) 2019.
 year: 2019
-projecturl: tileGAN
+projecturl: tilegan
 authors: 
 - Anna Frühstück
 - Ibraheem Alhashim

@@ -16,15 +16,18 @@ links:
 - name: PDF
   type: pdf
   url: 'https://arxiv.org/pdf/2406.00609.pdf'
+- name: Code
+  type: github
+  url: 'https://github.com/adobe-research/SuperGaussian'
 # - name: Supplementary PDF
 #   type: pdf
 #   localurl: assets/data/VIVE3D_CVPR2023_supp.pdf
 # - name: Code
 #   type: github
 #   url: 'http://github.com/afruehstueck/VIVE3D'
-# - name: Video
-#   type: youtube 
-#   url: 'https://youtu.be/qfYGQwOw8pg'
+- name: Video
+  type: youtube 
+  url: 'https://www.youtube.com/watch?v=K8hTOjBdwRM'
 - name: arXiv
   type: arxiv 
   url: 'https://arxiv.org/abs/2406.00609'
