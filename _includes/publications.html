@@ -1,0 +1,69 @@
+<section id="bio">	
+<div class="container">
+  <div class="panel panel-default">
+    <div class="panel-body">
+		<h2>Publications</h2>
+		{% assign sorted_papers = site.papers | sort: "year" | reverse %}
+		{% for paper in sorted_papers %}
+			<div class="imgbox">
+				<div class="thumb_left shaded">
+					{% if paper.projecturl %}
+						<a href="{{ site.baseurl }}{{ paper.projecturl }}"><img src="{{ paper.thumbnail }}" ></a>
+					{% elsif paper.externalurl %}
+						<a href="{{ paper.externalurl }}"><img src="{{ paper.thumbnail }}" ></a>
+					{% else %}
+					<img src="{{ paper.thumbnail }}" >
+					{% endif %}
+					
+				</div>
+				<div class="imgtxt_left">
+					<h4>{% if paper.projecturl %}
+						<a href="{{ site.baseurl }}{{ paper.projecturl }}">{{ paper.title }}</a>
+						{% elsif paper.externalurl %}
+						<a href="{{ paper.externalurl }}" target="_blank">{{ paper.title }}</a>
+						{% else %}
+						{{ paper.title }}
+						{% endif %}
+					</h4>
+					<h5>
+						{% for author in paper.authors %}{% if forloop.first == false %}{% if forloop.last == true %} and {% else %}, {% endif %}{% endif %}
+						{% if author == 'Anna Frühstück'%}<u>{{ author }}</u>{% else %}{{ author }}{% endif %}{% endfor %}
+						<br>
+						<i>{{paper.venue}}</i>
+					</h5>
+					{% if paper.links %}
+					<h5>
+						{% for link in paper.links %}
+							<a href={% if link.localurl %}'{{ site.baseurl }}{{link.localurl}}'{% else %}'{{link.url}}'{% endif %} style='margin-right:12px'>
+							<i class=
+							{% if link.type == 'video' %}
+								"fa-regular fa-video"
+							{% elsif link.type == 'youtube' %}
+								"fa-brands fa-youtube"
+							{% elsif link.type == 'github' %}
+								"fa-brands fa-github"
+							{% elsif link.type == 'pdf' %}
+								"fas fa-file-pdf"
+							{% elsif link.type == 'arxiv' %}
+								"ai ai-arxiv ai-1x"
+							{% else %}
+								"fas fa-link"
+							{% endif %}
+							style='margin-right:3px'></i>
+							{{link.name}}
+							</a> 
+						{% endfor %}
+					</h5>
+					{% endif %}
+				</div>
+			</div>
+	   {% endfor %}
+	</div>
+  </div>
+</div>
+</section>
+
+
+
+
+
