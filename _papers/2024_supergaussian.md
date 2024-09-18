@@ -19,16 +19,19 @@ links:
 - name: Code
   type: github
   url: 'https://github.com/adobe-research/SuperGaussian'
-# - name: Supplementary PDF
-#   type: pdf
-#   localurl: assets/data/VIVE3D_CVPR2023_supp.pdf
-# - name: Code
-#   type: github
-#   url: 'http://github.com/afruehstueck/VIVE3D'
 - name: Video
   type: youtube 
   url: 'https://www.youtube.com/watch?v=K8hTOjBdwRM'
 - name: arXiv
   type: arxiv 
   url: 'https://arxiv.org/abs/2406.00609'
+citation: 
+  linkname: superGaussian
+  text: >
+    @inproceedings{Shen2024SuperGaussian,
+      &nbsp;&nbsp;title = {{SuperGaussian}: Repurposing Video Models for 3D Super Resolution},
+      &nbsp;&nbsp;uthor = {Shen, Yuan and Ceylan, Duygu and Guerrero, Paul and Xu, Zexiang and Mitra, {Niloy J.} and Wang, Shenlong and Fr{\"u}hst{\"u}ck, Anna},
+      &nbsp;&nbsp;booktitle = {European Conference on Computer Vision (ECCV)},
+      &nbsp;&nbsp;year = {2024},
+    }
 ---

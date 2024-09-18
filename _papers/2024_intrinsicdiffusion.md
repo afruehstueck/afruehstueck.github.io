@@ -18,13 +18,14 @@ links:
  - name: PDF
    type: pdf
    url: https://richardt.name/publications/IntrinsicDiffusion/LuoEtAl-IntrinsicDiffusion-SIGGRAPH2024.pdf
-# - name: Supplementary PDF
-#   type: pdf
-#   localurl: assets/data/VIVE3D_CVPR2023_supp.pdf
-# - name: Code
-#   type: github
-#   url: 'http://github.com/afruehstueck/VIVE3D'
-# - name: Video
-#   type: youtube 
-#   url: 'https://youtu.be/qfYGQwOw8pg'
+citation: 
+  linkname: intrinsicDiffusion
+  text: >
+    @inproceedings{Luo2024IntrinsicDiffusion,
+      &nbsp;&nbsp;author    = {Luo, Jundan and Ceylan, Duygu and Yoon, Jae Shin and Zhao, Nanxuan and Philip, Julien and Fr{\"u}hst{\"u}ck, Anna and Li, Wenbin and Richardt, Christian and Wang, Tuanfeng Y.},
+      &nbsp;&nbsp;title     = {{IntrinsicDiffusion}: Joint Intrinsic Layers from Latent Diffusion Models},
+      &nbsp;&nbsp;booktitle = {SIGGRAPH 2024 Conference Papers},
+      &nbsp;&nbsp;year      = {2024},
+      &nbsp;&nbsp;doi       = {10.1145/3641519.3657472},
+    }
 ---

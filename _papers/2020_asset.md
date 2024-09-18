@@ -16,4 +16,16 @@ links:
 - name: Code
   type: github
   url: https://github.com/ZPdesu/lsaa-dataset
+citation: 
+  linkname: panoramic
+  text: >
+    @article{Zhu2020Panoramic,
+      &nbsp;&nbsp;title = {Large Scale Architectural Asset Extraction from Panoramic Imagery},
+      &nbsp;&nbsp;author = {Zhu, Peihao and Para, Wamiq and Fr{\"u}hst{\"u}ck, Anna and Femiani, John and Wonka, Peter},
+      &nbsp;&nbsp;journal = {IEEE Transactions in Visualization and Computer Graphics (TVCG)},
+      &nbsp;&nbsp;year={2020},
+      &nbsp;&nbsp;volume={28},
+      &nbsp;&nbsp;number={2},
+      &nbsp;&nbsp;pages={1301-1316},
+    }
 ---
