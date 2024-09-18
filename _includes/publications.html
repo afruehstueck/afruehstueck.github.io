@@ -31,8 +31,8 @@
 						<br>
 						<i>{{paper.venue}}</i>
 					</h5>
+					<h5 class='linkbox'>
 					{% if paper.links %}
-					<h5>
 						{% for link in paper.links %}
 							<a href={% if link.localurl %}'{{ site.baseurl }}{{link.localurl}}'{% else %}'{{link.url}}'{% endif %} style='margin-right:12px'>
 							<i class=
@@ -53,8 +53,16 @@
 							{{link.name}}
 							</a> 
 						{% endfor %}
-					</h5>
 					{% endif %}
+					{% if paper.citation %}
+					<a href='#{{paper.citation.linkname}}' title='Citation'><span class="expander"><i class="fas fa-quote-right"></i>Citation</span></a>
+					{% raw %}
+					<div class="citation">
+						{{paper.citation.ref}}
+					</div>
+					{% endraw %}
+					{% endif %}
+					</h5>
 				</div>
 			</div>
 	   {% endfor %}
