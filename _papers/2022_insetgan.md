@@ -30,12 +30,12 @@ links:
 citation: 
   linkname: insetGAN
   text: >
-    @inproceedings{Fruehstueck2022InsetGAN,
-      &nbsp;&nbsp;title = {InsetGAN for Full-Body Image Generation},
-      &nbsp;&nbsp;author = {Fr{\"u}hst{\"u}ck, Anna and Singh, {Krishna Kumar} and Shechtman, Eli and Mitra, {Niloy J.} and Wonka, Peter and Lu, Jingwan},
-      &nbsp;&nbsp;booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision and Pattern Recognition (CVPR)},
-      &nbsp;&nbsp;month = {June},
-      &nbsp;&nbsp;year = {2022},
-      &nbsp;&nbsp;pages = {7723-7732}
+    @inproceedings{Fruehstueck2022InsetGAN,<br>
+      &nbsp;&nbsp;title = {InsetGAN for Full-Body Image Generation},<br>
+      &nbsp;&nbsp;author = {Fr{\"u}hst{\"u}ck, Anna and Singh, {Krishna Kumar} and Shechtman, Eli and Mitra, {Niloy J.} and Wonka, Peter and Lu, Jingwan},<br>
+      &nbsp;&nbsp;booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision and Pattern Recognition (CVPR)},<br>
+      &nbsp;&nbsp;month = {June},<br>
+      &nbsp;&nbsp;year = {2022},<br>
+      &nbsp;&nbsp;pages = {7723-7732}<br>
     }
 ---

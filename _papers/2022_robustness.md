@@ -24,11 +24,11 @@ links:
 citation: 
   linkname: robustness
   text: >
-    @inproceedings{Alfarra2022Robustness,
-      &nbsp;&nbsp;title = {On the Robustness of Quality Measures for {GANs}},
-      &nbsp;&nbsp;author = {Alfarra, Motasem and P{\'e}rez, Juan C and Fr{\"u}hst{\"u}ck, Anna and Torr, Philip HS and Wonka, Peter and Ghanem, Bernard},
-      &nbsp;&nbsp;booktitle = {European Conference on Computer Vision (ECCV)},
-      &nbsp;&nbsp;pages = {18--33},
-      &nbsp;&nbsp;year = {2022}
+    @inproceedings{Alfarra2022Robustness,<br>
+      &nbsp;&nbsp;title = {On the Robustness of Quality Measures for {GANs}},<br>
+      &nbsp;&nbsp;author = {Alfarra, Motasem and P{\'e}rez, Juan C and Fr{\"u}hst{\"u}ck, Anna and Torr, Philip HS and Wonka, Peter and Ghanem, Bernard},<br>
+      &nbsp;&nbsp;booktitle = {European Conference on Computer Vision (ECCV)},<br>
+      &nbsp;&nbsp;pages = {18--33},<br>
+      &nbsp;&nbsp;year = {2022}<br>
     }
 ---

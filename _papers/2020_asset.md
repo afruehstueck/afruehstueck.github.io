@@ -19,13 +19,13 @@ links:
 citation: 
   linkname: panoramic
   text: >
-    @article{Zhu2020Panoramic,
-      &nbsp;&nbsp;title = {Large Scale Architectural Asset Extraction from Panoramic Imagery},
-      &nbsp;&nbsp;author = {Zhu, Peihao and Para, Wamiq and Fr{\"u}hst{\"u}ck, Anna and Femiani, John and Wonka, Peter},
-      &nbsp;&nbsp;journal = {IEEE Transactions in Visualization and Computer Graphics (TVCG)},
-      &nbsp;&nbsp;year={2020},
-      &nbsp;&nbsp;volume={28},
-      &nbsp;&nbsp;number={2},
-      &nbsp;&nbsp;pages={1301-1316},
+    @article{Zhu2020Panoramic,<br>
+      &nbsp;&nbsp;title = {Large Scale Architectural Asset Extraction from Panoramic Imagery},<br>
+      &nbsp;&nbsp;author = {Zhu, Peihao and Para, Wamiq and Fr{\"u}hst{\"u}ck, Anna and Femiani, John and Wonka, Peter},<br>
+      &nbsp;&nbsp;journal = {IEEE Transactions in Visualization and Computer Graphics (TVCG)},<br>
+      &nbsp;&nbsp;year={2020},<br>
+      &nbsp;&nbsp;volume={28},<br>
+      &nbsp;&nbsp;number={2},<br>
+      &nbsp;&nbsp;pages={1301-1316},<br>
     }
 ---

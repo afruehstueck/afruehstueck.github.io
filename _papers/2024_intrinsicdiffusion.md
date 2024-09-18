@@ -21,11 +21,11 @@ links:
 citation: 
   linkname: intrinsicDiffusion
   text: >
-    @inproceedings{Luo2024IntrinsicDiffusion,
-      &nbsp;&nbsp;author    = {Luo, Jundan and Ceylan, Duygu and Yoon, Jae Shin and Zhao, Nanxuan and Philip, Julien and Fr{\"u}hst{\"u}ck, Anna and Li, Wenbin and Richardt, Christian and Wang, Tuanfeng Y.},
-      &nbsp;&nbsp;title     = {{IntrinsicDiffusion}: Joint Intrinsic Layers from Latent Diffusion Models},
-      &nbsp;&nbsp;booktitle = {SIGGRAPH 2024 Conference Papers},
-      &nbsp;&nbsp;year      = {2024},
-      &nbsp;&nbsp;doi       = {10.1145/3641519.3657472},
+    @inproceedings{Luo2024IntrinsicDiffusion,<br>
+      &nbsp;&nbsp;author    = {Luo, Jundan and Ceylan, Duygu and Yoon, Jae Shin and Zhao, Nanxuan and Philip, Julien and Fr{\"u}hst{\"u}ck, Anna and Li, Wenbin and Richardt, Christian and Wang, Tuanfeng Y.},<br>
+      &nbsp;&nbsp;title     = {{IntrinsicDiffusion}: Joint Intrinsic Layers from Latent Diffusion Models},<br>
+      &nbsp;&nbsp;booktitle = {SIGGRAPH 2024 Conference Papers},<br>
+      &nbsp;&nbsp;year      = {2024},<br>
+      &nbsp;&nbsp;doi       = {10.1145/3641519.3657472},<br>
     }
 ---
