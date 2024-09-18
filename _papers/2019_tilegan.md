@@ -23,7 +23,7 @@ links:
   url: 'https://arxiv.org/abs/1904.12795'
 citation: 
   linkname: tileGAN
-  ref: >
+  text: |
     @article{Fruehstueck2019TileGAN,<br>
     &nbsp;&nbsp;title =      {{TileGAN}: Synthesis of Large-Scale Non-Homogeneous Textures},<br>
     &nbsp;&nbsp;author =     {Fr\"{u}hst\"{u}ck, Anna and Alhashim, Ibraheem and Wonka, Peter},<br>
