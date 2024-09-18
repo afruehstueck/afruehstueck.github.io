@@ -23,14 +23,14 @@ links:
   url: 'https://arxiv.org/abs/1904.12795'
 citation: 
   linkname: tileGAN
-  text: |
+  text: >
     @article{Fruehstueck2019TileGAN,<br>
-    &nbsp;&nbsp;title =      {{TileGAN}: Synthesis of Large-Scale Non-Homogeneous Textures},<br>
-    &nbsp;&nbsp;author =     {Fr\"{u}hst\"{u}ck, Anna and Alhashim, Ibraheem and Wonka, Peter},<br>
-    &nbsp;&nbsp;journal =    {ACM Transactions on Graphics (Proc. SIGGRAPH) },<br>
-    &nbsp;&nbsp;issue_date = {July 2019},<br>
-    &nbsp;&nbsp;volume =     {38},<br>
-    &nbsp;&nbsp;number =     {4},<br>
-    &nbsp;&nbsp;year =       {2019}<br>
+     &nbsp;&nbsp;title =      {{TileGAN}: Synthesis of Large-Scale Non-Homogeneous Textures},<br>
+     &nbsp;&nbsp;author =     {Fr\"{u}hst\"{u}ck, Anna and Alhashim, Ibraheem and Wonka, Peter},<br>
+     &nbsp;&nbsp;journal =    {ACM Transactions on Graphics (Proc. SIGGRAPH) },<br>
+     &nbsp;&nbsp;issue_date = {July 2019},<br>
+     &nbsp;&nbsp;volume =     {38},<br>
+     &nbsp;&nbsp;number =     {4},<br>
+     &nbsp;&nbsp;year =       {2019}<br>
     }
 ---
