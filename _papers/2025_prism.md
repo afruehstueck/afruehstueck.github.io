@@ -23,7 +23,7 @@ citation:
     @article{Dirik2025PRISM,<br>
       &nbsp;&nbsp;title = {{PRISM}: A Unified Framework for Photorealistic Reconstruction and Intrinsic Scene Modeling},<br>
       &nbsp;&nbsp;author = {Dirik, Alara and Wang, Tuanfeng and Ceylan, Duygu and Zafeiriou, Stefanos and Fr{\"u}hst{\"u}ck, Anna},<br>
-      &nbsp;&nbsp;journal = {arXiv preprint arXiv:2504.14219},
+      &nbsp;&nbsp;journal = {arXiv preprint arXiv:2504.14219},<br>
       &nbsp;&nbsp;year = {2025},<br>
     }
 ---
