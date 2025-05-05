@@ -9,7 +9,7 @@ authors:
 - Duygu Ceylan
 - Stefanos Zafeiriou
 - Anna Frühstück
-thumbnail: assets/publications/supergaussian.png
+thumbnail: assets/publications/prism.png
 links:
 - name: PDF
   type: pdf
