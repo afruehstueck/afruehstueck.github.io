@@ -1,6 +1,6 @@
 ---
 title: "PRISM: A Unified Framework for Photorealistic Reconstruction and Intrinsic Scene Modeling"
-venue: arXiv.
+venue: arXiv 2025.
 year: 2025
 #externalurl: https://supergaussian.github.io
 authors: 
