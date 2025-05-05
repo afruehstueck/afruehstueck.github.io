@@ -30,7 +30,7 @@ citation:
   text: >
     @inproceedings{Shen2024SuperGaussian,<br>
       &nbsp;&nbsp;title = {{SuperGaussian}: Repurposing Video Models for 3D Super Resolution},<br>
-      &nbsp;&nbsp;uthor = {Shen, Yuan and Ceylan, Duygu and Guerrero, Paul and Xu, Zexiang and Mitra, {Niloy J.} and Wang, Shenlong and Fr{\"u}hst{\"u}ck, Anna},<br>
+      &nbsp;&nbsp;author = {Shen, Yuan and Ceylan, Duygu and Guerrero, Paul and Xu, Zexiang and Mitra, {Niloy J.} and Wang, Shenlong and Fr{\"u}hst{\"u}ck, Anna},<br>
       &nbsp;&nbsp;booktitle = {European Conference on Computer Vision (ECCV)},<br>
       &nbsp;&nbsp;year = {2024},<br>
     }
