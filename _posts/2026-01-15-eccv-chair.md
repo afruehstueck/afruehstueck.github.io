@@ -6,4 +6,4 @@ tags:
 - Research
 - Reviewing
 ---
-I have accepted an invitation to serve as an Area Chair for [ECCV 2026](https://eccv.ecva.net/).
+I have recently accepted an invitation to serve as an Area Chair for [ECCV 2026](https://eccv.ecva.net/).
