@@ -23,8 +23,9 @@ layout: home
 			<p>I received my PhD in Computer Science from <a href='http://kaust.edu.sa'>King Abdullah University of Science and Technology</a> working with <a href='http://peterwonka.net'>Prof. Peter Wonka</a>.</p>
 		  <p>I'm broadly interested in computer graphics, especially image, 3D and video synthesis and generative modeling techniques. My research involves the generation end editing of large-scale images using deep neural networks, focusing on the quality of the generated content, controllability and the plausible compositing of the output.</p>
 		  <p>In my spare time, I enjoy designing, building, creating, disassembling and assembling things. I love to be outdoors, play music, learn languages and explore the world.</p>
-		
+
 		<h3 style='text-align: center'>News</h3>
+		<div class="news-scroll">
 		  <ul>
 		  {% for post in site.posts limit:8 %}
 			<li>
@@ -47,8 +48,9 @@ layout: home
 					</li>
 				  {% endfor %}
 				</ul>
-			</div>		  
-			</ul>	
+			</div>
+			</ul>
+		</div>
 		</div>
 	</div>
 	</div>
