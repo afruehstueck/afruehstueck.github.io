@@ -441,6 +441,7 @@ input[type="checkbox"] ~ ul {
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 0.5rem;
+  padding-bottom: 3rem; /* key: prevents last items being hidden */
   border-top: 1px solid rgba(0,0,0,0.08); /* optional */
 }
 
