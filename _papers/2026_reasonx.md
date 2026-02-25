@@ -1,7 +1,7 @@
 ---
 title: "ReasonX: MLLM-Guided Intrinsic Image Decomposition"
-venue: arXiv 2025.
-year: 2025
+venue: CVPR 2026.
+year: 2026
 #externalurl: https://supergaussian.github.io
 authors: 
 - Alara Dirik
@@ -20,10 +20,11 @@ links:
 citation: 
   linkname: reasonx
   text: >
-    @article{Dirik2025ReasonX,<br>
+    @inproceedings{Dirik2026ReasonX,<br>
       &nbsp;&nbsp;title = {{ReasonX: MLLM-Guided Intrinsic Image Decomposition}},<br>
       &nbsp;&nbsp;author = {Dirik, Alara and Wang, Tuanfeng and Ceylan, Duygu and Zafeiriou, Stefanos and Fr{\"u}hst{\"u}ck, Anna},<br>
-      &nbsp;&nbsp;journal = {arXiv preprint arXiv:2512.04222},<br>
-      &nbsp;&nbsp;year = {2025},<br>
+      &nbsp;&nbsp;booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision and Pattern Recognition (CVPR)},<br>
+      &nbsp;&nbsp;month = {June},<br>
+      &nbsp;&nbsp;year = {2026}<br>
     }
 ---
