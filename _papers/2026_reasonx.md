@@ -17,6 +17,9 @@ links:
 - name: arXiv
   type: arxiv 
   url: 'https://arxiv.org/abs/2512.04222'
+- name: Code
+  type: github
+  url: 'https://github.com/alaradirik/reasonx'
 citation: 
   linkname: reasonx
   text: >
