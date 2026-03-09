@@ -2,7 +2,7 @@
 title: "ReasonX: MLLM-Guided Intrinsic Image Decomposition"
 venue: CVPR 2026.
 year: 2026
-#externalurl: https://supergaussian.github.io
+externalurl: https://alaradirik.github.io/reasonx/
 authors: 
 - Alara Dirik
 - Tuanfeng Wang
