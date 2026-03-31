@@ -1,7 +1,7 @@
 ---
 title: "PRISM: A Unified Framework for Photorealistic Reconstruction and Intrinsic Scene Modeling"
-venue: arXiv 2025.
-year: 2025
+venue: ICPR 2026.
+year: 2026
 #externalurl: https://supergaussian.github.io
 authors: 
 - Alara Dirik
@@ -20,10 +20,10 @@ links:
 citation: 
   linkname: prism
   text: >
-    @article{Dirik2025PRISM,<br>
+    @inproceedings{Dirik2025PRISM,<br>
       &nbsp;&nbsp;title = {{PRISM}: A Unified Framework for Photorealistic Reconstruction and Intrinsic Scene Modeling},<br>
       &nbsp;&nbsp;author = {Dirik, Alara and Wang, Tuanfeng and Ceylan, Duygu and Zafeiriou, Stefanos and Fr{\"u}hst{\"u}ck, Anna},<br>
-      &nbsp;&nbsp;journal = {arXiv preprint arXiv:2504.14219},<br>
-      &nbsp;&nbsp;year = {2025},<br>
+      &nbsp;&nbsp;booktitle = {Proceedings of the International Conference on Pattern Recognition (ICPR)},<br>
+      &nbsp;&nbsp;year = {2026},<br>
     }
 ---
