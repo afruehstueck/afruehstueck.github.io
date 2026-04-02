@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  Paper accepted to ICPR
+title:  PRISM accepted to ICPR
 tags:
 - News
 - Paper

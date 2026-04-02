@@ -5,7 +5,7 @@ rdiscount:
   extensions: [smart]
 permalink: /:title.html
 paginate: 5
-plugins: 
+plugins:
  - jekyll-paginate
  - jekyll-sitemap
 port: 3000
@@ -23,6 +23,7 @@ avatar_hover: profile2.png
 email: fruehstu (at) adobe (dot) com
 github: afruehstueck
 twitter: farnunea
+bluesky: farnunea.bsky.social
 linkedin: afruehstueck
 scholar: d0hUiVIAAAAJ
 google_analytics: UA-55435735-2
