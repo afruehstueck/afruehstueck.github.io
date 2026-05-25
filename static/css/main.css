@@ -362,6 +362,7 @@ body {
   left: -9999px;
 }
 
+/* Style for the label when COLLAPSED (after post 8) */
 label {
   display: block;
   width: 100%;
@@ -370,6 +371,7 @@ label {
   position: absolute;
   top: 0;
   transition: top .45s cubic-bezier(.44, .99, .48, 1);
+  margin-top: 5px; /* Pulls it slightly closer to post 8 if needed */
 }
 
 label:before,
@@ -401,14 +403,13 @@ input[type="checkbox"] ~ ul {
   max-height: max-content;
 }
 
+/* Style for the label when EXPANDED (at the very bottom) */
 [type="checkbox"]:checked + label {
-  /* Change from top: 100% to relative positioning at the bottom */
   position: relative;
   top: 0;
-  /* Add these lines */
-  order: 2;          /* Pushes the label below the <ul> which defaults to order: 0 */
-  margin-top: 25px;  /* Pushes it safely away from the very last post */
-  padding-bottom: 10px;
+  order: 2;
+  margin-top: 10px;   /* Reduced from 25px to tighten the gap after the last post */
+  padding-bottom: 0;  /* Stripped out unnecessary padding */
 }
 
 [type="checkbox"]:checked + label:after {
@@ -452,8 +453,9 @@ input[type="checkbox"] ~ ul {
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 0.5rem;
-  padding-bottom: 3rem; /* key: prevents last items being hidden */
-  border-top: 1px solid rgba(0,0,0,0.08); /* optional */
+  /* Change this from 3rem to something tighter, like 1rem */
+  padding-bottom: 1rem;
+  border-top: 1px solid rgba(0,0,0,0.08);
 }
 
 /* Expanded: make the whole news block scrollable */
