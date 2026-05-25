@@ -352,6 +352,9 @@ body {
   position: relative;
   height: auto;
   border-top: 0;
+  /* Add these lines */
+  display: flex;
+  flex-direction: column;
 }
 
 [type="checkbox"] {
@@ -385,6 +388,8 @@ input[type="checkbox"] ~ ul {
   overflow: hidden;
   max-height: 0;
   transition: max-height .45s cubic-bezier(.44, .99, .48, 1);
+  /* Add this line */
+  order: 1;
 }
 
 [type="checkbox"]:checked ~ ul {
@@ -400,7 +405,9 @@ input[type="checkbox"] ~ ul {
   /* Change from top: 100% to relative positioning at the bottom */
   position: relative;
   top: 0;
-  margin-top: 15px;
+  /* Add these lines */
+  order: 2;          /* Pushes the label below the <ul> which defaults to order: 0 */
+  margin-top: 25px;  /* Pushes it safely away from the very last post */
   padding-bottom: 10px;
 }
 
