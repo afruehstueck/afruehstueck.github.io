@@ -393,11 +393,15 @@ input[type="checkbox"] ~ ul {
    * set a very big value (e.g. 9999px) to see the difference
    */
 
-  max-height: 1500px;
+  max-height: max-content;
 }
 
 [type="checkbox"]:checked + label {
-  top: 100%;
+  /* Change from top: 100% to relative positioning at the bottom */
+  position: relative;
+  top: 0;
+  margin-top: 15px;
+  padding-bottom: 10px;
 }
 
 [type="checkbox"]:checked + label:after {
