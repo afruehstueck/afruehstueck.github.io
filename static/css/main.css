@@ -33,13 +33,13 @@ body::before {
 }
 
 @keyframes true-rainbow {
-  0%   { background-color: #660066; } /* Start with your brand purple */
-  16%  { background-color: #0055ff; } /* Pure Royal Blue */
-  33%  { background-color: #00cc99; } /* Bright Teal/Mint Green */
-  50%  { background-color: #99cc00; } /* Your site's hover green! */
-  66%  { background-color: #ffbb00; } /* Warm Yellow/Gold */
-  83%  { background-color: #e63300; } /* Vibrant Red-Orange */
-  100% { background-color: #660066; } /* Seamless loop back to purple */
+  0%   { background-color: #660066; color: #660066 !important; }/* Start with your brand purple */
+  16%  { background-color: #0055ff; color: #0055ff !important; }/* Pure Royal Blue */
+  33%  { background-color: #00cc99; color: #00cc99 !important; }/* Bright Teal/Mint Green */
+  50%  { background-color: #99cc00; color: #99cc00 !important; }/* Your site's hover green! */
+  66%  { background-color: #ffbb00; color: #ffbb00 !important; }/* Warm Yellow/Gold */
+  83%  { background-color: #e63300; color: #e63300 !important; }/* Vibrant Red-Orange */
+  100% { background-color: #660066; color: #660066 !important; }/* Seamless loop back to purple */
 }
 
 /* Wrapper for page content to push down footer */
@@ -661,12 +661,14 @@ div.footer{
 
 }*/
 
-/* Sync all site accents to the master rainbow loop */
+/* Apply the synchronized loop to the top bar background, links, and dates */
+body::before,
 .container a,
 #sidebar a,
 .panel-default h4 a,
 .panel-default h5 a,
-.news-date {
+.news-date,
+.rainbow-heart {
   animation: true-rainbow 60s linear infinite;
 }
 
