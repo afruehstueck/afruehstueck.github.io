@@ -727,3 +727,15 @@ div.footer{
   opacity: 1;
   transform: translateX(-50%) translateY(0); /* Glides down cleanly into view */
 }
+
+/* ==========================================================================
+   REMOVE ACTIVE CLICK OUTLINES
+   ========================================================================== */
+.container a:focus,
+#sidebar a:focus,
+.navbar-brand:focus,
+.panel-default h4 a:focus,
+.panel-default h5 a:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
