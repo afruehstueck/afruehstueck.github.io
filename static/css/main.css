@@ -16,8 +16,32 @@ body {
   background-color: #fff;
   font-family: var(--text), sans-serif;
   /* The html and body elements cannot have any padding or margin. */
-  border-top: 3px solid var(--accent-color);
+  /* border-top: 3px solid var(--accent-color); */
 }
+/* Animated floating rainbow bar at the top of the browser window */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  z-index: 9999;
+
+  /* Travels smoothly through your true rainbow keyframes */
+  animation: true-rainbow 60s linear infinite;
+}
+
+@keyframes true-rainbow {
+  0%   { background-color: #660066; } /* Start with your brand purple */
+  16%  { background-color: #0055ff; } /* Pure Royal Blue */
+  33%  { background-color: #00cc99; } /* Bright Teal/Mint Green */
+  50%  { background-color: #99cc00; } /* Your site's hover green! */
+  66%  { background-color: #ffbb00; } /* Warm Yellow/Gold */
+  83%  { background-color: #e63300; } /* Vibrant Red-Orange */
+  100% { background-color: #660066; } /* Seamless loop back to purple */
+}
+
 /* Wrapper for page content to push down footer */
 #wrap {
   padding-bottom: 50px;
@@ -416,9 +440,9 @@ input[type="checkbox"] ~ ul {
   content: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' height='20' width='20' viewBox='0 0 320 512'><path fill='rgb(128,128,128)' d='M177 160l136 136c9 9 9 24 0 34l-23 22c-9 10-24 10-34 0l-96-96-96 96c-10 10-25 10-34 0L7 330c-9-10-9-25 0-34l136-136c9-10 25-10 34 0z'/></svg>");
 }
 
-/* .sublist ul li:last-child {
+.sublist ul li:last-child {
   margin-bottom: 10px;
-} */
+}
 
 /**************************************************************************/
 @media (max-width: 767px) {
