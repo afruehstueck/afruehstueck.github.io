@@ -669,3 +669,12 @@ div.footer{
 .news-date {
   animation: true-rainbow 60s linear infinite;
 }
+
+/* Make the footer heart cycle through the rainbow in sync with the page */
+.rainbow-heart {
+  display: inline-block;
+  font-size: 1.1em; /* Gives it a nice, clear presence */
+
+  /* Blends text color smoothly using your existing animation loop */
+  animation: true-rainbow 60s linear infinite;
+}
