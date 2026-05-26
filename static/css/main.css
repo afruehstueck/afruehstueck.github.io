@@ -49,7 +49,7 @@ body {
 
 /* --- Bind Timelines directly to the layout roots --- */
 :root {
-  animation: true-rainbow 60s linear infinite;
+  animation: true-rainbow 90s linear infinite;
 }
 
 /* Animated floating rainbow bar at the top of the browser window */
@@ -63,7 +63,7 @@ body::before {
   z-index: 9999;
 
   /* Travels smoothly through your true rainbow keyframes */
-  animation: bar-rainbow 60s linear infinite;
+  animation: bar-rainbow 90s linear infinite;
 }
 
 /* Wrapper for page content to push down footer */
@@ -689,4 +689,37 @@ div.footer{
 /* Force the custom SVG heart path to read the active variable value */
 .rainbow-heart path {
   fill: var(--accent-color) !important;
+}
+
+/* ==========================================================================
+   SOFTENED HOVER TOOLTIP INTERFACE
+   ========================================================================== */
+.name-tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.name-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 130%;
+  left: 50%;
+  transform: translateX(-50%) translateY(5px);
+  white-space: nowrap;
+  background-color: #484848;   /* Muted gray to tie into your text colors */
+  color: #ffffff !important;
+  font-size: 13px;
+  font-family: var(--text), sans-serif;
+  padding: 6px 12px;
+  border-radius: 4px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  z-index: 10000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.name-tooltip:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
