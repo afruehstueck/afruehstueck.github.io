@@ -673,8 +673,7 @@ div.footer{
 
 }*/
 
-/* Force individual element trees to evaluate the keyframe stream */
-
+/* Force individual text element trees to evaluate the keyframe stream */
 .container a,
 #sidebar a,
 .panel-default h4 a,
@@ -683,5 +682,7 @@ div.footer{
 .rainbow-heart,
 .rainbow-heart path {
   animation: true-rainbow 60s linear infinite !important;
-  background-color: transparent !important; /* Forces any lingering highlight boxes to vanish */
+  background-color: transparent !important;
+  background-image: none !important;
+  background: transparent !important;
 }
