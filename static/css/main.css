@@ -19,14 +19,25 @@ body {
   /* border-top: 3px solid var(--accent-color); */
 }
 
+/* 1. Dedicated animation purely for the top bar's background property */
+@keyframes bar-rainbow {
+  0%   { background-color: #660066; }
+  16%  { background-color: #0055ff; }
+  33%  { background-color: #00cc99; }
+  50%  { background-color: #99cc00; }
+  66%  { background-color: #ffbb00; }
+  83%  { background-color: #e63300; }
+  100% { background-color: #660066; }
+}
+
 @keyframes true-rainbow {
-  0%   { background-color: #660066; color: #660066 !important; fill: #660066 !important; }
-  16%  { background-color: #0055ff; color: #0055ff !important; fill: #0055ff !important; }
-  33%  { background-color: #00cc99; color: #00cc99 !important; fill: #00cc99 !important; }
-  50%  { background-color: #99cc00; color: #99cc00 !important; fill: #99cc00 !important; }
-  66%  { background-color: #ffbb00; color: #ffbb00 !important; fill: #ffbb00 !important; }
-  83%  { background-color: #e63300; color: #e63300 !important; fill: #e63300 !important; }
-  100% { background-color: #660066; color: #660066 !important; fill: #660066 !important; }
+  0%   { color: #660066 !important; fill: #660066 !important; }
+  16%  { color: #0055ff !important; fill: #0055ff !important; }
+  33%  { color: #00cc99 !important; fill: #00cc99 !important; }
+  50%  { color: #99cc00 !important; fill: #99cc00 !important; }
+  66%  { color: #ffbb00 !important; fill: #ffbb00 !important; }
+  83%  { color: #e63300 !important; fill: #e63300 !important; }
+  100% { color: #660066 !important; fill: #660066 !important; }
 }
 
 /* Animated floating rainbow bar at the top of the browser window */
@@ -40,7 +51,7 @@ body::before {
   z-index: 9999;
 
   /* Travels smoothly through your true rainbow keyframes */
-  animation: true-rainbow 60s linear infinite;
+  animation: bar-rainbow 60s linear infinite;
 }
 
 /* Wrapper for page content to push down footer */
@@ -663,29 +674,14 @@ div.footer{
 }*/
 
 /* Force individual element trees to evaluate the keyframe stream */
-body::before {
-  animation: true-rainbow 60s linear infinite !important;
-}
 
-.container a {
-  animation: true-rainbow 60s linear infinite !important;
-}
-
-#sidebar a {
-  animation: true-rainbow 60s linear infinite !important;
-}
-
+.container a,
+#sidebar a,
 .panel-default h4 a,
-.panel-default h5 a {
-  animation: true-rainbow 60s linear infinite !important;
-}
-
-.news-date {
-  animation: true-rainbow 60s linear infinite !important;
-}
-
-/* Targets our new inline vector heart path */
+.panel-default h5 a,
+.news-date,
 .rainbow-heart,
 .rainbow-heart path {
   animation: true-rainbow 60s linear infinite !important;
+  background-color: transparent !important; /* Forces any lingering highlight boxes to vanish */
 }
