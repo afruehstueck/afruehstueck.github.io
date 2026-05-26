@@ -22,22 +22,22 @@ body {
 /* 1. Dedicated animation purely for the top bar's background property */
 @keyframes bar-rainbow {
   0%   { background-color: #660066; }
-  16%  { background-color: #0055ff; }
-  33%  { background-color: #00cc99; }
+  16%  { background-color: #4a7acc; }
+  33%  { background-color: #5cb399; }
   50%  { background-color: #99cc00; }
-  66%  { background-color: #ffbb00; }
-  83%  { background-color: #e63300; }
+  66%  { background-color: #e0b034; }
+  83%  { background-color: #c25334; }
   100% { background-color: #660066; }
 }
 
 @keyframes true-rainbow {
-  0%   { color: #660066 !important; fill: #660066 !important; }
-  16%  { color: #0055ff !important; fill: #0055ff !important; }
-  33%  { color: #00cc99 !important; fill: #00cc99 !important; }
-  50%  { color: #99cc00 !important; fill: #99cc00 !important; }
-  66%  { color: #ffbb00 !important; fill: #ffbb00 !important; }
-  83%  { color: #e63300 !important; fill: #e63300 !important; }
-  100% { color: #660066 !important; fill: #660066 !important; }
+  0%   { color: #660066 !important; fill: #660066 !important; } /* Your original bold purple */
+  16%  { color: #4a7acc !important; fill: #4a7acc !important; } /* Muted Slate Blue */
+  33%  { color: #5cb399 !important; fill: #5cb399 !important; } /* Muted Sage Teal */
+  50%  { color: #99cc00 !important; fill: #99cc00 !important; } /* Your original hover green */
+  66%  { color: #e0b034 !important; fill: #e0b034 !important; } /* Muted Ochre Gold */
+  83%  { color: #c25334 !important; fill: #c25334 !important; } /* Muted Terracotta Red */
+  100% { color: #660066 !important; fill: #660066 !important; } /* Loop back to purple */
 }
 
 /* Animated floating rainbow bar at the top of the browser window */
@@ -673,16 +673,17 @@ div.footer{
 
 }*/
 
-/* Force individual text element trees to evaluate the keyframe stream */
+/* Force the elements to evaluate the text rainbow color animation */
 .container a,
 #sidebar a,
 .panel-default h4 a,
 .panel-default h5 a,
-.news-date,
-.rainbow-heart,
-.rainbow-heart path {
+.panel-default h4 a span,
+.panel-default h5 a span,
+span.news-date,
+svg.rainbow-heart,
+svg.rainbow-heart path {
   animation: true-rainbow 60s linear infinite !important;
   background-color: transparent !important;
-  background-image: none !important;
   background: transparent !important;
 }
