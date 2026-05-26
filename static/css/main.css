@@ -703,15 +703,15 @@ div.footer{
   content: attr(data-tooltip);
   position: absolute;
   /* Shifted from bottom to top to display below the link instead of being clipped above */
-  top: 140%;
+  top: 105%;
   left: 50%;
   transform: translateX(-50%) translateY(-5px);
   white-space: nowrap;
   background-color: #484848;   /* Muted gray to tie into your text colors */
   color: #ffffff !important;
-  font-size: 13px;
+  font-size: 14px;
   font-family: var(--text), sans-serif;
-  padding: 6px 12px;
+  padding: 4px 10px;
   border-radius: 4px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 
@@ -720,7 +720,7 @@ div.footer{
 
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
 .name-tooltip:hover::after {
