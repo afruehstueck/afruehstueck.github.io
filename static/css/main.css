@@ -692,7 +692,7 @@ div.footer{
 }
 
 /* ==========================================================================
-   SOFTENED HOVER TOOLTIP INTERFACE
+   HOVER TOOLTIP INTERFACE (DOWNWARD DIRECTION MATRIX)
    ========================================================================== */
 .name-tooltip {
   position: relative;
@@ -702,9 +702,10 @@ div.footer{
 .name-tooltip::after {
   content: attr(data-tooltip);
   position: absolute;
-  bottom: 130%;
+  /* Shifted from bottom to top to display below the link instead of being clipped above */
+  top: 140%;
   left: 50%;
-  transform: translateX(-50%) translateY(5px);
+  transform: translateX(-50%) translateY(-5px);
   white-space: nowrap;
   background-color: #484848;   /* Muted gray to tie into your text colors */
   color: #ffffff !important;
@@ -712,8 +713,11 @@ div.footer{
   font-family: var(--text), sans-serif;
   padding: 6px 12px;
   border-radius: 4px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  z-index: 10000;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+
+  /* Extreme stacking priority to force it to render over background layout planes */
+  z-index: 999999 !important;
+
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease, transform 0.2s ease;
@@ -721,5 +725,5 @@ div.footer{
 
 .name-tooltip:hover::after {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translateX(-50%) translateY(0); /* Glides down cleanly into view */
 }
