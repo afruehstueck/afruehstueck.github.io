@@ -18,6 +18,17 @@ body {
   /* The html and body elements cannot have any padding or margin. */
   /* border-top: 3px solid var(--accent-color); */
 }
+
+@keyframes true-rainbow {
+  0%   { background-color: #660066; color: #660066 !important; fill: #660066 !important; }
+  16%  { background-color: #0055ff; color: #0055ff !important; fill: #0055ff !important; }
+  33%  { background-color: #00cc99; color: #00cc99 !important; fill: #00cc99 !important; }
+  50%  { background-color: #99cc00; color: #99cc00 !important; fill: #99cc00 !important; }
+  66%  { background-color: #ffbb00; color: #ffbb00 !important; fill: #ffbb00 !important; }
+  83%  { background-color: #e63300; color: #e63300 !important; fill: #e63300 !important; }
+  100% { background-color: #660066; color: #660066 !important; fill: #660066 !important; }
+}
+
 /* Animated floating rainbow bar at the top of the browser window */
 body::before {
   content: "";
@@ -30,16 +41,6 @@ body::before {
 
   /* Travels smoothly through your true rainbow keyframes */
   animation: true-rainbow 60s linear infinite;
-}
-
-@keyframes true-rainbow {
-  0%   { background-color: #660066; color: #660066 !important; }/* Start with your brand purple */
-  16%  { background-color: #0055ff; color: #0055ff !important; }/* Pure Royal Blue */
-  33%  { background-color: #00cc99; color: #00cc99 !important; }/* Bright Teal/Mint Green */
-  50%  { background-color: #99cc00; color: #99cc00 !important; }/* Your site's hover green! */
-  66%  { background-color: #ffbb00; color: #ffbb00 !important; }/* Warm Yellow/Gold */
-  83%  { background-color: #e63300; color: #e63300 !important; }/* Vibrant Red-Orange */
-  100% { background-color: #660066; color: #660066 !important; }/* Seamless loop back to purple */
 }
 
 /* Wrapper for page content to push down footer */
@@ -661,22 +662,30 @@ div.footer{
 
 }*/
 
-/* Apply the synchronized loop to the top bar background, links, and dates */
-body::before,
-.container a,
-#sidebar a,
-.panel-default h4 a,
-.panel-default h5 a,
-.news-date,
-.rainbow-heart {
-  animation: true-rainbow 60s linear infinite;
+/* Force individual element trees to evaluate the keyframe stream */
+body::before {
+  animation: true-rainbow 60s linear infinite !important;
 }
 
-/* Make the footer heart cycle through the rainbow in sync with the page */
-.rainbow-heart {
-  display: inline-block;
-  font-size: 1.1em; /* Gives it a nice, clear presence */
+.container a {
+  animation: true-rainbow 60s linear infinite !important;
+}
 
-  /* Blends text color smoothly using your existing animation loop */
-  animation: true-rainbow 60s linear infinite;
+#sidebar a {
+  animation: true-rainbow 60s linear infinite !important;
+}
+
+.panel-default h4 a,
+.panel-default h5 a {
+  animation: true-rainbow 60s linear infinite !important;
+}
+
+.news-date {
+  animation: true-rainbow 60s linear infinite !important;
+}
+
+/* Targets our new inline vector heart path */
+.rainbow-heart,
+.rainbow-heart path {
+  animation: true-rainbow 60s linear infinite !important;
 }
