@@ -19,38 +19,38 @@ layout: home
 	</div>
 	<div id='info'>
 		<div>
-			<p>I am a Research Scientist at Adobe Research London working on image/3D/video generative modeling.</p>
-			<p>I received my PhD in Computer Science from <a href='http://kaust.edu.sa'>King Abdullah University of Science and Technology</a> working with <a href='http://peterwonka.net'>Prof. Peter Wonka</a>.</p>
-		  <p>I'm broadly interested in computer graphics, especially image, 3D and video synthesis and generative modeling techniques. My research involves the generation end editing of large-scale images using deep neural networks, focusing on the quality of the generated content, controllability and the plausible compositing of the output.</p>
-		  <p>In my spare time, I enjoy designing, building, creating, disassembling and assembling things. I love to be outdoors, play music, learn languages and explore the world.</p>
-
+			<p>I am a Research Scientist at Adobe Research London, where I focus on the intersection of computer graphics and generative modeling for image, 3D, and video synthesis.</p>
+			<p>I earned my PhD in Computer Science from <a href='http://kaust.edu.sa'>KAUST</a> working with <a href='http://peterwonka.net'>Prof. Peter Wonka</a>.</p>
+		  <p>My work centers on pushing the boundaries of deep neural networks in computer graphics, specifically looking at how we can generate and edit visual content at a large-scale with better quality, finer user control, and seamless, plausible compositing</p>
+		  <p>Beyond my own research, I am deeply passionate about fostering the next generation of researchers. I am lucky to mentor brilliant students and research interns, and I love staying active in the broader graphics community, e.g. through initiatives like <a href="https://www.wigraph.org/">WiGRAPH</a>.</p>
+		  <p>When I’m not deep in code or pixels, I enjoy designing, building, creating, disassembling and assembling things. I love to be outdoors, play music, learn languages and explore the world.</p>
+		</div>
 		<h3 style='text-align: center'>News</h3>
 		<div class="news-scroll">
-		  <ul>
-		  {% for post in site.posts limit:8 %}
-			<li>
-			  <span class='news-date'>{{ post.date | date: "%B %Y" }} | </span><span class='news-title'> {{ post.title }}</span>
-			  <div class='news-text'>
-				{{post.content}}
-			  </div>
-			</li>
-		  {% endfor %}
+			<ul>
+			{% for post in site.posts limit:8 %}
+				<li>
+					<span class='news-date'>{{ post.date | date: "%B %Y" }} | </span><span class='news-title'> {{ post.title }}</span>
+					<div class='news-text'>
+						{{post.content}}
+					</div>
+				</li>
+			{% endfor %}
+			</ul>
 			<div class="sublist">
 				<input type="checkbox" id="check_id">
 				<label for="check_id"></label>
-				<ul>
-				  {% for post in site.posts offset:8 %}
-					<li>
-					  <span class='news-date'>{{ post.date | date: "%B %Y" }} | </span><span class='news-title'> {{ post.title }}</span>
-					  <div class='news-text'>
-						{{post.content}}
-					  </div>
-					</li>
-				  {% endfor %}
+				<ul class="news-more">
+					{% for post in site.posts offset:8 %}
+						<li>
+						<span class='news-date'>{{ post.date | date: "%B %Y" }} | </span><span class='news-title'> {{ post.title }}</span>
+						<div class='news-text'>
+							{{post.content}}
+						</div>
+						</li>
+					{% endfor %}
 				</ul>
 			</div>
-			</ul>
-		</div>
 		</div>
 	</div>
 	</div>
