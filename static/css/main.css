@@ -22,22 +22,23 @@ body {
 /* 1. Dedicated animation purely for the top bar's background property */
 @keyframes bar-rainbow {
   0%   { background-color: #660066; }
-  16%  { background-color: #4a7acc; }
-  33%  { background-color: #5cb399; }
-  50%  { background-color: #99cc00; }
-  66%  { background-color: #e0b034; }
-  83%  { background-color: #c25334; }
+  16%  { background-color: #4a7acc; } /* Muted Slate Blue */
+  33%  { background-color: #5cb399; } /* Muted Sage Teal */
+  50%  { background-color: #99cc00; } /* Your original hover green */
+  66%  { background-color: #e0b034; } /* Muted Ochre Gold */
+  83%  { background-color: #c25334; } /* Muted Terracotta Red */
   100% { background-color: #660066; }
 }
 
+/* 2. Text timeline - strictly targeting font pigments and vector fills */
 @keyframes true-rainbow {
-  0%   { color: #660066 !important; fill: #660066 !important; } /* Your original bold purple */
-  16%  { color: #4a7acc !important; fill: #4a7acc !important; } /* Muted Slate Blue */
-  33%  { color: #5cb399 !important; fill: #5cb399 !important; } /* Muted Sage Teal */
-  50%  { color: #99cc00 !important; fill: #99cc00 !important; } /* Your original hover green */
-  66%  { color: #e0b034 !important; fill: #e0b034 !important; } /* Muted Ochre Gold */
-  83%  { color: #c25334 !important; fill: #c25334 !important; } /* Muted Terracotta Red */
-  100% { color: #660066 !important; fill: #660066 !important; } /* Loop back to purple */
+  0%   { color: #660066 !important; fill: #660066 !important; }
+  16%  { color: #4a7acc !important; fill: #4a7acc !important; }
+  33%  { color: #5cb399 !important; fill: #5cb399 !important; }
+  50%  { color: #99cc00 !important; fill: #99cc00 !important; }
+  66%  { color: #e0b034 !important; fill: #e0b034 !important; }
+  83%  { color: #c25334 !important; fill: #c25334 !important; }
+  100% { color: #660066 !important; fill: #660066 !important; }
 }
 
 /* Animated floating rainbow bar at the top of the browser window */
@@ -47,7 +48,7 @@ body::before {
   top: 0;
   left: 0;
   width: 100%;
-  height: 5px;
+  height: 4px;
   z-index: 9999;
 
   /* Travels smoothly through your true rainbow keyframes */
@@ -332,6 +333,7 @@ body::before {
 }
 .container a {
   color: var(--accent-color);
+  animation: true-rainbow 60s linear infinite !important;
 }
 
 .container a:hover {
@@ -467,6 +469,7 @@ input[type="checkbox"] ~ ul {
 .news-date {
 	font-size: 14px;
 	color: var(--accent-color);
+  animation: true-rainbow 60s linear infinite !important;
 }
 
 .news-title {
@@ -527,9 +530,11 @@ input[type="checkbox"] ~ ul {
 }
 .panel-default h4 a, h5 a {
   color: var(--accent-color);
+  animation: true-rainbow 60s linear infinite !important;
 }
 .panel-default h4 a:hover, h5 a:hover {
   color: var(--hover-color);
+  animation: true-rainbow 60s linear infinite !important;
 }
 .panel{
   border-style: none;
@@ -587,7 +592,9 @@ input[type="checkbox"] ~ ul {
 }
 #sidebar a {
   color: var(--accent-color);
+  animation: true-rainbow 60s linear infinite !important;
 }
+
 #sidebar a:hover {
   text-decoration: none;
   color: var(--hover-color);
@@ -674,15 +681,9 @@ div.footer{
 }*/
 
 /* Force the elements to evaluate the text rainbow color animation */
-.container a,
-#sidebar a,
-.panel-default h4 a,
-.panel-default h5 a,
-.panel-default h4 a span,
-.panel-default h5 a span,
-span.news-date,
-svg.rainbow-heart,
-svg.rainbow-heart path {
+/* Clean target for the vector heart icon fill state */
+.rainbow-heart,
+.rainbow-heart path {
   animation: true-rainbow 60s linear infinite !important;
   background-color: transparent !important;
   background: transparent !important;
