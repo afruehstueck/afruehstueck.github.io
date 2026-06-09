@@ -1,6 +1,6 @@
 ---
 title: "ResEdit: Residual Embeddings for Precise Generative Image Editing"
-venue: CVPR 2026.
+venue: EGSR 2026.
 year: 2026
 #externalurl: https://alaradirik.github.io/reasonx/
 authors: 

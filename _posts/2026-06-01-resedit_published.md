@@ -6,4 +6,4 @@ tags:
 - Paper
 - Publication
 ---
-[ResEdit: Residual Embeddings for Precise Generative Image Editing](#) was accepted to EGSR 2026!
+[ResEdit: Residual Embeddings for Precise Generative Image Editing](#) was accepted to EGSR 2026.
