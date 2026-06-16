@@ -2,7 +2,7 @@
 title: "ResEdit: Residual Embeddings for Precise Generative Image Editing"
 venue: EGSR 2026.
 year: 2026
-#externalurl: https://alaradirik.github.io/reasonx/
+externalurl: https://johnberg1.github.io/resedit/
 authors: 
 - Canberk Baykal
 - Valentin Deschaintre
@@ -15,7 +15,10 @@ thumbnail: assets/publications/resedit.png
 links:
 - name: PDF
   type: pdf
-  url: '#'
+  url: 'https://arxiv.org/pdf/2606.16457'
+- name: arXiv
+  type: arxiv 
+  url: 'https://arxiv.org/abs/2606.16457'
 citation: 
   linkname: resedit
   text: >
